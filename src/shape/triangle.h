@@ -44,6 +44,7 @@ public:
     void Sample(GeometryRecord& geoRec, Float2& s) const;
     float Pdf(GeometryRecord& geoRec) const;
     float Area() const;
+    Bounds GetBounds() const;
 
     uint32_t m_triangleIdx;
     std::shared_ptr<Mesh> m_mesh;

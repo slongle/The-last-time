@@ -206,7 +206,7 @@ void Parse(const std::string& filename, Renderer& renderer)
         if (type == "path_tracer") {
             int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
             int spp = GetInt(integratorProperties, "spp", 1);
-            integrator = std::make_shared<PathIntegrator>(scene, camera, buffer, maxBounce, spp);
+            integrator = std::make_shared<PathIntegrator>(scene, camera, buffer, maxBounce, spp);            
         }
         else {
             assert(false);

@@ -3,20 +3,6 @@
 #include "transform.h"
 #include "sampler.h"
 
-#define Epsilon 1e-4f
-
-class Ray {
-public:
-    Ray() {}
-    Ray(const Float3& _o, const Float3& _d)
-        :o(_o), d(_d), tMin(1e-4), tMax(std::numeric_limits<float>::infinity()) {}
-    Ray(const Float3& _o, const Float3& _d, const float& _tMin, const float& _tMax)
-        :o(_o), d(_d), tMin(_tMin), tMax(_tMax) {}
-
-    Float3 o, d;
-    float tMin, tMax;
-};
-
 class Camera {
 public:
     Camera() {}

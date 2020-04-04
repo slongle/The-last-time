@@ -6,7 +6,7 @@ template<typename T>
 inline T ImageTexture<T>::Evaluate(const Float2& uv) const
 {
     Float2 st = uv * Float2(m_width, m_height);
-    Int2 pos(int(st.x) % m_width, int(st.y) % m_height);
+    Int2 pos((int(st.x) + m_width) % m_width, (int(st.y) + m_height) % m_height);
     return m_image[pos.y * m_width + pos.x];
 }
 

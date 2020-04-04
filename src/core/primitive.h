@@ -17,6 +17,7 @@ public:
     virtual void Sample(GeometryRecord& geoRec, Float2& s) const = 0;
     virtual float Pdf(GeometryRecord& geoRec) const = 0;
     virtual float Area() const = 0;
+    virtual Bounds GetBounds() const = 0;
 };
 
 class BSDF {    

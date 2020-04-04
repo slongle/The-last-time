@@ -27,6 +27,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <cassert>
+#include <numeric>
 
 #undef M_PI
 

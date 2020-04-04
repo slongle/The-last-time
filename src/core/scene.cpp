@@ -63,11 +63,15 @@ void Scene::AddSpectrumTexture(const std::string& name, const std::shared_ptr<Te
 
 void Scene::Setup()
 {
+    std::cout << "# of lights : " << m_lights.size() << std::endl;
     assert(!m_lights.empty());
+    m_bvh = std::shared_ptr<BVH>(new BVH(m_primitives));
+    m_bvh->Build();
 }
 
 bool Scene::Intersect(Ray& ray, HitRecord& hitRec) const
 {
+    return m_bvh->Intersect(ray, hitRec);
     bool hit = false;
     for (const Primitive& primitive : m_primitives) {
         if (primitive.m_shape->Intersect(ray, hitRec)) {
@@ -84,6 +88,7 @@ bool Scene::Intersect(Ray& ray, HitRecord& hitRec) const
 
 bool Scene::Occlude(Ray& ray) const
 {
+    return m_bvh->Occlude(ray);
     HitRecord hitRec;
     for (const Primitive& primitive : m_primitives) {
         if (primitive.m_shape->Intersect(ray, hitRec)) {

@@ -194,3 +194,11 @@ float Triangle::Area() const
 
     return Length(Cross(p1 - p0, p2 - p0));
 }
+
+Bounds Triangle::GetBounds() const
+{
+    Float3 p0 = m_mesh->GetVertex(m_triangleIdx, 0);
+    Float3 p1 = m_mesh->GetVertex(m_triangleIdx, 1);
+    Float3 p2 = m_mesh->GetVertex(m_triangleIdx, 2);
+    return Bounds(Min(Min(p0, p1), p2), Max(Max(p0, p1), p2));
+}

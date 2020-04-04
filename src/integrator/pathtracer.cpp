@@ -191,7 +191,7 @@ Spectrum PathIntegrator::NormalCheck(Ray ray, Sampler& sampler)
 
     hitRec.m_primitive->m_shape->SetGeometryRecord(hitRec.m_geoRec);
 
-    //radiance = Spectrum(hitRec.m_geoRec.m_ns); break;
+    //radiance = Spectrum(hitRec.m_geoRec.m_ng); return radiance;
 
     float dotValue = Dot(-ray.d, hitRec.m_geoRec.m_ns);
     if (dotValue >= 0) {
