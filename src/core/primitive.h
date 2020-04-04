@@ -6,6 +6,7 @@
 #include "record.h"
 #include "camera.h"
 #include "sampling.h"
+#include "texture.h"
 
 class AreaLight;
 

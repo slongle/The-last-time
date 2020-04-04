@@ -1,6 +1,7 @@
 #pragma once
 
-#include "vector.h"
+#include "core/vector.h"
+#include "core/spectrum.h"
 
 template<typename T>
 class Texture {    

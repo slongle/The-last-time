@@ -2,10 +2,12 @@
 
 #include "core/spectrum.h"
 
-std::unique_ptr<float[]> ReadImage(
+std::shared_ptr<float[]> ReadImage(
     const std::string& filename,
     int* width,
-    int* height);
+    int* height,
+    int* channel,
+    int reqChannel);
 
 void WriteImage(
     const std::string& filename,

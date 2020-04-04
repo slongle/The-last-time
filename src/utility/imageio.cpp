@@ -18,17 +18,18 @@
  * @param filename 
  * @param width 
  * @param height 
- * @return std::unique_ptr<float[]> 
+ * @return std::shared_ptr<float[]> 
  */
-std::unique_ptr<float[]> ReadImage(
+std::shared_ptr<float[]> ReadImage(
     const std::string& filename,
     int* width,
-    int* height)
+    int* height,
+    int* channel,
+    int reqChannel)
 {
     const std::string ext = GetFileExtension(filename);
-    int nchannel;
-    float* ptr = stbi_loadf(filename.c_str(), width, height, &nchannel, 3);
-    return std::unique_ptr<float[]>(ptr);
+    float* ptr = stbi_loadf(filename.c_str(), width, height, channel, 3);
+    return std::shared_ptr<float[]>(ptr);
 }
 
 /**

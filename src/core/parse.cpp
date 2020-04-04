@@ -8,6 +8,8 @@
 #include "bsdf/matte.h"
 #include "light/arealight.h"
 #include "integrator/pathtracer.h"
+#include "texture/consttexture.h"
+#include "texture/imagemap.h"
 
 #include "ext/json/json.hpp"
 using json = nlohmann::json;
@@ -32,17 +34,37 @@ int GetInt(const json::value_type& node, const std::string name, const int& defa
     return node.contains(name) ? node[name] : defaultValue;
 }
 
-void GetTexture(const json::value_type& node, const std::string name, const Spectrum& defaultValue, const Scene& scene) {
+std::shared_ptr<Texture<Spectrum>> 
+GetSpectrumTexture(const json::value_type& node, const std::string name, 
+    const Spectrum& defaultValue, const std::shared_ptr<Scene>& scene) 
+{
     if (!node.contains(name)) {
-        //return std::shared_ptr<Texture>(new ConstTexture(defaultValue));
+        return std::shared_ptr<Texture<Spectrum>>(new ConstTexture<Spectrum>(defaultValue));
     }
     else {
         if (!node[name].is_string()) {
             Spectrum c = Spectrum(node[name][0], node[name][1], node[name][2]);
-            //return std::shared_ptr<Texture>(new ConstTexture(c));
+            return std::shared_ptr<Texture<Spectrum>>(new ConstTexture<Spectrum>(c));
         }
         else {
-            
+            return scene->GetSpectrumTexture(node[name]);
+        }
+    }
+}
+
+std::shared_ptr<Texture<float>>
+GetFloatTexture(const json::value_type& node, const std::string name, 
+    const float& defaultValue, const std::shared_ptr<Scene>& scene) 
+{
+    if (!node.contains(name)) {
+        return std::shared_ptr<Texture<float>>(new ConstTexture<float>(defaultValue));
+    }
+    else {
+        if (!node[name].is_string()) {
+            return std::shared_ptr<Texture<float>>(new ConstTexture<float>(node[name]));
+        }
+        else {
+            return scene->GetFloatTexture(node[name]);
         }
     }
 }
@@ -62,6 +84,17 @@ void Parse(const std::string& filename, Renderer& renderer)
     {
         int textureNum = sceneFile["textures"].size();
         std::cout << "# of textures : " << textureNum << std::endl;
+        for (auto& textureProperties : sceneFile["textures"]) {
+            std::string textureName = textureProperties["name"];
+            std::string type = textureProperties["type"];
+            std::string filename = textureProperties["filename"];
+            if (type == "float") {
+                scene->AddFloatTexture(textureName, CreateFloatImageTexture(filename));
+            }
+            else {
+                scene->AddSpectrumTexture(textureName, CreateSpectrumImageTexture(filename));
+            }
+        }
     }
 
     // BSDF
@@ -75,8 +108,7 @@ void Parse(const std::string& filename, Renderer& renderer)
             BSDF* bsdf = nullptr;
             if (type == "matte")
             {
-                Spectrum reflectance = GetSpectrum(bsdfProperties,"reflectance", Spectrum(1.f));
-                //Texture<Spectrum> 
+                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 bsdf = new Matte(reflectance);
             }
             else {

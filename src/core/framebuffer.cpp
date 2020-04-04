@@ -24,7 +24,6 @@ Framebuffer::Framebuffer(const std::string& filename, const int& width, const in
 
 Framebuffer::~Framebuffer()
 {
-    std::cout << "Destruct\n";
     delete[] m_sRGB;
     delete[] m_accumulate;
     delete[] m_sampleNum;
@@ -62,4 +61,6 @@ void Framebuffer::Save()
     }
     WriteImage(m_filename, m_width, m_height, linearRGB);
     delete[] linearRGB;
+
+    std::cout << "Save image in " + m_filename << std::endl;
 }

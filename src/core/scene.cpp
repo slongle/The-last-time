@@ -18,6 +18,18 @@ std::shared_ptr<BSDF> Scene::GetBSDF(const std::string& name)
     return m_BSDFs[name];
 }
 
+std::shared_ptr<Texture<float>> Scene::GetFloatTexture(const std::string& name)
+{
+    assert(m_floatTextures.count(name) == 1);
+    return m_floatTextures[name];    
+}
+
+std::shared_ptr<Texture<Spectrum>> Scene::GetSpectrumTexture(const std::string& name)
+{
+    assert(m_spectrumTextures.count(name) == 1);
+    return m_spectrumTextures[name];
+}
+
 
 void Scene::AddMesh(const std::string& name, const std::shared_ptr<Mesh>& mesh)
 {
@@ -35,6 +47,18 @@ void Scene::AddBSDF(const std::string& name, const std::shared_ptr<BSDF>& bsdf)
 {
     assert(m_BSDFs.count(name) == 0);
     m_BSDFs[name] = bsdf;
+}
+
+void Scene::AddFloatTexture(const std::string& name, const std::shared_ptr<Texture<float>>& texture)
+{
+    assert(m_floatTextures.count(name) == 0);
+    m_floatTextures[name] = texture;
+}
+
+void Scene::AddSpectrumTexture(const std::string& name, const std::shared_ptr<Texture<Spectrum>>& texture)
+{
+    assert(m_spectrumTextures.count(name) == 0);
+    m_spectrumTextures[name] = texture;
 }
 
 void Scene::Setup()

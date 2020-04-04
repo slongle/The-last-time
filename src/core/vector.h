@@ -20,6 +20,7 @@ public:
 typedef glm::vec2 Float2;
 typedef glm::vec3 Float3;
 typedef glm::vec4 Float4;
+typedef glm::ivec2 Int2;
 
 inline std::ostream& operator << (std::ostream& os, const Float3& v) {
     os << v.x << ' ' << v.y << ' ' << v.z;
