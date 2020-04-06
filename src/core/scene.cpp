@@ -64,6 +64,7 @@ void Scene::AddSpectrumTexture(const std::string& name, const std::shared_ptr<Te
 void Scene::Setup()
 {
     std::cout << "# of lights : " << m_lights.size() << std::endl;
+    std::cout << "# of shapes : " << m_primitives.size() << std::endl;
     assert(!m_lights.empty());
     m_bvh = std::shared_ptr<BVH>(new BVH(m_primitives));
     m_bvh->Build();

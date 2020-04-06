@@ -21,6 +21,7 @@ public:
     RGBSpectrum operator / (float v) const { assert(v != 0.f); return RGBSpectrum(r / v, g / v, b / v); }
     RGBSpectrum& operator /= (float v) { assert(v != 0.f); r /= v; g /= v; b /= v; return *this; }
 
+    RGBSpectrum operator + (const RGBSpectrum& s) const { return RGBSpectrum(r + s.r, g + s.g, b + s.b); }
     RGBSpectrum& operator += (const RGBSpectrum& s) { r += s.r; g += s.g; b += s.b; return *this; }
     RGBSpectrum operator * (const RGBSpectrum& v) const { return RGBSpectrum(r * v.r, g * v.g, b * v.b); }
     RGBSpectrum& operator *= (const RGBSpectrum& v) { r *= v.r; g *= v.g; b *= v.b; return *this; }

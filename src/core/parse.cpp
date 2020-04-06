@@ -6,6 +6,8 @@
 
 #include "shape/triangle.h"
 #include "bsdf/matte.h"
+#include "bsdf/dielectric.h"
+#include "bsdf/blendbsdf.h"
 #include "light/arealight.h"
 #include "integrator/pathtracer.h"
 #include "texture/consttexture.h"
@@ -110,6 +112,20 @@ void Parse(const std::string& filename, Renderer& renderer)
             {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 bsdf = new Matte(reflectance);
+            }
+            else if (type == "smooth_dieletric") {
+                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
+                auto transmittance = GetSpectrumTexture(bsdfProperties, "transmittance", Spectrum(1.f), scene);
+                float eta = GetFloat(bsdfProperties, "eta", 1.5f);
+                bsdf = new SmoothDielectric(reflectance, transmittance, eta);
+            }
+            else if (type == "blend") {
+                auto weight = GetFloatTexture(bsdfProperties, "weight", 0.5f, scene);
+                std::string bsdf1Name = bsdfProperties["bsdf1"];
+                std::string bsdf2Name = bsdfProperties["bsdf2"];
+                std::shared_ptr<BSDF> bsdf1 = scene->GetBSDF(bsdf1Name);
+                std::shared_ptr<BSDF> bsdf2 = scene->GetBSDF(bsdf2Name);
+                bsdf = new BlendBSDF(weight, bsdf1, bsdf2);
             }
             else {
                 assert(false);

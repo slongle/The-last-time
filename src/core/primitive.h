@@ -22,9 +22,8 @@ public:
 
 class BSDF {    
 public:
-
     // Return f * |cos| / pdf
-    virtual Spectrum Sample(MaterialRecord& matRec, Float2& s) const;
+    virtual Spectrum Sample(MaterialRecord& matRec, Float2 s) const;
     // Return f * |cos|
     virtual Spectrum Eval(MaterialRecord& matRec) const = 0;
     // Return pdf
@@ -32,7 +31,7 @@ public:
     // Return f * |cos|
     virtual Spectrum EvalPdf(MaterialRecord& matRec) const = 0;
 
-    virtual bool IsDelta() const { return false; }
+    virtual bool IsDelta(const MaterialRecord& matRec) const { return false; }
 };
 
 class Light {

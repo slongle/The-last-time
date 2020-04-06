@@ -23,7 +23,7 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 
         auto& bsdf = hitRec.m_primitive->m_bsdf;
         MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-        specular = bsdf->IsDelta();
+        specular = bsdf->IsDelta(matRec);
 
         // NEE using MIS            
         if (!specular) {
@@ -191,6 +191,8 @@ Spectrum PathIntegrator::NormalCheck(Ray ray, Sampler& sampler)
 
     hitRec.m_primitive->m_shape->SetGeometryRecord(hitRec.m_geoRec);
 
+    Float2 st = hitRec.m_geoRec.m_st;
+    radiance = Spectrum(st.x, st.y, 0); return radiance;
     //radiance = Spectrum(hitRec.m_geoRec.m_ng); return radiance;
 
     float dotValue = Dot(-ray.d, hitRec.m_geoRec.m_ns);
