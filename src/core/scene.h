@@ -3,8 +3,9 @@
 #include "accelerator/bvh.h"
 #include "camera.h"
 #include "primitive.h"
-#include "shape/triangle.h"
 #include "texture.h"
+#include "shape/triangle.h"
+#include "light/environment.h"
 
 class Scene {
 public:
@@ -16,6 +17,7 @@ public:
     std::shared_ptr<BVH> m_bvh = nullptr;
     std::vector<Primitive> m_primitives;
     std::vector<std::shared_ptr<Light>> m_lights;
+    std::shared_ptr<EnvironmentLight> m_environmentLight = nullptr;
 
 public:
     void AddMesh(const std::string& name, const std::shared_ptr<Mesh>& mesh);

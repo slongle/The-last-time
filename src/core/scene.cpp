@@ -30,7 +30,6 @@ std::shared_ptr<Texture<Spectrum>> Scene::GetSpectrumTexture(const std::string& 
     return m_spectrumTextures[name];
 }
 
-
 void Scene::AddMesh(const std::string& name, const std::shared_ptr<Mesh>& mesh)
 {
     assert(m_meshes.count(name) == 0 && m_shapes.count(name) == 0);
@@ -65,9 +64,11 @@ void Scene::Setup()
 {
     std::cout << "# of lights : " << m_lights.size() << std::endl;
     std::cout << "# of shapes : " << m_primitives.size() << std::endl;
-    assert(!m_lights.empty());
+    assert(!m_lights.empty() || m_environmentLight);
     m_bvh = std::shared_ptr<BVH>(new BVH(m_primitives));
+    std::cout << "Building BVH" << std::endl;
     m_bvh->Build();
+    std::cout << "BVH Done" << std::endl;
 }
 
 bool Scene::Intersect(Ray& ray, HitRecord& hitRec) const

@@ -23,6 +23,8 @@ public:
 
     static inline float CosTheta(const Float3& v) { return v.z; }
     static inline float AbsCosTheta(const Float3& v) { return std::fabs(v.z); }
+    static inline float SphericalPhi(const Float3& v) { return std::atan2(v.y, v.x) + M_PI; }
+    static inline float SphericalTheta(const Float3& v) { return std::acos(v.z); }
 };
 
 Float3 SampleCosineHemisphere(const Float2& s);

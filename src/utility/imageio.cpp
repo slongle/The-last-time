@@ -13,7 +13,7 @@
 
 
 /**
- * @brief stb_image : index of left-upper is (0, 0)
+ * @brief stb_image : index of left-lower is (0, 0)
  * 
  * @param filename 
  * @param width 
@@ -33,11 +33,12 @@ std::shared_ptr<float[]> ReadImage(
     if (!ptr) {
         std::cout << "Can't load image : " << filename << std::endl;
     }
+    //std::cout << ptr[0] << ' ' << ptr[1] << ' ' << ptr[2] << std::endl;
     return std::shared_ptr<float[]>(ptr);
 }
 
 /**
- * @brief stb_image : index of left-upper is (0, 0)
+ * @brief stb_image : index of left-lower is (0, 0)
  * 
  * @param filename 
  * @param width 

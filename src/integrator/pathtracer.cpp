@@ -1,4 +1,5 @@
 #include "pathtracer.h"
+#include "light/environment.h"
 
 Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 {
@@ -10,8 +11,11 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
         bool hit = m_scene->Intersect(ray, hitRec);
 
         if (!hit) {
-            if (bounce == 0 || specular) {
+            if (bounce == 0 || specular || m_scene->m_lights.empty()) {
                 // Environment Light
+                if (m_scene->m_environmentLight) {
+                    radiance += throughput * m_scene->m_environmentLight->Eval(ray);
+                }
             }
             break;
         }
@@ -26,7 +30,7 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
         specular = bsdf->IsDelta(matRec);
 
         // NEE using MIS            
-        if (!specular) {
+        if (!specular && !m_scene->m_lights.empty()) {
             // Light Sampling
             {
                 // Choose one of lights
@@ -115,6 +119,7 @@ void PathIntegrator::Wait()
         thread->join();
         delete thread;
     }
+    m_threads.clear();
     assert(m_renderingNum == 0);
 }
 
@@ -186,7 +191,10 @@ Spectrum PathIntegrator::NormalCheck(Ray ray, Sampler& sampler)
     bool hit = m_scene->Intersect(ray, hitRec);
 
     if (!hit) {
-        return radiance;
+        // Environment Light
+        if (m_scene->m_environmentLight) {
+            return m_scene->m_environmentLight->Eval(ray);
+        }
     }
 
     hitRec.m_primitive->m_shape->SetGeometryRecord(hitRec.m_geoRec);

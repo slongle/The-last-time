@@ -7,10 +7,6 @@
 #include "color.h"
 #include "vector.h"
 
-inline float GammaCorrect(const float& v) {
-    return v < 0.0031308f ? 12.92f * v : 1.055f * std::pow(v, 1.0f / 2.4f) - 0.055f;
-}
-
 class RGBSpectrum {
 public:
     RGBSpectrum(float v = 0) :r(v), g(v), b(v) {}

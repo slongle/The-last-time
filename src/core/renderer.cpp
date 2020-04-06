@@ -83,6 +83,8 @@ void Renderer::Render()
 
 		Draw();
 		if (!m_integrator->IsRendering()) {
+			m_integrator->Stop();
+			m_integrator->Wait();
 			std::string title("Render done in ");
 			title += m_integrator->m_timer.ToString();
 			glfwSetWindowTitle(m_window, title.c_str());

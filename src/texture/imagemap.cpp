@@ -34,7 +34,10 @@ std::shared_ptr<ImageTexture<Spectrum>> CreateSpectrumImageTexture(std::string f
 
     std::shared_ptr<Spectrum[]> spectrumImage(new Spectrum[width * height]);
     for (int i = 0; i < width * height; i++) {
-        spectrumImage[i] = Spectrum(image[i * 3 + 0], image[i * 3 + 1], image[i * 3 + 2]);
+        spectrumImage[i] = Spectrum(
+            (image[i * 3 + 0]), 
+            (image[i * 3 + 1]), 
+            (image[i * 3 + 2]));
     }
     return std::make_shared<ImageTexture<Spectrum>>(width, height, spectrumImage);
 }

@@ -9,6 +9,7 @@
 #include "bsdf/dielectric.h"
 #include "bsdf/blendbsdf.h"
 #include "light/arealight.h"
+#include "light/environment.h"
 #include "integrator/pathtracer.h"
 #include "texture/consttexture.h"
 #include "texture/imagemap.h"
@@ -190,6 +191,25 @@ void Parse(const std::string& filename, Renderer& renderer)
                     scene->m_primitives.emplace_back(shape, bsdf);
                 }
             }
+        }
+    }
+
+    // Lights
+    {
+        int lightNum = sceneFile["lights"].size();
+        std::cout << "# of lights : " << lightNum << std::endl;
+        for (auto& lightProperties : sceneFile["lights"])
+        {
+            std::string lightType = lightProperties["type"];
+            if (lightType == "environment") {
+                auto texture = GetSpectrumTexture(lightProperties, "texture", Spectrum(1.f), scene);
+                auto light = std::shared_ptr<EnvironmentLight>(new EnvironmentLight(texture));
+                //scene->m_lights.push_back(light);
+                scene->m_environmentLight = light;
+            }
+            else {
+                assert(false);
+            }            
         }
     }
 
