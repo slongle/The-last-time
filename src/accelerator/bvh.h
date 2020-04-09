@@ -44,6 +44,7 @@ private:
         Bounds m_bounds;
     };
 
+private:
     std::vector<Primitive> m_primitives;
     std::vector<BVHNode> m_nodes;
 };

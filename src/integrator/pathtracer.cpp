@@ -208,17 +208,18 @@ Spectrum PathIntegrator::NormalCheck(Ray ray, Sampler& sampler)
     bool hit = m_scene->Intersect(ray, hitRec);
 
     if (!hit) {
+        return radiance;
         // Environment Light
         if (m_scene->m_environmentLight) {
             return m_scene->m_environmentLight->Eval(ray);
         }
     }
 
-    hitRec.m_primitive->m_shape->SetGeometryRecord(hitRec.m_geoRec);
+    //std::cout << "Hit!!!\n";
 
     Float2 st = hitRec.m_geoRec.m_st;
-    radiance = Spectrum(st.x, st.y, 0); return radiance;
     //radiance = Spectrum(hitRec.m_geoRec.m_ng); return radiance;
+    //radiance = Spectrum(st.x, st.y, 0); return radiance;
 
     float dotValue = Dot(-ray.d, hitRec.m_geoRec.m_ns);
     if (dotValue >= 0) {

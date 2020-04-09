@@ -1,6 +1,7 @@
 #pragma once
 
 #include "accelerator/bvh.h"
+#include "accelerator/embreebvh.h"
 #include "camera.h"
 #include "primitive.h"
 #include "texture.h"
@@ -15,6 +16,7 @@ public:
     bool Occlude(Ray& ray) const;
 
     std::shared_ptr<BVH> m_bvh = nullptr;
+    std::shared_ptr<EmbreeBVH> m_embreeBvh = nullptr;
     std::vector<Primitive> m_primitives;
     std::vector<std::shared_ptr<Light>> m_lights;
     std::shared_ptr<EnvironmentLight> m_environmentLight = nullptr;
@@ -32,6 +34,7 @@ public:
     std::shared_ptr<Texture<float>> GetFloatTexture(const std::string& name);
     std::shared_ptr<Texture<Spectrum>> GetSpectrumTexture(const std::string& name);
     
+    std::vector<std::shared_ptr<Mesh>> m_orderedMeshes;
     std::unordered_map<std::string, std::shared_ptr<Mesh>> m_meshes;
     std::unordered_map<std::string, std::shared_ptr<Shape>> m_shapes;
     std::unordered_map<std::string, std::shared_ptr<BSDF>> m_BSDFs;

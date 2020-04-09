@@ -164,6 +164,7 @@ void Parse(const std::string& filename, Renderer& renderer)
             std::vector<std::shared_ptr<Shape>> shapes;
             if (scene->m_meshes.count(shapeName)) {
                 std::shared_ptr<Mesh> mesh = scene->GetMesh(shapeName);
+                scene->m_orderedMeshes.push_back(mesh);
                 shapes.reserve(mesh->m_triangleNum);
                 for (uint32_t i = 0; i < mesh->m_triangleNum; i++){
                     shapes.emplace_back(new Triangle(mesh, i));

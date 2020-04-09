@@ -70,14 +70,16 @@ void Scene::Setup()
     std::cout << "# of lights : " << m_lights.size() << std::endl;
     std::cout << "# of shapes : " << m_primitives.size() << std::endl;
     assert(!m_lights.empty() || m_environmentLight);
-    m_bvh = std::shared_ptr<BVH>(new BVH(m_primitives));
     std::cout << "Building BVH" << std::endl;
-    m_bvh->Build();
+    //m_bvh = std::shared_ptr<BVH>(new BVH(m_primitives));
+    //m_bvh->Build();
+    m_embreeBvh = std::shared_ptr<EmbreeBVH>(new EmbreeBVH(m_orderedMeshes, m_primitives));
     std::cout << "BVH Done" << std::endl;
 }
 
 bool Scene::Intersect(Ray& ray, HitRecord& hitRec) const
 {
+    return m_embreeBvh->Intersect(ray, hitRec);
     return m_bvh->Intersect(ray, hitRec);
     bool hit = false;
     for (const Primitive& primitive : m_primitives) {
@@ -95,6 +97,7 @@ bool Scene::Intersect(Ray& ray, HitRecord& hitRec) const
 
 bool Scene::Occlude(Ray& ray) const
 {
+    return m_embreeBvh->Occlude(ray);
     return m_bvh->Occlude(ray);
     HitRecord hitRec;
     for (const Primitive& primitive : m_primitives) {

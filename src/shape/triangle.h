@@ -11,27 +11,37 @@ struct Mesh {
         float* vertices,
         float* texcoords,
         float* normals,
-        int* indices)
+        int* vertexIndices,
+        int* texcoordIndices,
+        int* normalIndices)
         : m_vertexNum(vertexNum), m_texcoordNum(texcoordNum),
         m_normalNum(normalNum), m_triangleNum(triangleNum),
-        m_vertices(vertices), m_texcoords(texcoords), 
-        m_normals(normals), m_indices(indices) {};
+        m_vertices(vertices), m_texcoords(texcoords),
+        m_normals(normals),
+        m_vertexIndices(vertexIndices),
+        m_texcoordIndices(texcoordIndices),
+        m_normalIndices(normalIndices) {}
     ~Mesh() {
         delete[] m_vertices;
         delete[] m_normals;
         delete[] m_texcoords;
-        delete[] m_indices;
+        delete[] m_vertexIndices;
+        delete[] m_texcoordIndices;
+        delete[] m_normalIndices;
     }
 
     Float3 GetVertex(const uint32_t& triangleIdx, const uint32_t& vertexIdx) const;
     Float2 GetTexcoord(const uint32_t& triangleIdx, const uint32_t& vertexIdx) const;
     Float3 GetNormal(const uint32_t& triangleIdx, const uint32_t& vertexIdx) const;
+    void SetGeometryRecord(const uint32_t& triangleIdx, GeometryRecord& geoRec) const;
 
     uint32_t m_vertexNum, m_texcoordNum, m_normalNum, m_triangleNum;
     float* m_vertices;
     float* m_normals;
-    float* m_texcoords;
-    int* m_indices;
+    float* m_texcoords;    
+    int* m_vertexIndices;
+    int* m_texcoordIndices;
+    int* m_normalIndices;
 };
 
 class Triangle : public Shape{
