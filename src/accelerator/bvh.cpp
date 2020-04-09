@@ -21,11 +21,13 @@ void BVH::Build()
 bool BVH::Intersect(Ray& ray, HitRecord& hitRec) const
 {
     int nodeIdx = 0, stackIdx = 0, stack[65];
+    Float3 invDir = Float3(1.f) / ray.d;
+    int dirIsNeg[3] = { ray.d.x < 0, ray.d.y < 0, ray.d.z < 0 };
 
     bool hit = false;
     while (true) {
         const BVHNode& node = m_nodes[nodeIdx];
-        if (!node.m_bounds.Intersect(ray)) {
+        if (!node.m_bounds.Intersect(ray, invDir, dirIsNeg)) {
             if (stackIdx == 0) {
                 break;
             }
@@ -33,8 +35,14 @@ bool BVH::Intersect(Ray& ray, HitRecord& hitRec) const
         }
         else {
             if (node.m_inner.m_flag == 0) {
-                stack[stackIdx++] = node.m_inner.m_rightChild;
-                nodeIdx++;
+                if (m_nodes[node.m_inner.m_rightChild].m_inner.m_flag == 0) {
+                    stack[stackIdx++] = nodeIdx + 1;
+                    nodeIdx = node.m_inner.m_rightChild;
+                }
+                else {
+                    stack[stackIdx++] = node.m_inner.m_rightChild;
+                    nodeIdx++;
+                }
             }
             else {
                 for (uint32_t i = node.m_leaf.m_start; i < node.m_leaf.m_start + node.m_leaf.m_size; i++) {
@@ -60,12 +68,14 @@ bool BVH::Intersect(Ray& ray, HitRecord& hitRec) const
 bool BVH::Occlude(Ray& ray) const
 {
     int nodeIdx = 0, stackIdx = 0, stack[65];
+    Float3 invDir = Float3(1.f) / ray.d;
+    int dirIsNeg[3] = { ray.d.x < 0, ray.d.y < 0, ray.d.z < 0 };
 
     HitRecord hitRec;
     bool hit = false;
     while (true) {
         const BVHNode& node = m_nodes[nodeIdx];
-        if (!node.m_bounds.Intersect(ray)) {
+        if (!node.m_bounds.Intersect(ray, invDir, dirIsNeg)) {            
             if (stackIdx == 0) {
                 break;
             }

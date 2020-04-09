@@ -84,12 +84,15 @@ public:
     Bounds() :m_pMin(std::numeric_limits<float>::max()), m_pMax(std::numeric_limits<float>::min()) {}
     Bounds(const Float3& pMin, const Float3& pMax) :m_pMin(pMin), m_pMax(pMax) {}
     
+    const Float3& operator[](const int& idx) const { return idx == 0 ? m_pMin : m_pMax; }
+    
     float Area() const {
         Float3 diag = m_pMax - m_pMin;
         return 2.f * (diag.x * diag.y + diag.x * diag.z + diag.y * diag.z);
     }
 
     Float3 Centroid() const { return (m_pMin + m_pMax) * 0.5f; }
+
     bool Intersect(const Ray& ray) const {
         float nearT = -std::numeric_limits<float>::infinity();
         float farT = std::numeric_limits<float>::infinity();
@@ -117,6 +120,34 @@ public:
         }
 
         return ray.tMin <= farT && nearT <= ray.tMax;
+    }
+
+    bool Intersect(const Ray& ray, const Float3& invDir, const int* dirIsNeg) const {
+        const Bounds& bounds = *this;
+
+        // Check for ray intersection against $x$ and $y$ slabs
+        float tMin = (bounds[    dirIsNeg[0]].x - ray.o.x) * invDir.x;
+        float tMax = (bounds[1 - dirIsNeg[0]].x - ray.o.x) * invDir.x;
+        float tyMin = (bounds[    dirIsNeg[1]].y - ray.o.y) * invDir.y;
+        float tyMax = (bounds[1 - dirIsNeg[1]].y - ray.o.y) * invDir.y;
+        //if (tMin > tMax) std::swap(tMin, tMax);
+        //if (tyMin > tyMax) std::swap(tyMin, tyMax);
+
+        // Update _tMax_ and _tyMax_ to ensure robust bounds intersection
+        if (tMin > tyMax || tyMin > tMax) return false;
+        if (tyMin > tMin) tMin = tyMin;
+        if (tyMax < tMax) tMax = tyMax;
+
+        // Check for ray intersection against $z$ slab
+        float tzMin = (bounds[    dirIsNeg[2]].z - ray.o.z) * invDir.z;
+        float tzMax = (bounds[1 - dirIsNeg[2]].z - ray.o.z) * invDir.z;
+        //if (tzMin > tzMax) std::swap(tzMin, tzMax);
+
+        // Update _tzMax_ to ensure robust bounds intersection
+        if (tMin > tzMax || tzMin > tMax) return false;
+        if (tzMin > tMin) tMin = tzMin;
+        if (tzMax < tMax) tMax = tzMax;
+        return ray.tMin <= tMax && tMin <= ray.tMax;
     }
 
     Float3 m_pMin, m_pMax;
