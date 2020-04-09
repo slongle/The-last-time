@@ -22,6 +22,9 @@ public:
     RGBSpectrum operator * (const RGBSpectrum& v) const { return RGBSpectrum(r * v.r, g * v.g, b * v.b); }
     RGBSpectrum& operator *= (const RGBSpectrum& v) { r *= v.r; g *= v.g; b *= v.b; return *this; }
 
+    float y() const { return (r * 0.299) + (g * 0.587) + (b * 0.114); }
+    bool IsBlack() const { return r == 0 && g == 0 && b == 0; }
+
     sRGB TosRGB() const {
         return sRGB(GammaCorrect(r), GammaCorrect(g), GammaCorrect(b));
     }

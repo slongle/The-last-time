@@ -14,8 +14,13 @@ std::shared_ptr<Shape> Scene::GetShape(const std::string& name)
 
 std::shared_ptr<BSDF> Scene::GetBSDF(const std::string& name)
 {
-    assert(m_BSDFs.count(name) == 1);
-    return m_BSDFs[name];
+    //assert(m_BSDFs.count(name) == 1);
+    if (m_BSDFs.count(name)) {
+        return m_BSDFs[name];
+    }
+    else {
+        return std::shared_ptr<BSDF>(nullptr);
+    }
 }
 
 std::shared_ptr<Texture<float>> Scene::GetFloatTexture(const std::string& name)

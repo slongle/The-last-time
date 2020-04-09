@@ -47,6 +47,7 @@ public:
         :m_ref(_ref) {}
     LightRecord(const Float3& _ref, const GeometryRecord& _geoRec) 
         :m_ref(_ref), m_geoRec(_geoRec) {}
+    LightRecord(const Ray& ray) :m_ref(ray.o), m_wi(ray.d) {}
 
     Float3 m_ref;
 

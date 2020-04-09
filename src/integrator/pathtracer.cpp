@@ -5,72 +5,89 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 {
     Spectrum radiance(0.f);
     Spectrum throughput(1.f);
-    bool specular = false;
+    bool hitEmitter = false;
+    HitRecord hitRec;
+    bool hit = m_scene->Intersect(ray, hitRec);
     for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
-        HitRecord hitRec;
-        bool hit = m_scene->Intersect(ray, hitRec);
-
         if (!hit) {
-            if (bounce == 0 || specular || m_scene->m_lights.empty()) {
-                // Environment Light
-                if (m_scene->m_environmentLight) {
-                    radiance += throughput * m_scene->m_environmentLight->Eval(ray);
-                }
+            // Environment Light
+            if (!hitEmitter && m_scene->m_environmentLight) {
+                radiance += throughput * m_scene->m_environmentLight->Eval(ray);
             }
             break;
         }
 
-        if ((bounce == 0 || specular) && hitRec.m_primitive->IsAreaLight()) {
+        if (!hitEmitter && hitRec.m_primitive->IsAreaLight()) {
             LightRecord lightRec(ray.o, hitRec.m_geoRec);
             radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
         }
 
         auto& bsdf = hitRec.m_primitive->m_bsdf;
         MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-        specular = bsdf->IsDelta(matRec);
 
-        // NEE using MIS            
-        if (!specular && !m_scene->m_lights.empty()) {
-            // Light Sampling
-            {
-                // Choose one of lights
-                uint32_t lightNum = m_scene->m_lights.size();
-                uint32_t lightIdx = std::min(uint32_t(lightNum * sampler.Next1D()), lightNum - 1);
-                const auto& light = m_scene->m_lights[lightIdx];
-                // Sample light
-                LightRecord lightRec(hitRec.m_geoRec.m_p);
-                Spectrum emission = light->Sample(lightRec, sampler.Next2D()) * lightNum;
-                if (!m_scene->Occlude(lightRec.m_shadowRay)) {
-                    matRec.m_wo = matRec.ToLocal(lightRec.m_wi);
-                    Spectrum f = bsdf->EvalPdf(matRec);
+        // Sample Light
+        if (!bsdf->IsDelta(matRec)) {
+            // Choose one of lights
+            uint32_t lightNum = m_scene->m_lights.size();
+            uint32_t lightIdx = std::min(uint32_t(lightNum * sampler.Next1D()), lightNum - 1);
+            const auto& light = m_scene->m_lights[lightIdx];
+            // Sample light
+            LightRecord lightRec(hitRec.m_geoRec.m_p);
+            Spectrum emission = light->Sample(lightRec, sampler.Next2D()) * lightNum;
+            if (!emission.IsBlack() && !m_scene->Occlude(lightRec.m_shadowRay)) {
+                matRec.m_wo = matRec.ToLocal(lightRec.m_wi);
+                Spectrum f = bsdf->EvalPdf(matRec);
+                if (!f.IsBlack()) {
                     // Balance Heuristic
                     float weight = lightRec.m_pdf / (lightRec.m_pdf + matRec.m_pdf);
                     radiance += emission * throughput * f * weight;
                 }
             }
-            // BSDF Sampling
-            {
-                Spectrum f = bsdf->Sample(matRec, sampler.Next2D());
-                Ray shadowRay(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
-                HitRecord lightHitRecord;
-                if (m_scene->Intersect(shadowRay, lightHitRecord)) {
-                    if (lightHitRecord.m_primitive->IsAreaLight()) {
-                        auto areaLight = lightHitRecord.m_primitive->m_areaLight;
-                        LightRecord lightRec(hitRec.m_geoRec.m_p, lightHitRecord.m_geoRec);
-                        Spectrum emission = areaLight->EvalPdf(lightRec);
-                        // Balance Heuristic
-                        float weight = matRec.m_pdf / (lightRec.m_pdf + matRec.m_pdf);
-                        radiance += emission * throughput * f * weight;
-                    }
-                }
-                else {
-                    // Environment Light
-                }
-            }
         }
 
-        throughput *= bsdf->Sample(matRec, sampler.Next2D());
-        ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
+
+        // Sample BSDF
+        {
+            // Sample BSDF * |cos| / pdf
+            Spectrum f = bsdf->Sample(matRec, sampler.Next2D());
+            ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
+            if (f.IsBlack()) {
+                break;
+            }
+
+            throughput *= f;
+            LightRecord lightRec;
+            Spectrum emission;
+            hitEmitter = false;
+            hit = m_scene->Intersect(ray, hitRec);
+            if (hit) {
+                if (hitRec.m_primitive->IsAreaLight()) {
+                    auto areaLight = hitRec.m_primitive->m_areaLight;
+                    lightRec = LightRecord(ray.o, hitRec.m_geoRec);
+                    emission = areaLight->EvalPdf(lightRec);
+                    lightRec.m_pdf /= m_scene->m_lights.size();
+                    hitEmitter = true;
+                }
+            }
+            else {
+                // Environment Light
+                if (m_scene->m_environmentLight) {
+                    lightRec = LightRecord(ray);
+                    emission = m_scene->m_environmentLight->EvalPdf(lightRec);
+                    lightRec.m_pdf /= m_scene->m_lights.size();
+                    hitEmitter = true;                    
+                }
+                else {
+                    break;
+                }
+            }
+
+            if (!emission.IsBlack()) {
+                // Balance Heuristic
+                float weight = matRec.m_pdf / (lightRec.m_pdf + matRec.m_pdf);
+                radiance += emission * throughput * weight;
+            }
+        }
 
         if (bounce > 3) {
             float q = std::min(0.99f, MaxComponent(throughput));

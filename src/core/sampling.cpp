@@ -30,3 +30,59 @@ Float2 SampleUniformTriangle(const Float2& s)
     float su = std::sqrt(s.x);
     return Float2(1 - su, s.y * su);
 }
+
+Float3 SampleUniformSphere(const Float2& s)
+{
+    float theta = std::acos(1 - 2 * s.x), phi = s.y * M_PI * 2;
+    Float3 ret(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi), std::cos(theta));
+    return ret;
+}
+
+float PdfUniformSphere(const Float3& v)
+{
+    return INV_FOURPI;
+}
+
+Distribution1D::Distribution1D(const float* ptr, int n)
+    :m_func(ptr, ptr + n), m_cdf(n + 1)
+{
+    m_cdf[0] = 0;
+    for (int i = 1; i < n + 1; i++) {
+        m_cdf[i] = m_cdf[i - 1] + m_func[i - 1];
+    }
+    m_sum = m_cdf[n];
+    for (int i = 1; i < n + 1; i++) {
+        m_cdf[i] /= m_sum;
+    }
+}
+
+float Distribution1D::Sample(const float& s, float& pdf) const
+{
+    int l = 0, r = m_cdf.size();
+    while (l < r) {
+        int mid = (l + r) * 0.5f;
+        if (m_cdf[mid] < s) l = mid;
+        else r = mid;
+    }
+    return 0.f;
+}
+
+Distribution2D::Distribution2D(const float* ptr, int nu, int nv)
+{
+    m_conditional.reserve(nv);
+    for (int i = 0; i < nv; i++) {
+        m_conditional.emplace_back(new Distribution1D(ptr + nu * i, nu));
+    }
+
+    std::vector<float> sum;
+    sum.reserve(nv);
+    for (int i = 0; i < nv; i++) {
+        sum.push_back(m_conditional[i]->GetSum());
+    }
+    m_marginal.reset(new Distribution1D(&sum[0], nv));
+}
+
+Float2 Distribution2D::Sample(const Float2& s) const
+{
+    return Float2();
+}
