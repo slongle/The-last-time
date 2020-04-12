@@ -7,6 +7,7 @@
 #include "shape/triangle.h"
 #include "bsdf/matte.h"
 #include "bsdf/dielectric.h"
+#include "bsdf/conductor.h"
 #include "bsdf/blendbsdf.h"
 #include "light/arealight.h"
 #include "light/environment.h"
@@ -72,6 +73,10 @@ GetFloatTexture(const json::value_type& node, const std::string name,
     }
 }
 
+std::string GetString(const json::value_type& node, const std::string name, const std::string& defaultValue) {
+    return node.contains(name) ? node[name] : defaultValue;
+}
+
 void Parse(const std::string& filename, Renderer& renderer)
 {
     std::filesystem::path path(filename);
@@ -114,11 +119,20 @@ void Parse(const std::string& filename, Renderer& renderer)
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 bsdf = new Matte(reflectance);
             }
-            else if (type == "smooth_dieletric") {
+            else if (type == "smooth_dielectric") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 auto transmittance = GetSpectrumTexture(bsdfProperties, "transmittance", Spectrum(1.f), scene);
                 float eta = GetFloat(bsdfProperties, "eta", 1.5f);
                 bsdf = new SmoothDielectric(reflectance, transmittance, eta);
+            }
+            else if (type == "smooth_conductor") {
+                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
+                std::string materialName = GetString(bsdfProperties, "material", "Al");
+                Spectrum k(GetFileResolver()->string() + "/spds/" + materialName + ".k.spd");
+                Spectrum eta(GetFileResolver()->string() + "/spds/" + materialName + ".eta.spd");
+                bsdf = new SmoothConductor(reflectance, eta, k);
+                //std::cout << k << std::endl;
+                //std::cout << eta << std::endl;
             }
             else if (type == "blend") {
                 auto weight = GetFloatTexture(bsdfProperties, "weight", 0.5f, scene);

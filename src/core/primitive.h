@@ -31,7 +31,7 @@ public:
     // Return f * |cos|
     virtual Spectrum EvalPdf(MaterialRecord& matRec) const = 0;
 
-    virtual bool IsDelta(const MaterialRecord& matRec) const { return false; }
+    virtual bool IsDelta() const { return false; }
 };
 
 class Light {

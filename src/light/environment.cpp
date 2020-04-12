@@ -30,7 +30,7 @@ Spectrum EnvironmentLight::Sample(LightRecord& lightRec, Float2& s) const
             
     lightRec.m_wi = d;
     lightRec.m_pdf = lightRec.m_geoRec.m_pdf;
-    lightRec.m_shadowRay = Ray(lightRec.m_ref, lightRec.m_wi, Ray::Epsilon, t - Ray::Epsilon);
+    lightRec.m_shadowRay = Ray(lightRec.m_ref, lightRec.m_wi, Ray::epsilon, t * (1 - Ray::shadowEpsilon));
     return m_texture->Evaluate(st) / lightRec.m_pdf;
 }
 
@@ -49,6 +49,6 @@ Spectrum EnvironmentLight::EvalPdf(LightRecord& lightRec) const
     lightRec.m_geoRec.m_st = lightRec.m_geoRec.m_uv = st;
 
     lightRec.m_pdf = lightRec.m_geoRec.m_pdf;
-    lightRec.m_shadowRay = Ray(lightRec.m_ref, lightRec.m_wi, Ray::Epsilon, t - Ray::Epsilon);
+    lightRec.m_shadowRay = Ray(lightRec.m_ref, lightRec.m_wi, Ray::epsilon, t * (1 - Ray::shadowEpsilon));
     return m_texture->Evaluate(st);
 }

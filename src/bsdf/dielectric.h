@@ -38,7 +38,7 @@ public:
     Spectrum Eval(MaterialRecord& matRec) const { return Spectrum(0.f); }
     float Pdf(MaterialRecord& matRec) const { matRec.m_pdf = 0.f; return 0.f; }
     Spectrum EvalPdf(MaterialRecord& matRec) const { matRec.m_pdf = 0.f; return Spectrum(0.f); }
-    bool IsDelta(const MaterialRecord& matRec) const { return true; }
+    bool IsDelta() const { return true; }
 private:
     Float3 Reflect(const Float3& v) const {
         return Float3(-v.x, -v.y, v.z);

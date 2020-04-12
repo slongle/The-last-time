@@ -23,6 +23,7 @@ public:
     ~Framebuffer();
 
     void AddSample(int x, int y, const Spectrum& s);
+    void SetVal(int x, int y, const Spectrum& s);
     void Draw();
     void Save();
 

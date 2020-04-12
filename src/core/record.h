@@ -28,6 +28,8 @@ public:
     MaterialRecord() {}
     MaterialRecord(const Float3& wi, const Float3& ns, const Float2& st)
         :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_st(st) {}
+    MaterialRecord(const Float3& wi, const Float3& wo, const Float3& ns, const Float2& st)
+        :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_wo(m_frame.ToLocal(wo)), m_st(st) {} 
 
     Float3 ToLocal(const Float3& v) const { return m_frame.ToLocal(v); }
     Float3 ToWorld(const Float3& v) const { return m_frame.ToWorld(v); }
@@ -43,8 +45,7 @@ public:
 class LightRecord {
 public:
     LightRecord() {}
-    LightRecord(const Float3& _ref)
-        :m_ref(_ref) {}
+    LightRecord(const Float3& _ref) :m_ref(_ref) {}
     LightRecord(const Float3& _ref, const GeometryRecord& _geoRec) 
         :m_ref(_ref), m_geoRec(_geoRec) {}
     LightRecord(const Ray& ray) :m_ref(ray.o), m_wi(ray.d) {}

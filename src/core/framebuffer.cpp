@@ -37,6 +37,14 @@ void Framebuffer::AddSample(int x, int y, const Spectrum& s)
     m_sRGB[idx] = (m_accumulate[idx] / float(m_sampleNum[idx])).TosRGB();
 }
 
+void Framebuffer::SetVal(int x, int y, const Spectrum& s)
+{
+    int idx = y * m_width + x;
+    m_sampleNum[idx] = 1;
+    m_accumulate[idx] = s;
+    m_sRGB[idx] = (m_accumulate[idx] / float(m_sampleNum[idx])).TosRGB();
+}
+
 void Framebuffer::Draw()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

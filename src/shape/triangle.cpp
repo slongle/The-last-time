@@ -117,7 +117,7 @@ void Mesh::SetGeometryRecord(const uint32_t& triangleIdx, GeometryRecord& geoRec
     }
 
     Float3 dir = Cross(p1 - p0, p2 - p0);
-    geoRec.m_pdf = 1.f / Length(dir);
+    geoRec.m_pdf = 2.f / Length(dir);
     geoRec.m_ng = Normalize(dir);
     if (m_normalNum > 0) {
         Float3 n0 = GetNormal(triangleIdx, 0);
@@ -191,7 +191,8 @@ void Triangle::Sample(GeometryRecord& geoRec, Float2& s) const
 
 float Triangle::Pdf(GeometryRecord& geoRec) const
 {
-    return geoRec.m_pdf = 1.f / Area();
+    geoRec.m_pdf = 1.f / Area();
+    return geoRec.m_pdf;
 }
 
 float Triangle::Area() const
@@ -200,7 +201,7 @@ float Triangle::Area() const
     Float3 p1 = m_mesh->GetVertex(m_triangleIdx, 1);
     Float3 p2 = m_mesh->GetVertex(m_triangleIdx, 2);
 
-    return Length(Cross(p1 - p0, p2 - p0));
+    return Length(Cross(p1 - p0, p2 - p0)) * 0.5f;
 }
 
 Bounds Triangle::GetBounds() const

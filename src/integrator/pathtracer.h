@@ -26,7 +26,11 @@ private:
     void ThreadWork();
     void RenderTile(const Framebuffer::Tile& tile);
 
+    float PowerHeuristic(float a, float b) const;
+
     Spectrum NormalCheck(Ray ray, Sampler& sampler);
+    void DebugRay(Ray ray, Sampler& sampler);
+    void DrawLine(const Float3& p, const Float3& q, const Spectrum& c);
 
     // Muti-thread setting
     bool m_rendering;

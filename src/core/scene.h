@@ -15,6 +15,8 @@ public:
     bool Intersect(Ray& ray, HitRecord& hitRec) const;
     bool Occlude(Ray& ray) const;
 
+    Spectrum SampleLight(LightRecord& lightRec, const Float2& s) const;
+
     std::shared_ptr<BVH> m_bvh = nullptr;
     std::shared_ptr<EmbreeBVH> m_embreeBvh = nullptr;
     std::vector<Primitive> m_primitives;

@@ -25,6 +25,7 @@
 #include <string>
 #include <filesystem>
 #include <iostream>
+#include <fstream>
 #include <unordered_map>
 #include <cassert>
 #include <numeric>

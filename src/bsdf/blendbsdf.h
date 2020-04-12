@@ -53,8 +53,8 @@ public:
         return f1 * weight + f2 * (1 - weight);
     }
 
-    bool IsDelta(const MaterialRecord& matRec) const {
-        return m_bsdf[0]->IsDelta(matRec) & m_bsdf[1]->IsDelta(matRec);
+    bool IsDelta() const {
+        return m_bsdf[0]->IsDelta() & m_bsdf[1]->IsDelta();
     }
 private:
     std::shared_ptr<Texture<float>> m_weight;

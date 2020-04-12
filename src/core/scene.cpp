@@ -107,3 +107,27 @@ bool Scene::Occlude(Ray& ray) const
     }
     return false;
 }
+
+Spectrum Scene::SampleLight(LightRecord& lightRec, const Float2& _s) const
+{
+    Float2 s(_s);
+    uint32_t lightNum = m_lights.size();
+    /* Randomly pick an emitter */
+    uint32_t lightIdx = std::min(uint32_t(lightNum * s.x), lightNum - 1);
+    float lightChoosePdf = 1.f / lightNum;
+    s.x = s.x * lightNum - lightIdx;
+    const auto& light = m_lights[lightIdx];
+    Spectrum emission = light->Sample(lightRec, s);
+
+    if (lightRec.m_pdf != 0) {
+        if (Occlude(lightRec.m_shadowRay)) {
+            return Spectrum(0.0f);
+        }                            
+        lightRec.m_pdf *= lightChoosePdf;
+        emission /= lightChoosePdf;
+        return emission;
+    }
+    else {
+        return Spectrum(0.0f);
+    }
+}

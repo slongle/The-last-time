@@ -45,6 +45,10 @@ inline float Dot(const Float3& u, const Float3& v) {
     return glm::dot(u, v);
 }
 
+inline float AbsDot(const Float3& u, const Float3& v) {
+    return std::abs(glm::dot(u, v));
+}
+
 inline Float3 Cross(const Float3& u,const Float3& v) {
     return glm::cross(u, v);
 }
@@ -66,17 +70,19 @@ class Ray {
 public:
     Ray() {}
     Ray(const Float3& _o, const Float3& _d)
-        :o(_o), d(_d), tMin(Epsilon), tMax(std::numeric_limits<float>::infinity()) {}
+        :o(_o), d(_d), tMin(epsilon), tMax(std::numeric_limits<float>::infinity()) {}
     Ray(const Float3& _o, const Float3& _d, const float& _tMin, const float& _tMax)
         :o(_o), d(_d), tMin(_tMin), tMax(_tMax) {}
 
     Float3 o, d;
     float tMin, tMax;
 
-    static float Epsilon;
+    static float epsilon;
+    static float shadowEpsilon;
 };
 
-inline float Ray::Epsilon = 1e-4;
+inline float Ray::epsilon = 1e-4;
+inline float Ray::shadowEpsilon = 1e-3;
 
 
 class Bounds{
