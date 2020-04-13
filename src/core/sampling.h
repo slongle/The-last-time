@@ -43,7 +43,7 @@ private:
 class Distribution2D {
 public:
     Distribution2D(const float* ptr, int nu, int nv);
-    Float2 Sample(const Float2& s) const;
+    Float2 Sample(const Float2& s, float& pdf) const;
 
 private:
     std::vector<std::unique_ptr<Distribution1D>> m_conditional;

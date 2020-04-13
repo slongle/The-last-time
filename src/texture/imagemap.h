@@ -5,12 +5,10 @@
 template<typename T>
 class ImageTexture : public Texture<T> {
 public:
-    ImageTexture(const int& w, const int& h, const std::shared_ptr<T[]>& ptr) 
-        :m_width(w), m_height(h), m_image(ptr) {}
+    ImageTexture(const int& w, const int& h, const std::shared_ptr<T[]>& ptr)
+        :Texture<T>(w, h), m_image(ptr) {}
     T Evaluate(const Float2& uv) const;
-
 private:
-    int m_width, m_height;
     std::shared_ptr<T[]> m_image;
 };
 

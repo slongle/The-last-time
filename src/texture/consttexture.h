@@ -5,7 +5,7 @@
 template<typename T>
 class ConstTexture :public Texture<T> {
 public:
-    ConstTexture(const T& v) :m_value(v) {}
+    ConstTexture(const T& v) :Texture<T>(1, 1), m_value(v) {}
     T Evaluate(const Float2& uv) const { return m_value; }
 private:
     T m_value;

@@ -8,11 +8,11 @@ public:
 
     Spectrum Sample(MaterialRecord& matRec, Float2 s) const
     {
-        if (Frame::CosTheta(matRec.m_wi) <= 0) {            
-            return Spectrum(0.f);
+        matRec.m_wo = SampleCosineHemisphere(s);
+        if (Frame::CosTheta(matRec.m_wi) < 0) {
+            matRec.m_wo.z *= -1;
         }
 
-        matRec.m_wo = SampleCosineHemisphere(s);
         matRec.m_pdf = PdfCosineHemisphere(matRec.m_wo);
         return m_reflectance->Evaluate(matRec.m_st);
     }
@@ -27,8 +27,7 @@ public:
     }
 
     Spectrum EvalPdf(MaterialRecord& matRec) const {
-        if (Frame::CosTheta(matRec.m_wi) <= 0 ||
-            Frame::CosTheta(matRec.m_wo) <= 0) {
+        if (Frame::CosTheta(matRec.m_wi) * Frame::CosTheta(matRec.m_wo) <= 0) {            
             return Spectrum(0.f);
         }
 

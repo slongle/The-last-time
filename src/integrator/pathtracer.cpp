@@ -108,6 +108,7 @@ void PathIntegrator::Start()
                 });
         }
     }
+    std::reverse(m_tiles.begin(), m_tiles.end());
 
     m_renderingNum = 0;
     m_rendering = true;
@@ -172,7 +173,7 @@ void PathIntegrator::ThreadWork()
     m_renderingNum--;
     if (m_renderingNum == 0) {
         // Debug Ray
-        int x = 255, y = 150;
+        int x = 128, y = m_buffer->m_height - 430;
         Sampler sampler;
         unsigned int s = y * m_buffer->m_width + x;
         sampler.Setup(s);
@@ -257,6 +258,10 @@ void PathIntegrator::DebugRay(Ray ray, Sampler& sampler)
                 Spectrum bsdfVal = bsdf->EvalPdf(matRec);
 
                 if (!bsdfVal.IsBlack()) {
+                    /* Weight using the power heuristic */
+                    float weight = PowerHeuristic(lightRec.m_pdf, matRec.m_pdf);
+                    Spectrum value = throughput * bsdfVal * emission * weight;
+
                     Float3 p = hitRec.m_geoRec.m_p;
                     Float3 q = lightRec.m_geoRec.m_p;
                     DrawLine(p, q, Spectrum(1, 1, 0));

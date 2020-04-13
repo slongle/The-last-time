@@ -58,13 +58,14 @@ Distribution1D::Distribution1D(const float* ptr, int n)
 
 float Distribution1D::Sample(const float& s, float& pdf) const
 {
-    int l = 0, r = m_cdf.size();
-    while (l < r) {
+    int l = 0, r = m_cdf.size() - 1;
+    while (l + 1 < r) {
         int mid = (l + r) * 0.5f;
-        if (m_cdf[mid] < s) l = mid;
+        if (m_cdf[mid] <= s) l = mid;
         else r = mid;
     }
-    return 0.f;
+    pdf = m_cdf[l + 1] - m_cdf[l];
+    return l + (s - m_cdf[l]) / (m_cdf[l + 1] - m_cdf[l]);
 }
 
 Distribution2D::Distribution2D(const float* ptr, int nu, int nv)
@@ -82,7 +83,11 @@ Distribution2D::Distribution2D(const float* ptr, int nu, int nv)
     m_marginal.reset(new Distribution1D(&sum[0], nv));
 }
 
-Float2 Distribution2D::Sample(const Float2& s) const
+Float2 Distribution2D::Sample(const Float2& s, float& pdf) const
 {
-    return Float2();
+    float pdfX, pdfY, idxX, idxY;
+    idxX = m_marginal->Sample(s.x, pdfX);
+    idxY = m_conditional[std::min(uint64_t(idxX), m_conditional.size() - 1)]->Sample(s.y, pdfY);
+    pdf = pdfX * pdfY;
+    return Float2(idxY, idxX);
 }
