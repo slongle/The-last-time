@@ -14,13 +14,15 @@
 #include <atomic>
 #include <mutex>
 
+struct GLFWwindow;
+
 class Renderer {
 public:
     Renderer(const std::string& filename);
     void Render();
 private:
     void InitializeGUI();    
-    void Draw() { m_buffer->Draw(); }
+    void Draw();
 
 public:
     std::shared_ptr<Framebuffer> m_buffer;

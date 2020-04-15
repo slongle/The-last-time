@@ -23,6 +23,8 @@ public:
     virtual void Stop() = 0;
     virtual void Wait() = 0;
     virtual bool IsRendering() = 0;
+    //Debug
+    virtual void DebugRay(const Float2& pos) {}
 public:
     Timer m_timer;
 protected:

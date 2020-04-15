@@ -21,6 +21,9 @@ public:
     void Stop();
     void Wait();
     bool IsRendering();
+    // Debug
+    void DebugRay(const Float2& pos);
+
 private:
     void Setup();
     void ThreadWork();

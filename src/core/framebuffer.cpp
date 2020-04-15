@@ -39,20 +39,14 @@ void Framebuffer::AddSample(int x, int y, const Spectrum& s)
 
 void Framebuffer::SetVal(int x, int y, const Spectrum& s)
 {
+    if (x < 0 || x >= m_width || y < 0 || y >= m_height) {
+        return;
+    }
+
     int idx = y * m_width + x;
     m_sampleNum[idx] = 1;
     m_accumulate[idx] = s;
     m_sRGB[idx] = (m_accumulate[idx] / float(m_sampleNum[idx])).TosRGB();
-}
-
-void Framebuffer::Draw()
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glDrawPixels(
-        static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height),
-        GL_RGB, GL_FLOAT, m_sRGB
-    );
 }
 
 void Framebuffer::Save()
@@ -71,4 +65,9 @@ void Framebuffer::Save()
     delete[] linearRGB;
 
     std::cout << "Save image in " + m_filename << std::endl;
+}
+
+sRGB* Framebuffer::GetsRGBBuffer() const
+{
+    return m_sRGB;
 }

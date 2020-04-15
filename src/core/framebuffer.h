@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <GLFW/glfw3.h>
 
 #include "spectrum.h"
 
@@ -23,9 +22,9 @@ public:
     ~Framebuffer();
 
     void AddSample(int x, int y, const Spectrum& s);
-    void SetVal(int x, int y, const Spectrum& s);
-    void Draw();
+    void SetVal(int x, int y, const Spectrum& s);    
     void Save();
+    sRGB* GetsRGBBuffer() const;
 
     int m_width, m_height;
 private:

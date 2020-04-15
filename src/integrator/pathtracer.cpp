@@ -141,6 +141,21 @@ bool PathIntegrator::IsRendering()
     return m_rendering;
 }
 
+void PathIntegrator::DebugRay(const Float2& pos)
+{
+    if (pos.x < 0 || pos.x >= m_buffer->m_width || 
+        pos.y < 0 || pos.y >= m_buffer->m_height) {
+        return;
+    }
+    int x = pos.x, y = m_buffer->m_height - pos.y;
+    Sampler sampler;
+    unsigned int s = y * m_buffer->m_width + x;
+    sampler.Setup(s);
+    Ray ray;
+    m_camera->GenerateRay(Float2(x, y), sampler, ray);
+    DebugRay(ray, sampler);
+}
+
 void PathIntegrator::Setup()
 {
     Integrator::Setup();
@@ -171,16 +186,7 @@ void PathIntegrator::ThreadWork()
     }
 
     m_renderingNum--;
-    if (m_renderingNum == 0) {
-        // Debug Ray
-        int x = 128, y = m_buffer->m_height - 430;
-        Sampler sampler;
-        unsigned int s = y * m_buffer->m_width + x;
-        sampler.Setup(s);
-        Ray ray;
-        m_camera->GenerateRay(Float2(x, y), sampler, ray);
-        //DebugRay(ray, sampler);
-
+    if (m_renderingNum == 0) {        
         m_rendering = false;
         m_timer.Stop();
         m_buffer->Save();

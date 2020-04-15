@@ -28,6 +28,8 @@ file(GLOB SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/core/*.cpp
     ${CMAKE_SOURCE_DIR}/src/ext/*.h
     ${CMAKE_SOURCE_DIR}/src/ext/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/gui/*.h
+    ${CMAKE_SOURCE_DIR}/src/gui/*.cpp
     ${CMAKE_SOURCE_DIR}/src/integrator/*.h
     ${CMAKE_SOURCE_DIR}/src/integrator/*.cpp
     ${CMAKE_SOURCE_DIR}/src/light/*.h
