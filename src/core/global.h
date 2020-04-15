@@ -18,6 +18,10 @@
 #pragma warning(disable : 4843)  // double -> float conversion
 #pragma warning(disable : 4267)  // size_t -> int
 #pragma warning(disable : 4838)  // another double -> int
+
+// non ¨C DLL-interface class 'std::runtime_error' used as base for DLL-interface class
+#pragma warning(disable : 4275)  // warning in fmtlib 
+
 #endif
 
 #include <algorithm>
@@ -29,6 +33,8 @@
 #include <unordered_map>
 #include <cassert>
 #include <numeric>
+
+#include <fmt/format.h>
 
 #undef M_PI
 

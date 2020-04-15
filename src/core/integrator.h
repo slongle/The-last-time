@@ -23,6 +23,7 @@ public:
     virtual void Stop() = 0;
     virtual void Wait() = 0;
     virtual bool IsRendering() = 0;
+    virtual std::string ToString() const = 0;
     //Debug
     virtual void DebugRay(const Float2& pos) {}
 public:

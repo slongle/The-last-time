@@ -141,6 +141,12 @@ bool PathIntegrator::IsRendering()
     return m_rendering;
 }
 
+//#include <fmt/format.h>
+std::string PathIntegrator::ToString() const
+{
+    return fmt::format("Path Tracer\nspp : {0}\nmax bounce : {1}", m_spp, m_maxBounce);
+}
+
 void PathIntegrator::DebugRay(const Float2& pos)
 {
     if (pos.x < 0 || pos.x >= m_buffer->m_width || 

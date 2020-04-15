@@ -57,47 +57,7 @@ Renderer::Renderer(const std::string& filename)
 
 void Renderer::InitializeGUI()
 {	
-/*
-	{
-#ifdef _DEBUG
-		glfwSetErrorCallback(_callback_err_glfw);
-#endif
-
-		glfwInit();
-
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-#ifdef _DEBUG
-		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-#endif
-
-		glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-
-#ifdef WITH_TRANSPARENT_FRAMEBUFFER
-		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
-#endif
-
-		m_window = glfwCreateWindow(
-			static_cast<int>(m_buffer->m_width), static_cast<int>(m_buffer->m_height),
-			"Renderer",
-			nullptr,
-			nullptr
-		);
-
-		glfwSetKeyCallback(m_window, _callback_key);
-
-		glfwMakeContextCurrent(m_window);
-#ifdef _DEBUG
-		//glDebugMessageCallback(_callback_err_gl, nullptr);
-#endif
-
-//glfwSwapInterval(0);
-
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
-*/
-// Setup window
+    // Setup window
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) {
         assert(false);
@@ -241,9 +201,11 @@ void Renderer::Render()
         // Auxiliary windows
         {
             ImGui::SetNextWindowPos(ImVec2(m_buffer->m_width, 0));
-            ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, 50));
-            ImGui::Begin("Another Window");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");                            
+            ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, 200));
+            ImGui::Begin("Overview");
+            std::string integratorString = m_integrator->ToString();
+            std::string sceneString = m_scene->ToString();
+            ImGui::Text((integratorString + "\n\n" + sceneString).c_str());
             ImGui::End();
         }
 

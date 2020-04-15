@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
     scenes[2] = "1.Texture/Pbrt-book/scene.json";
 	scenes[3] = "2.Shader/Shader-ball/scene.json";
 	scenes[4] = "4.Guide/Torus/scene.json";
-	std::string filename = prefix + scenes[1];
+	std::string filename = prefix + scenes[4];
 
 	Renderer renderer(filename);
 	renderer.Render();

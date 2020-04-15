@@ -67,8 +67,6 @@ void Scene::AddSpectrumTexture(const std::string& name, const std::shared_ptr<Te
 
 void Scene::Setup()
 {
-    std::cout << "# of lights : " << m_lights.size() << std::endl;
-    std::cout << "# of shapes : " << m_primitives.size() << std::endl;
     assert(!m_lights.empty() || m_environmentLight);
     std::cout << "Building BVH" << std::endl;
     //m_bvh = std::shared_ptr<BVH>(new BVH(m_primitives));
@@ -130,4 +128,10 @@ Spectrum Scene::SampleLight(LightRecord& lightRec, const Float2& _s) const
     else {
         return Spectrum(0.0f);
     }
+}
+
+std::string Scene::ToString() const
+{
+    return fmt::format("Scene\n# of primitives : {0}\n# of lights : {1}", 
+        m_primitives.size(), m_lights.size());
 }

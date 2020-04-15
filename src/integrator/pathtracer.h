@@ -21,6 +21,7 @@ public:
     void Stop();
     void Wait();
     bool IsRendering();
+    std::string ToString() const;
     // Debug
     void DebugRay(const Float2& pos);
 

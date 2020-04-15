@@ -26,6 +26,7 @@ private:
 
 public:
     std::shared_ptr<Framebuffer> m_buffer;
+    std::shared_ptr<Scene> m_scene;
     std::shared_ptr<Integrator> m_integrator;
 private:
     // GUI
