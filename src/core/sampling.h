@@ -23,16 +23,20 @@ private:
     Float3 m_n, m_s, m_t;
 
 public:
+    static inline const float deltaEpsilon = 1e-3;
     static inline float CosTheta(const Float3& v) { return v.z; }
     static inline float AbsCosTheta(const Float3& v) { return std::fabs(v.z); }
     static inline float SphericalPhi(const Float3& v) { return std::atan2(v.y, v.x) + M_PI; }
     static inline float SphericalTheta(const Float3& v) { return std::acos(v.z); }
+    static inline bool SameHemisphere(const Float3& u, const Float3& v) { return u.z * v.z >= 0; }
+    static inline bool SameDirection(const Float3& u, const Float3& v) { return std::fabs(Dot(u, v) - 1) <= deltaEpsilon; }
 };
 
 class Distribution1D {
 public:
     Distribution1D(const float* ptr, int n);
     float Sample(const float& s, float& pdf) const;
+    float Pdf(const float& s) const;
     float GetSum() const { return m_sum; }
 
 private:
@@ -42,10 +46,12 @@ private:
 
 class Distribution2D {
 public:
-    Distribution2D(const float* ptr, int nu, int nv);
+    Distribution2D(const float* ptr, uint32_t nu, uint32_t nv);
     Float2 Sample(const Float2& s, float& pdf) const;
+    float Pdf(const Float2& s) const;
 
 private:
+    uint32_t m_nu, m_nv;
     std::vector<std::unique_ptr<Distribution1D>> m_conditional;
     std::unique_ptr<Distribution1D> m_marginal;
 };

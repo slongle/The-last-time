@@ -10,23 +10,30 @@ public:
         const std::shared_ptr<BSDF>& bsdf2)
         :m_weight(weight), m_bsdf{ bsdf1, bsdf2 } {}
     Spectrum Sample(MaterialRecord& matRec, Float2 s) const {
-        float weight = m_weight->Evaluate(matRec.m_st);
+        float w = std::min(1.f, std::max(0.f, m_weight->Evaluate(matRec.m_st)));
+        float weight[2] = { w,1 - w };
         int slot;
-        float pdf;
-        if (s.x < weight) {
+        if (s.x < weight[0]) {
             slot = 0; 
-            s.x /= weight;
-            pdf = weight;
+            s.x /= weight[0];            
         }
         else {
             slot = 1;
-            s.x = (s.x - weight) / (1 - weight);
-            pdf = 1 - weight;
+            s.x = (s.x - weight[0]) / (1 - weight[0]);
         }
-        Spectrum f = m_bsdf[slot]->Sample(matRec, s);
-        f /= pdf;
-        matRec.m_pdf *= pdf;
-        return f;
+        Spectrum fA = m_bsdf[slot]->Sample(matRec, s) * matRec.m_pdf;
+        float pdfA = matRec.m_pdf;
+
+        // Sample failed
+        if (fA.IsBlack()) {
+            return Spectrum(0.f);
+        }
+
+        Spectrum fB = m_bsdf[slot ^ 1]->EvalPdf(matRec);
+        float pdfB = matRec.m_pdf;
+        matRec.m_pdf = pdfA * weight[slot] + pdfB * weight[slot ^ 1];
+        Spectrum f = fA * weight[slot] + fB * weight[slot ^ 1];
+        return f / matRec.m_pdf;
     }
 
     Spectrum Eval(MaterialRecord& matRec) const { 

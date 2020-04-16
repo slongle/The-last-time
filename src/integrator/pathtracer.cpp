@@ -5,6 +5,7 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 {
     Spectrum radiance(0.f);
     Spectrum throughput(1.f);    
+    float eta = 1.f;
     HitRecord hitRec;
     bool hit = m_scene->Intersect(ray, hitRec);
     for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
@@ -53,6 +54,7 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 
             // Update throughput
             throughput *= bsdfVal;
+            eta *= matRec.m_eta;
 
             LightRecord lightRec;
             Spectrum emission;
@@ -85,7 +87,7 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
         }
 
         if (bounce > 5) {
-            float q = std::min(0.99f, MaxComponent(throughput));
+            float q = std::min(0.99f, MaxComponent(throughput * eta * eta));
             if (sampler.Next1D() > q) {
                 break;
             }
@@ -141,7 +143,6 @@ bool PathIntegrator::IsRendering()
     return m_rendering;
 }
 
-//#include <fmt/format.h>
 std::string PathIntegrator::ToString() const
 {
     return fmt::format("Path Tracer\nspp : {0}\nmax bounce : {1}", m_spp, m_maxBounce);
@@ -170,7 +171,6 @@ void PathIntegrator::Setup()
 void PathIntegrator::ThreadWork()
 {
     int threadIdx = ++m_renderingNum;
-    //std::cout << threadIdx << std::endl;
 
     while (m_rendering) {
         Framebuffer::Tile tile;
@@ -210,9 +210,9 @@ void PathIntegrator::RenderTile(const Framebuffer::Tile& tile)
             for (uint32_t k = 0; k < m_spp; k++) {
                 int x = i + tile.pos[0], y = j + tile.pos[1];
                 Ray ray;
-                m_camera->GenerateRay(Float2(x, y), sampler, ray);                
+                m_camera->GenerateRay(Float2(x, y), sampler, ray);
                 Spectrum radiance = Li(ray, sampler);
-                m_buffer->AddSample(x, y, radiance);                
+                m_buffer->AddSample(x, y, radiance);
             }
         }
     }
@@ -313,7 +313,7 @@ void PathIntegrator::DebugRay(Ray ray, Sampler& sampler)
                 if (m_scene->m_environmentLight) {
                     Float3 p = ray.o;
                     Float3 q = ray.o + ray.d * 100.f;
-                    DrawLine(p, q, Spectrum(1, 1, 1));
+                    DrawLine(p, q, Spectrum(1, 0, 0));
                 }
                 else {
                     break;

@@ -24,6 +24,22 @@ std::shared_ptr<ImageTexture<float>> CreateFloatImageTexture(std::string filenam
     return std::make_shared<ImageTexture<float>>(width, height, image);
 }
 
+std::shared_ptr<ImageTexture<float>> CreateFloatImageTexture(std::string filename, uint32_t slot)
+{
+    std::cout << "Loading " << filename << std::endl;
+    filename = GetFileResolver()->string() + "/" + filename;
+
+    int width, height, channel;
+    std::shared_ptr<float[]> _image = ReadImage(filename, &width, &height, &channel, 3);
+
+    std::shared_ptr<float[]> image(new float[width * height]);
+    for (int i = 0; i < width * height; i ++) {
+        image[i] = _image[i * 3 + slot];
+    }
+
+    return std::make_shared<ImageTexture<float>>(width, height, image);
+}
+
 std::shared_ptr<ImageTexture<Spectrum>> CreateSpectrumImageTexture(std::string filename)
 {
     std::cout << "Loading " << filename << std::endl;
@@ -32,11 +48,12 @@ std::shared_ptr<ImageTexture<Spectrum>> CreateSpectrumImageTexture(std::string f
     int width, height, channel;
     std::shared_ptr<float[]> image = ReadImage(filename, &width, &height, &channel, 3);
 
-    std::shared_ptr<Spectrum[]> spectrumImage(new Spectrum[width * height]);
+    std::string ext = GetFileExtension(filename);
+    std::shared_ptr<Spectrum[]> spectrumImage(new Spectrum[width * height]);    
     for (int i = 0; i < width * height; i++) {
         spectrumImage[i] = Spectrum(
-            (image[i * 3 + 0]), 
-            (image[i * 3 + 1]), 
+            (image[i * 3 + 0]),
+            (image[i * 3 + 1]),
             (image[i * 3 + 2]));
     }
     return std::make_shared<ImageTexture<Spectrum>>(width, height, spectrumImage);

@@ -22,7 +22,8 @@ public:
     ~Framebuffer();
 
     void AddSample(int x, int y, const Spectrum& s);
-    void SetVal(int x, int y, const Spectrum& s);    
+    void SetVal(int x, int y, const Spectrum& s);
+    void SetCircle(float x, float y, float r, const Spectrum& s);
     void Save();
     sRGB* GetsRGBBuffer() const;
 

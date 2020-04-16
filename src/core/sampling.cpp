@@ -68,16 +68,23 @@ float Distribution1D::Sample(const float& s, float& pdf) const
     return l + (s - m_cdf[l]) / (m_cdf[l + 1] - m_cdf[l]);
 }
 
-Distribution2D::Distribution2D(const float* ptr, int nu, int nv)
+float Distribution1D::Pdf(const float& s) const
 {
-    m_conditional.reserve(nv);
-    for (int i = 0; i < nv; i++) {
-        m_conditional.emplace_back(new Distribution1D(ptr + nu * i, nu));
+    uint32_t idx = std::min(uint64_t(s * m_func.size()), m_func.size() - 1);
+    return m_cdf[idx + 1] - m_cdf[idx];
+}
+
+Distribution2D::Distribution2D(const float* ptr, uint32_t nu, uint32_t nv)
+    :m_nu(nu), m_nv(nv)
+{
+    m_conditional.reserve(m_nv);
+    for (uint32_t i = 0; i < m_nv; i++) {
+        m_conditional.emplace_back(new Distribution1D(ptr + m_nu * i, m_nu));
     }
 
     std::vector<float> sum;
-    sum.reserve(nv);
-    for (int i = 0; i < nv; i++) {
+    sum.reserve(m_nv);
+    for (uint32_t i = 0; i < m_nv; i++) {
         sum.push_back(m_conditional[i]->GetSum());
     }
     m_marginal.reset(new Distribution1D(&sum[0], nv));
@@ -86,8 +93,15 @@ Distribution2D::Distribution2D(const float* ptr, int nu, int nv)
 Float2 Distribution2D::Sample(const Float2& s, float& pdf) const
 {
     float pdfX, pdfY, idxX, idxY;
-    idxX = m_marginal->Sample(s.x, pdfX);
-    idxY = m_conditional[std::min(uint64_t(idxX), m_conditional.size() - 1)]->Sample(s.y, pdfY);
+    idxY = m_marginal->Sample(s.x, pdfY);
+    idxX = m_conditional[std::min(uint32_t(idxY), m_nv - 1)]->Sample(s.y, pdfX);
     pdf = pdfX * pdfY;
-    return Float2(idxY, idxX);
+    return Float2(idxX / m_nu, idxY / m_nv);
+}
+
+float Distribution2D::Pdf(const Float2& s) const
+{
+    float pdfY = m_marginal->Pdf(s.y);
+    float pdfX = m_conditional[std::min(uint32_t(s.y * m_nv), m_nv - 1)]->Pdf(s.x);
+    return pdfY * pdfX;
 }

@@ -20,13 +20,14 @@ public:
 
         matRec.m_wo = Reflect(matRec.m_wi);
         matRec.m_pdf = 1.f;
+        matRec.m_eta = 1.f;
         return m_reflectance->Evaluate(matRec.m_st) * 
             FresnelConductor(Frame::CosTheta(matRec.m_wi), m_eta, m_k);
     }
     Spectrum Eval(MaterialRecord& matRec) const {
         if (Frame::CosTheta(matRec.m_wi) <= 0 ||
             Frame::CosTheta(matRec.m_wo) <= 0 ||
-            std::abs(Dot(Reflect(matRec.m_wi), matRec.m_wo) - 1) > deltaEpsilon) {
+            !Frame::SameDirection(matRec.m_wo, Reflect(matRec.m_wi))) {
             return Spectrum(0.f);
         }
         return m_reflectance->Evaluate(matRec.m_st) *
@@ -35,7 +36,7 @@ public:
     float Pdf(MaterialRecord& matRec) const { 
         if (false || Frame::CosTheta(matRec.m_wi) <= 0 ||
             Frame::CosTheta(matRec.m_wo) <= 0 ||
-            std::abs(Dot(Reflect(matRec.m_wi), matRec.m_wo) - 1) > deltaEpsilon) {
+            !Frame::SameDirection(matRec.m_wo, Reflect(matRec.m_wi))) {
             return matRec.m_pdf = 0.f;
         }
         return matRec.m_pdf = 1.f;        
@@ -43,7 +44,7 @@ public:
     Spectrum EvalPdf(MaterialRecord& matRec) const { 
         if (Frame::CosTheta(matRec.m_wi) <= 0 ||
             Frame::CosTheta(matRec.m_wo) <= 0 ||
-            std::abs(Dot(Reflect(matRec.m_wi), matRec.m_wo) - 1) > deltaEpsilon) {
+            !Frame::SameDirection(matRec.m_wo, Reflect(matRec.m_wi))) {
             matRec.m_pdf = 0.f;
             return Spectrum(0.f);
         }

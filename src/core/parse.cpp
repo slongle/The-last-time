@@ -245,6 +245,9 @@ void Parse(const std::string& filename, Renderer& renderer)
         auto& framebuffer = sceneFile["framebuffer"];
         int width = framebuffer["resolution"][0];
         int height = framebuffer["resolution"][1];
+        float scale = GetFloat(framebuffer, "scale", 1.f);
+        width = int(width * scale);
+        height = int(height * scale);
         std::string filename = framebuffer["filename"];
         buffer = std::make_shared<Framebuffer>(filename, width, height);
     }

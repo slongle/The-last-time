@@ -13,6 +13,7 @@ public:
             matRec.m_wo.z *= -1;
         }
 
+        matRec.m_eta = 1.f;
         matRec.m_pdf = PdfCosineHemisphere(matRec.m_wo);
         return m_reflectance->Evaluate(matRec.m_st);
     }
@@ -27,10 +28,10 @@ public:
     }
 
     Spectrum EvalPdf(MaterialRecord& matRec) const {
-        if (Frame::CosTheta(matRec.m_wi) * Frame::CosTheta(matRec.m_wo) <= 0) {            
+        if (!Frame::SameHemisphere(matRec.m_wo,matRec.m_wi)) {
             return Spectrum(0.f);
         }
-
+        
         matRec.m_pdf = PdfCosineHemisphere(matRec.m_wo);
         return m_reflectance->Evaluate(matRec.m_st) * INV_PI * Frame::AbsCosTheta(matRec.m_wo);
     }

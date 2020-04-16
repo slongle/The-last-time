@@ -208,6 +208,19 @@ void Renderer::Render()
             ImGui::Text((integratorString + "\n\n" + sceneString).c_str());
             ImGui::End();
         }
+        {
+            ImGui::SetNextWindowPos(ImVec2(m_buffer->m_width, 200));
+            ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, 200));
+            ImGui::Begin("Debug");
+            int px, py;
+            ImGuiIO& io = ImGui::GetIO();
+            if (ImGui::IsMousePosValid()) {
+                px = io.MousePos.x;
+                py = io.MousePos.y;
+            }
+            ImGui::Text(fmt::format("Mouse position : ({0}, {1})", px, py).c_str());
+            ImGui::End();
+        }
 
         // Rendering
         ImGui::Render();

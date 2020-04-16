@@ -39,6 +39,7 @@ public:
 
     Float3 m_wo, m_wi;
     float m_pdf;
+    float m_eta;
 
 };
 

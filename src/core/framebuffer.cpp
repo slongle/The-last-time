@@ -49,6 +49,20 @@ void Framebuffer::SetVal(int x, int y, const Spectrum& s)
     m_sRGB[idx] = (m_accumulate[idx] / float(m_sampleNum[idx])).TosRGB();
 }
 
+void Framebuffer::SetCircle(float cx, float cy, float r, const Spectrum& s)
+{
+    for (int x = std::ceil(cx - r); x <= std::floor(cx + r); x++) {
+        for (int y = std::ceil(cy - r); y <= std::floor(cy + r); y++) {
+            if (x < 0 || x >= m_width || y < 0 || y >= m_height) {
+                continue;
+            }
+            if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r) {
+                SetVal(x, y, s);
+            }
+        }        
+    }
+}
+
 void Framebuffer::Save()
 {
     float* linearRGB = new float[m_width * m_height * 3];
@@ -61,10 +75,11 @@ void Framebuffer::Save()
         linearRGB[i * 3 + 1] = c.g;
         linearRGB[i * 3 + 2] = c.b;
     }
-    WriteImage(m_filename, m_width, m_height, linearRGB);
+    std::string filename = GetFileResolver()->string() + "/" + m_filename;
+    WriteImage(filename, m_width, m_height, linearRGB);
     delete[] linearRGB;
 
-    std::cout << "Save image in " + m_filename << std::endl;
+    std::cout << "Save image in " + filename << std::endl;
 }
 
 sRGB* Framebuffer::GetsRGBBuffer() const

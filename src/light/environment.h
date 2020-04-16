@@ -11,6 +11,8 @@ public:
     Spectrum Eval(LightRecord& lightRec) const { return Spectrum(0.f); }    
     float Pdf(LightRecord& lightRec) const { return 0.f; }    
     Spectrum EvalPdf(LightRecord& lightRec) const;
+    // Test
+    void TestSampling(const std::string& filename, const uint32_t& sampleNum) const;
 
 private:
     std::shared_ptr<Texture<Spectrum>> m_texture;

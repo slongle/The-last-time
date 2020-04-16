@@ -2,8 +2,6 @@
 
 #include "core/vector.h"
 
-inline const float deltaEpsilon = 1e-3;
-
 inline float FresnelDieletric(const float& cosThetaI, float& cosThetaT, const float& eta) {
     float factor = cosThetaI > 0.f ? 1.f / eta : eta;
     float cosThetaTSqr = 1 - (factor * factor) * (1 - cosThetaI * cosThetaI);
