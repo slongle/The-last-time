@@ -20,8 +20,10 @@ public:
     virtual Bounds GetBounds() const = 0;
 };
 
-class BSDF {    
+class BSDF {
 public:
+    BSDF(const std::shared_ptr<Texture<float>>& alpha) : m_alpha(alpha) {}
+
     // Return f * |cos| / pdf
     virtual Spectrum Sample(MaterialRecord& matRec, Float2 s) const;
     // Return f * |cos|
@@ -31,7 +33,9 @@ public:
     // Return f * |cos|
     virtual Spectrum EvalPdf(MaterialRecord& matRec) const = 0;
 
-    virtual bool IsDelta() const { return false; }
+    virtual bool IsDelta(const Float2& st) const;
+protected:
+    std::shared_ptr<Texture<float>> m_alpha;
 };
 
 class Light {

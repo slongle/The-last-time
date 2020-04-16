@@ -24,7 +24,7 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 
         auto& bsdf = hitRec.m_primitive->m_bsdf;        
 
-        if (!bsdf->IsDelta()) {
+        if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {            
             LightRecord lightRec(hitRec.m_geoRec.m_p);
             Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
             if (!emission.IsBlack()) {
@@ -81,7 +81,8 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 
             if (!emission.IsBlack()) {
                 // Heuristic
-                float weight = bsdf->IsDelta() ? 1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
+                float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ? 
+                    1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
                 radiance += throughput * emission * weight;
             }
         }
@@ -259,7 +260,7 @@ void PathIntegrator::DebugRay(Ray ray, Sampler& sampler)
 
         auto& bsdf = hitRec.m_primitive->m_bsdf;
 
-        if (!bsdf->IsDelta()) {
+        if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
             LightRecord lightRec(hitRec.m_geoRec.m_p);
             Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
             if (!emission.IsBlack()) {
@@ -322,7 +323,8 @@ void PathIntegrator::DebugRay(Ray ray, Sampler& sampler)
 
             if (!emission.IsBlack()) {
                 // Heuristic
-                float weight = bsdf->IsDelta() ? 1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
+                float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ? 
+                    1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
                 Spectrum contribution = throughput * emission * weight;
             }
         }

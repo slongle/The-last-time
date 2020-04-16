@@ -12,3 +12,9 @@ float BSDF::Pdf(MaterialRecord& matRec) const
 {
     return matRec.m_pdf = PdfCosineHemisphere(matRec.m_wo);
 }
+
+bool BSDF::IsDelta(const Float2& st) const
+{
+    bool opaque = !(m_alpha->Evaluate(st) >= 0.99f);
+    return opaque;
+}

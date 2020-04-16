@@ -7,9 +7,19 @@ public:
     BlendBSDF(
         const std::shared_ptr<Texture<float>>& weight,
         const std::shared_ptr<BSDF>& bsdf1,
-        const std::shared_ptr<BSDF>& bsdf2)
-        :m_weight(weight), m_bsdf{ bsdf1, bsdf2 } {}
+        const std::shared_ptr<BSDF>& bsdf2,
+        const std::shared_ptr<Texture<float>>& alpha)
+        :BSDF(alpha), m_weight(weight), m_bsdf{ bsdf1, bsdf2 } {}
+
     Spectrum Sample(MaterialRecord& matRec, Float2 s) const {
+        // Alpha texture
+        bool opaque = !(m_alpha->Evaluate(matRec.m_st) >= 0.99f);
+        if (opaque) {
+            matRec.m_wo = -matRec.m_wi;
+            matRec.m_pdf = 1.f;
+            return Spectrum(1.f);
+        }
+
         float w = std::min(1.f, std::max(0.f, m_weight->Evaluate(matRec.m_st)));
         float weight[2] = { w,1 - w };
         int slot;
@@ -60,8 +70,8 @@ public:
         return f1 * weight + f2 * (1 - weight);
     }
 
-    bool IsDelta() const {
-        return m_bsdf[0]->IsDelta() & m_bsdf[1]->IsDelta();
+    bool IsDelta(const Float2& st) const {
+        return BSDF::IsDelta(st) ? true : m_bsdf[0]->IsDelta(st) & m_bsdf[1]->IsDelta(st);
     }
 private:
     std::shared_ptr<Texture<float>> m_weight;

@@ -14,10 +14,19 @@ public:
     SmoothDielectric(
         const std::shared_ptr<Texture<Spectrum>>& refl,
         const std::shared_ptr<Texture<Spectrum>>& tran,
-        const float& eta) 
-        : m_reflectance(refl), m_transmittance(tran), m_eta(eta), m_invEta(1.f / eta) {}
+        const float& eta,
+        const std::shared_ptr<Texture<float>>& alpha)
+        :BSDF(alpha), m_reflectance(refl), m_transmittance(tran), m_eta(eta), m_invEta(1.f / eta) {}
 
     Spectrum Sample(MaterialRecord& matRec, Float2 s) const {
+        // Alpha texture
+        bool opaque = !(m_alpha->Evaluate(matRec.m_st) >= 0.99f);
+        if (opaque) {
+            matRec.m_wo = -matRec.m_wi;
+            matRec.m_pdf = 1.f;
+            return Spectrum(1.f);
+        }
+
         float cosThetaT;
         float Fr = FresnelDieletric(Frame::CosTheta(matRec.m_wi), cosThetaT, m_eta);
         if (s.x < Fr) {

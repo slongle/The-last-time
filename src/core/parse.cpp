@@ -113,24 +113,25 @@ void Parse(const std::string& filename, Renderer& renderer)
         {
             std::string BSDFName = bsdfProperties["name"];
             std::string type = bsdfProperties["type"];
+            auto alpha = GetFloatTexture(bsdfProperties, "alpha", 1.f, scene);
             BSDF* bsdf = nullptr;
             if (type == "matte")
             {
-                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
-                bsdf = new Matte(reflectance);
+                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);                
+                bsdf = new Matte(reflectance, alpha);
             }
             else if (type == "smooth_dielectric") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 auto transmittance = GetSpectrumTexture(bsdfProperties, "transmittance", Spectrum(1.f), scene);
                 float eta = GetFloat(bsdfProperties, "eta", 1.5f);
-                bsdf = new SmoothDielectric(reflectance, transmittance, eta);
+                bsdf = new SmoothDielectric(reflectance, transmittance, eta, alpha);
             }
             else if (type == "smooth_conductor") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 std::string materialName = GetString(bsdfProperties, "material", "Al");
                 Spectrum k(GetFileResolver()->string() + "/spds/" + materialName + ".k.spd");
                 Spectrum eta(GetFileResolver()->string() + "/spds/" + materialName + ".eta.spd");
-                bsdf = new SmoothConductor(reflectance, eta, k);
+                bsdf = new SmoothConductor(reflectance, eta, k, alpha);
                 //std::cout << k << std::endl;
                 //std::cout << eta << std::endl;
             }
@@ -140,7 +141,7 @@ void Parse(const std::string& filename, Renderer& renderer)
                 std::string bsdf2Name = bsdfProperties["bsdf2"];
                 std::shared_ptr<BSDF> bsdf1 = scene->GetBSDF(bsdf1Name);
                 std::shared_ptr<BSDF> bsdf2 = scene->GetBSDF(bsdf2Name);
-                bsdf = new BlendBSDF(weight, bsdf1, bsdf2);
+                bsdf = new BlendBSDF(weight, bsdf1, bsdf2, alpha);
             }
             else {
                 assert(false);

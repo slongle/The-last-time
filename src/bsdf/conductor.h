@@ -7,15 +7,21 @@ class SmoothConductor :public BSDF {
 public:
     SmoothConductor(
         const std::shared_ptr<Texture<Spectrum>>& reflectance,
-        const Spectrum& eta, const Spectrum& k) 
-        :m_reflectance(reflectance), m_eta(eta), m_k(k) {
-        std::cout << eta << std::endl;
-        std::cout << k << std::endl;
-    }    
+        const Spectrum& eta, const Spectrum& k,
+        const std::shared_ptr<Texture<float>>& alpha)
+        :BSDF(alpha), m_reflectance(reflectance), m_eta(eta), m_k(k) {}
 
     Spectrum Sample(MaterialRecord& matRec, Float2 s) const {
         if (Frame::CosTheta(matRec.m_wi) <= 0) {            
             return Spectrum(0.f);
+        }
+
+        // Alpha texture
+        bool opaque = !(m_alpha->Evaluate(matRec.m_st) >= 0.99f);
+        if (opaque) {
+            matRec.m_wo = -matRec.m_wi;
+            matRec.m_pdf = 1.f;
+            return Spectrum(1.f);
         }
 
         matRec.m_wo = Reflect(matRec.m_wi);
@@ -52,7 +58,7 @@ public:
         return m_reflectance->Evaluate(matRec.m_st) *
             FresnelConductor(Frame::CosTheta(matRec.m_wi), m_eta, m_k);
     }
-    bool IsDelta() const { return true; }
+    bool IsDelta(const Float2& st) const { return true; }
 private:
     Float3 Reflect(const Float3& v) const {
         return Float3(-v.x, -v.y, v.z);
