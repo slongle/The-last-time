@@ -23,5 +23,8 @@ inline void XYZToRGB(const float xyz[3], float rgb[3]) {
 struct sRGB {
     sRGB(float v = 0) :r(v), g(v), b(v) {}
     sRGB(float _r, float _g, float _b) :r(_r), g(_g), b(_b) {}
+
+    bool IsBlack() const { return r == 0 && g == 0 && b == 0; }
+
     float r, g, b;
 };

@@ -58,3 +58,17 @@ public:
     float m_pdf;
     Ray m_shadowRay;
 };
+
+class DebugRecord { 
+public:
+    DebugRecord() :m_debugRay(false), m_debugKDTree(false) {}
+
+    void SetDebugRay(const Float2& pos) {
+        m_debugRay = true;
+        m_rasterPosition = pos;
+    }
+
+    bool m_debugRay;
+    Float2 m_rasterPosition;
+    bool m_debugKDTree;
+};

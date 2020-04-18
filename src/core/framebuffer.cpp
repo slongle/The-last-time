@@ -5,17 +5,19 @@
 Framebuffer::Framebuffer(const std::string& filename, const int& width, const int& height)
     : m_filename(filename), m_width(width), m_height(height)
 {
-    m_sRGB = new sRGB[m_width * m_height];
+    m_outputBuffer = new sRGB[m_width * m_height];
+    m_debugBuffer = new sRGB[m_width * m_height];
+    m_image = new sRGB[m_width * m_height];
     m_accumulate = new Spectrum[m_width * m_height];
     m_sampleNum = new unsigned int[m_width * m_height];
     for (int i = 0; i < m_height; i++) {
         for (int j = 0; j < m_width; j++) {
             int idx = i * m_width + j;
             if (((i / tile_size) ^ (j / tile_size)) & 1) {
-                m_sRGB[idx] = sRGB(0.3f);
+                m_image[idx] = sRGB(0.3f);
             }
             else {
-                m_sRGB[idx] = sRGB(0.7f);
+                m_image[idx] = sRGB(0.7f);
             }
             m_sampleNum[idx] = 0;
         }
@@ -24,7 +26,9 @@ Framebuffer::Framebuffer(const std::string& filename, const int& width, const in
 
 Framebuffer::~Framebuffer()
 {
-    delete[] m_sRGB;
+    delete[] m_outputBuffer;
+    delete[] m_debugBuffer;
+    delete[] m_image;
     delete[] m_accumulate;
     delete[] m_sampleNum;
 }
@@ -34,7 +38,7 @@ void Framebuffer::AddSample(int x, int y, const Spectrum& s)
     int idx = y * m_width + x;
     m_sampleNum[idx] ++;
     m_accumulate[idx] += s;
-    m_sRGB[idx] = (m_accumulate[idx] / float(m_sampleNum[idx])).TosRGB();
+    m_image[idx] = (m_accumulate[idx] / float(m_sampleNum[idx])).TosRGB();
 }
 
 void Framebuffer::SetVal(int x, int y, const Spectrum& s)
@@ -44,12 +48,13 @@ void Framebuffer::SetVal(int x, int y, const Spectrum& s)
     }
 
     int idx = y * m_width + x;
-    m_sampleNum[idx] = 1;
-    m_accumulate[idx] = s;
-    m_sRGB[idx] = (m_accumulate[idx] / float(m_sampleNum[idx])).TosRGB();
+    //m_sampleNum[idx] = 1;
+    //m_accumulate[idx] = s;
+    //m_sRGB[idx] = (m_accumulate[idx] / float(m_sampleNum[idx])).TosRGB();
+    m_debugBuffer[idx] = s.TosRGB();
 }
 
-void Framebuffer::SetCircle(float cx, float cy, float r, const Spectrum& s)
+void Framebuffer::DrawCircle(float cx, float cy, float r, const Spectrum& s)
 {
     for (int x = std::ceil(cx - r); x <= std::floor(cx + r); x++) {
         for (int y = std::ceil(cy - r); y <= std::floor(cy + r); y++) {
@@ -60,6 +65,21 @@ void Framebuffer::SetCircle(float cx, float cy, float r, const Spectrum& s)
                 SetVal(x, y, s);
             }
         }        
+    }
+}
+
+void Framebuffer::DrawLine(Float2 p, Float2 q, const Spectrum& s)
+{
+    int x0 = p.x, y0 = p.y;
+    int x1 = q.x, y1 = q.y;
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = (dx > dy ? dx : -dy) / 2;
+
+    while (SetVal(x0, y0, s), x0 != x1 || y0 != y1) {
+        int e2 = err;
+        if (e2 > -dx) { err -= dy; x0 += sx; }
+        if (e2 < dy) { err += dx; y0 += sy; }
     }
 }
 
@@ -84,5 +104,14 @@ void Framebuffer::Save()
 
 sRGB* Framebuffer::GetsRGBBuffer() const
 {
-    return m_sRGB;
+    //return m_sRGB;
+    for (int i = 0; i < m_width * m_height; i++) {
+        m_outputBuffer[i] = m_debugBuffer[i].IsBlack() ? m_image[i] : m_debugBuffer[i];
+    }
+    return m_outputBuffer;
+}
+
+void Framebuffer::ClearDebugBuffer()
+{
+    memset(m_debugBuffer, 0, sizeof(sRGB) * m_width * m_height);
 }

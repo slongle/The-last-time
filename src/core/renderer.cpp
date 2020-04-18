@@ -82,6 +82,7 @@ void Renderer::InitializeGUI()
 #endif
 
     // Create window with graphics context
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     m_window = glfwCreateWindow(
         static_cast<int>(m_buffer->m_width + auxiliaryWidth), static_cast<int>(m_buffer->m_height),
         "Renderer", NULL, NULL);
@@ -164,6 +165,7 @@ void Renderer::Render()
 
 	//Display loop for the ongoing or completed render
 	glfwSetWindowTitle(m_window, "Rendering...");
+    bool debugRay = false, debugKDTree = false;
 	while (!glfwWindowShouldClose(m_window)) {
         // Initialize window color
         //glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
@@ -179,26 +181,10 @@ void Renderer::Render()
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        // Renderer core
-		Draw();
-		if (!m_integrator->IsRendering()) {
-			m_integrator->Stop();
-			m_integrator->Wait();
-			std::string title("Render done in ");
-			title += m_integrator->m_timer.ToString();
-			glfwSetWindowTitle(m_window, title.c_str());
-
-            ImGuiIO& io = ImGui::GetIO();
-            if (ImGui::IsMousePosValid()){
-                if (ImGui::IsMouseClicked(0)) {
-                    m_integrator->DebugRay(Float2(io.MousePos.x, io.MousePos.y));
-                }
-            }
-		}
+        ImGui::NewFrame();        
 
         // Auxiliary windows
+        bool clearDebugBuffer = false;
         {
             ImGui::SetNextWindowPos(ImVec2(m_buffer->m_width, 0));
             ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, 200));
@@ -218,8 +204,42 @@ void Renderer::Render()
                 px = io.MousePos.x;
                 py = io.MousePos.y;
             }
-            ImGui::Text(fmt::format("Mouse position : ({0}, {1})", px, py).c_str());
+            ImGui::Checkbox(fmt::format("Debug ray : ({0}, {1})", px, py).c_str(), &debugRay);
+            ImGui::Checkbox(fmt::format("Debug kd-tree").c_str(), &debugKDTree);
+            clearDebugBuffer = ImGui::Button("Clear debug buffer");
             ImGui::End();
+        }
+        {
+            //ImGui::ShowDemoWindow();
+        }
+
+        // Renderer core
+        Draw();
+        // Render done
+        if (!m_integrator->IsRendering()) {
+            m_integrator->Stop();
+            m_integrator->Wait();
+            std::string title("Render done in ");
+            title += m_integrator->m_timer.ToString();
+            glfwSetWindowTitle(m_window, title.c_str());
+
+            // Debug
+            DebugRecord debugRec;
+            if (debugRay) {
+                ImGuiIO& io = ImGui::GetIO();
+                if (ImGui::IsMousePosValid()) {
+                    if (ImGui::IsMouseClicked(0)) {
+                        debugRec.SetDebugRay(Float2(io.MousePos.x, io.MousePos.y));
+                    }
+                }
+            }            
+            if (debugKDTree) {
+
+            }
+            if (clearDebugBuffer) {
+                m_buffer->ClearDebugBuffer();
+            }
+            m_integrator->Debug(debugRec);
         }
 
         // Rendering

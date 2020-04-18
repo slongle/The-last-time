@@ -25,7 +25,9 @@ public:
     virtual bool IsRendering() = 0;
     virtual std::string ToString() const = 0;
     //Debug
-    virtual void DebugRay(const Float2& pos) {}
+    virtual void Debug(DebugRecord& debugRec) {}
+protected:
+    void DrawLine(const Float3& p, const Float3& q, const Spectrum& c);
 public:
     Timer m_timer;
 protected:

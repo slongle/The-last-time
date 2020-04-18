@@ -82,7 +82,7 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
             if (!emission.IsBlack()) {
                 // Heuristic
                 float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ? 
-                    1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
+                    1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);                
                 radiance += throughput * emission * weight;
             }
         }
@@ -149,19 +149,22 @@ std::string PathIntegrator::ToString() const
     return fmt::format("Path Tracer\nspp : {0}\nmax bounce : {1}", m_spp, m_maxBounce);
 }
 
-void PathIntegrator::DebugRay(const Float2& pos)
+void PathIntegrator::Debug(DebugRecord& debugRec)
 {
-    if (pos.x < 0 || pos.x >= m_buffer->m_width || 
-        pos.y < 0 || pos.y >= m_buffer->m_height) {
-        return;
-    }
-    int x = pos.x, y = m_buffer->m_height - pos.y;
-    Sampler sampler;
-    unsigned int s = y * m_buffer->m_width + x;
-    sampler.Setup(s);
-    Ray ray;
-    m_camera->GenerateRay(Float2(x, y), sampler, ray);
-    DebugRay(ray, sampler);
+    if (debugRec.m_debugRay) {
+        Float2 pos = debugRec.m_rasterPosition;
+        if (pos.x >= 0 && pos.x < m_buffer->m_width && 
+            pos.y >= 0 && pos.y < m_buffer->m_height) 
+        {
+            int x = pos.x, y = m_buffer->m_height - pos.y;
+            Sampler sampler;
+            unsigned int s = y * m_buffer->m_width + x;
+            sampler.Setup(s);
+            Ray ray;
+            m_camera->GenerateRay(Float2(x, y), sampler, ray);
+            DebugRay(ray, sampler);            
+        }
+    }    
 }
 
 void PathIntegrator::Setup()
@@ -336,23 +339,6 @@ void PathIntegrator::DebugRay(Ray ray, Sampler& sampler)
             }
             throughput /= q;
         }
-    }
-}
-
-void PathIntegrator::DrawLine(const Float3& p, const Float3& q, const Spectrum& c)
-{
-    Float2 pScreen(Inverse(m_camera->m_screenToWorld).TransformPoint(p));
-    Float2 qScreen(Inverse(m_camera->m_screenToWorld).TransformPoint(q));
-    int x0 = pScreen.x, y0 = pScreen.y;
-    int x1 = qScreen.x, y1 = qScreen.y;
-    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-    int dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-    int err = (dx > dy ? dx : -dy) / 2;
-
-    while (m_buffer->SetVal(x0, y0, c), x0 != x1 || y0 != y1) {        
-        int e2 = err;
-        if (e2 > -dx) { err -= dy; x0 += sx; }
-        if (e2 < dy) { err += dx; y0 += sy; }
     }
 }
 

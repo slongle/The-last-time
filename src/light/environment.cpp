@@ -85,7 +85,7 @@ void EnvironmentLight::TestSampling(const std::string& filename, const uint32_t&
     }
 
     /*for (int i = 0; i < 10; i++) {
-        buffer.SetCircle(i, 0, 3, Spectrum(1, 0, 0));
+        buffer.DrawCircle(i, 0, 3, Spectrum(1, 0, 0));
     }
     buffer.Save();
     return;
@@ -96,7 +96,7 @@ void EnvironmentLight::TestSampling(const std::string& filename, const uint32_t&
         float pdf;
         Float2 uv = m_distribution->Sample(sampler.Next2D(), pdf);
         uv *= Float2(w, h);
-        buffer.SetCircle(uv.x, uv.y, 3, Spectrum(1, 0, 0));
+        buffer.DrawCircle(uv.x, uv.y, 3, Spectrum(1, 0, 0));
     }
 
     buffer.Save();

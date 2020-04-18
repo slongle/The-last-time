@@ -23,19 +23,17 @@ public:
     bool IsRendering();
     std::string ToString() const;
     // Debug
-    void DebugRay(const Float2& pos);
-
+    void Debug(DebugRecord& debugRec);
 private:
     void Setup();
     void ThreadWork();
     void RenderTile(const Framebuffer::Tile& tile);
-
+    // Misc
     float PowerHeuristic(float a, float b) const;
-
+    // Debug
     Spectrum NormalCheck(Ray ray, Sampler& sampler);
     void DebugRay(Ray ray, Sampler& sampler);
-    void DrawLine(const Float3& p, const Float3& q, const Spectrum& c);
-
+private:
     // Muti-thread setting
     bool m_rendering;
     std::atomic<int> m_renderingNum;
