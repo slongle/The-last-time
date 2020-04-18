@@ -68,7 +68,9 @@ public:
         }
         return Spectrum(0.f);
     }
-    bool IsDelta() const { return true; }
+    bool IsDelta(const Float2& st) const {
+        return true;
+    }
 private:
     Float3 Reflect(const Float3& v) const {
         return Float3(-v.x, -v.y, v.z);
