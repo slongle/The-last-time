@@ -28,6 +28,7 @@ public:
     virtual void Debug(DebugRecord& debugRec) {}
 protected:
     void DrawLine(const Float3& p, const Float3& q, const Spectrum& c);
+    void DrawBounds(const Bounds& bounds, const Spectrum& c);
 public:
     Timer m_timer;
 protected:

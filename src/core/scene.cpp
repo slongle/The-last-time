@@ -69,6 +69,9 @@ void Scene::Setup()
 {
     assert(!m_lights.empty() || m_environmentLight);
     std::cout << "Building BVH" << std::endl;
+    for (Primitive& p: m_primitives) {
+        m_bounds = Union(m_bounds, p.m_shape->GetBounds());
+    }
     //m_bvh = std::shared_ptr<BVH>(new BVH(m_primitives));
     //m_bvh->Build();
     m_embreeBvh = std::shared_ptr<EmbreeBVH>(new EmbreeBVH(m_orderedMeshes, m_primitives));
@@ -132,6 +135,6 @@ Spectrum Scene::SampleLight(LightRecord& lightRec, const Float2& _s) const
 
 std::string Scene::ToString() const
 {
-    return fmt::format("Scene\n# of primitives : {0}\n# of lights : {1}", 
-        m_primitives.size(), m_lights.size());
+    return fmt::format("Scene\n# of primitives : {0}\n# of lights : {1}\nBounds : \n{2}", 
+        m_primitives.size(), m_lights.size(), m_bounds.ToString());
 }

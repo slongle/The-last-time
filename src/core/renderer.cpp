@@ -47,7 +47,7 @@ inline static void _callback_key(GLFWwindow* window, int key, int /*scancode*/, 
 	}
 }
 
-const uint32_t auxiliaryWidth = 200;
+const uint32_t auxiliaryWidth = 250;
 
 Renderer::Renderer(const std::string& filename)
 {
@@ -234,7 +234,7 @@ void Renderer::Render()
                 }
             }            
             if (debugKDTree) {
-
+                debugRec.m_debugKDTree = true;
             }
             if (clearDebugBuffer) {
                 m_buffer->ClearDebugBuffer();

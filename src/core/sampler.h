@@ -9,7 +9,7 @@ class Sampler {
 public:
     Sampler() {}
 
-    void Setup(unsigned int s) {
+    void Setup(uint64_t s) {
         m_engine.seed(s);
     }
 

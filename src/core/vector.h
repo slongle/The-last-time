@@ -161,6 +161,11 @@ public:
         return ray.tMin <= tMax && tMin <= ray.tMax;
     }
 
+    std::string ToString() const {
+        return fmt::format("pMin : [ {:.1f}, {:.1f}, {:.1f} ]\npMax : [ {:.1f}, {:.1f}, {:.1f} ]",
+            m_pMin.x, m_pMin.y, m_pMin.z, m_pMax.x, m_pMax.y, m_pMax.z);
+    }
+
     Float3 m_pMin, m_pMax;
 };
 

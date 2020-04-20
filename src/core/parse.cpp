@@ -12,6 +12,7 @@
 #include "light/arealight.h"
 #include "light/environment.h"
 #include "integrator/pathtracer.h"
+#include "integrator/pathguider.h"
 #include "texture/consttexture.h"
 #include "texture/imagemap.h"
 
@@ -261,7 +262,13 @@ void Parse(const std::string& filename, Renderer& renderer)
         if (type == "path_tracer") {
             int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
             int spp = GetInt(integratorProperties, "spp", 1);
-            integrator = std::make_shared<PathIntegrator>(scene, camera, buffer, maxBounce, spp);            
+            integrator = std::make_shared<PathIntegrator>(scene, camera, buffer, maxBounce, spp);
+        }
+        else if (type == "path_guider") {
+            int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
+            int initSpp = GetInt(integratorProperties, "init_spp", 1);
+            int maxIteration = GetInt(integratorProperties, "max_iteration", 1);
+            integrator = std::make_shared<PathGuiderIntegrator>(scene, camera, buffer, maxBounce, initSpp, maxIteration);
         }
         else {
             assert(false);

@@ -23,6 +23,7 @@ public:
     std::vector<Primitive> m_primitives;
     std::vector<std::shared_ptr<Light>> m_lights;
     std::shared_ptr<EnvironmentLight> m_environmentLight = nullptr;
+    Bounds m_bounds;
 
 
 public:
