@@ -20,8 +20,9 @@ public:
     Framebuffer(const std::string& filename, const int& width, const int& height);        
     ~Framebuffer();
 
+    void Initialize();
     void AddSample(int x, int y, const Spectrum& s);
-    void Save();
+    void Save(const std::string& prefix = "");
     sRGB* GetsRGBBuffer() const;
     // Debug
     void SetVal(int x, int y, const Spectrum& s);

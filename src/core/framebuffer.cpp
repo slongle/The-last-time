@@ -10,18 +10,7 @@ Framebuffer::Framebuffer(const std::string& filename, const int& width, const in
     m_image = new sRGB[m_width * m_height];
     m_accumulate = new Spectrum[m_width * m_height];
     m_sampleNum = new unsigned int[m_width * m_height];
-    for (int i = 0; i < m_height; i++) {
-        for (int j = 0; j < m_width; j++) {
-            int idx = i * m_width + j;
-            if (((i / tile_size) ^ (j / tile_size)) & 1) {
-                m_image[idx] = sRGB(0.3f);
-            }
-            else {
-                m_image[idx] = sRGB(0.7f);
-            }
-            m_sampleNum[idx] = 0;
-        }
-    }
+    Initialize();
 }
 
 Framebuffer::~Framebuffer()
@@ -31,6 +20,23 @@ Framebuffer::~Framebuffer()
     delete[] m_image;
     delete[] m_accumulate;
     delete[] m_sampleNum;
+}
+
+void Framebuffer::Initialize()
+{
+    for (int i = 0; i < m_height; i++) {
+        for (int j = 0; j < m_width; j++) {
+            int idx = i * m_width + j;
+            if (((i / tile_size) ^ (j / tile_size)) & 1) {
+                m_image[idx] = sRGB(0.3f);
+            }
+            else {
+                m_image[idx] = sRGB(0.7f);
+            }
+            m_accumulate[idx] = Spectrum(0.f);
+            m_sampleNum[idx] = 0;
+        }
+    }
 }
 
 void Framebuffer::AddSample(int x, int y, const Spectrum& s)
@@ -83,7 +89,7 @@ void Framebuffer::DrawLine(Float2 p, Float2 q, const Spectrum& s)
     }
 }
 
-void Framebuffer::Save()
+void Framebuffer::Save(const std::string& prefix)
 {
     float* linearRGB = new float[m_width * m_height * 3];
     for (int i = 0; i < m_width * m_height; i++) {
@@ -95,7 +101,7 @@ void Framebuffer::Save()
         linearRGB[i * 3 + 1] = c.g;
         linearRGB[i * 3 + 2] = c.b;
     }
-    std::string filename = GetFileResolver()->string() + "/" + m_filename;
+    std::string filename = GetFileResolver()->string() + "/" + prefix + "_" + m_filename;
     WriteImage(filename, m_width, m_height, linearRGB);
     delete[] linearRGB;
 

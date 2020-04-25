@@ -24,6 +24,7 @@
 
 #endif
 
+#include <array>
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -33,6 +34,7 @@
 #include <unordered_map>
 #include <cassert>
 #include <numeric>
+#include <stack>
 
 #include <fmt/format.h>
 

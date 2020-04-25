@@ -30,6 +30,10 @@ public:
     static inline float SphericalTheta(const Float3& v) { return std::acos(v.z); }
     static inline bool SameHemisphere(const Float3& u, const Float3& v) { return u.z * v.z >= 0; }
     static inline bool SameDirection(const Float3& u, const Float3& v) { return std::fabs(Dot(u, v) - 1) <= deltaEpsilon; }
+    static inline Float3 SphericalToDirect(const float& cosTheta, const float& phi) {
+        float sinTheta = std::sqrt(std::max(0.f, 1 - cosTheta * cosTheta));
+        return Float3(sinTheta * std::cos(phi), sinTheta * std::sin(phi), cosTheta);
+    }
 };
 
 class Distribution1D {

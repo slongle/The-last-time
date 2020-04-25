@@ -105,3 +105,4 @@ float Distribution2D::Pdf(const Float2& s) const
     float pdfX = m_conditional[std::min(uint32_t(s.y * m_nv), m_nv - 1)]->Pdf(s.x);
     return pdfY * pdfX;
 }
+

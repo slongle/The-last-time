@@ -1,6 +1,9 @@
 ﻿#include "core/renderer.h"
+#include "integrator/pathguider.h"
 
 int main(int argc, char* argv[]) {
+	std::cout << sizeof(SDTreeNode) << std::endl;
+
 	std::string prefix = "E:/Document/Graphics/code/The-Last-time/scenes/Scenes/";
 	std::vector<std::string> scenes(100);
 	scenes[0] = "Box/scene.json";

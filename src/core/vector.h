@@ -104,6 +104,11 @@ public:
 
     Float3 Centroid() const { return (m_pMin + m_pMax) * 0.5f; }
 
+    int MaxAxis() const {
+        Float3 diag = m_pMax - m_pMin;
+        return diag.x > diag.y ? (diag.x > diag.z ? 0 : 2) : (diag.y > diag.z ? 1 : 2);
+    }
+
     bool Intersect(const Ray& ray) const {
         float nearT = -std::numeric_limits<float>::infinity();
         float farT = std::numeric_limits<float>::infinity();

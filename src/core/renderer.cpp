@@ -84,7 +84,7 @@ void Renderer::InitializeGUI()
     // Create window with graphics context
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     m_window = glfwCreateWindow(
-        static_cast<int>(m_buffer->m_width + auxiliaryWidth), static_cast<int>(m_buffer->m_height),
+        static_cast<int>(m_buffer->m_width + auxiliaryWidth), static_cast<int>(std::max(500, m_buffer->m_height)),
         "Renderer", NULL, NULL);
     if (m_window == NULL) {
         assert(false);
