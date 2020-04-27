@@ -234,7 +234,7 @@ void SDTree::Subdivide(const uint32_t& idx, const uint32_t& limit)
 
 void Vertex::Commit()
 {    
-    Spectrum weight = m_radiance / m_throughput * m_bsdfVal * 0.5f;
+    Spectrum weight = m_radiance / (m_throughput * m_woPdf) * 0.5f;
     m_dtree->AddSample(m_d, weight.y());
 }
 
@@ -287,7 +287,8 @@ Spectrum PathGuiderIntegrator::Li(Ray ray, Sampler& sampler)
                         vertex.m_radiance += L;
                     }
 
-                    Vertex{ dtree,lightRec.m_wi,L,throughput * bsdfVal / lightRec.m_pdf, bsdfVal }.Commit();
+                    Vertex{ dtree, lightRec.m_wi, L, throughput * bsdfVal / lightRec.m_pdf, 
+                        bsdfVal, lightRec.m_pdf }.Commit();
                 }
             }
         }
@@ -343,7 +344,8 @@ Spectrum PathGuiderIntegrator::Li(Ray ray, Sampler& sampler)
                 }
 
                 if (!isDelta) {                    
-                    vertices.push_back(Vertex{ dtree,ray.d,L,throughput,bsdfVal * guideMatRec.m_woPdf });
+                    vertices.push_back(Vertex{ dtree, ray.d, Spectrum(0.f), 
+                        throughput, bsdfVal * guideMatRec.m_woPdf, guideMatRec.m_woPdf });
                 }
             }
         }
@@ -391,7 +393,7 @@ Spectrum PathGuiderIntegrator::GuideSampleBSDF(GuideMaterialRecord& guideMatRec,
         }
         else {
             // Sample DTree
-            guideMatRec.m_wo = guideMatRec.m_dtree->Sample(sampler);
+            guideMatRec.m_wo = guideMatRec.ToLocal(guideMatRec.m_dtree->Sample(sampler));
             bsdfVal = guideMatRec.m_bsdf->Eval(guideMatRec);
         }
 
@@ -418,7 +420,7 @@ float PathGuiderIntegrator::GuidePdfBSDF(GuideMaterialRecord& guideMatRec) const
         guideMatRec.m_woPdf = guideMatRec.m_bsdfPdf;
     }
     else {
-        guideMatRec.m_dtreePdf = guideMatRec.m_dtree->Pdf(guideMatRec.m_wo);
+        guideMatRec.m_dtreePdf = guideMatRec.m_dtree->Pdf(guideMatRec.ToWorld(guideMatRec.m_wo));
         guideMatRec.m_woPdf = guideMatRec.m_bsdfPdf * 0.5f + guideMatRec.m_dtreePdf * 0.5f;
     }
     return guideMatRec.m_woPdf;
@@ -554,7 +556,7 @@ void PathGuiderIntegrator::RenderTile(
                 Ray ray;
                 m_camera->GenerateRay(Float2(x, y), sampler, ray);
                 Spectrum radiance = Li(ray, sampler);
-                m_buffer->AddSample(x, y, radiance);
+                m_buffer->AddSample(x, y, radiance);                
             }
         }
     }

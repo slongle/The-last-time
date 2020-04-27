@@ -46,7 +46,7 @@ public:
     
     std::vector<DTreeNode> m_nodes;
 
-    uint32_t m_depth;
+    uint32_t m_depth = 1;
 };
 
 class DTreeWrapper {
@@ -147,7 +147,8 @@ public:
     Float3 m_d;
     Spectrum m_radiance;
     Spectrum m_throughput;
-    Spectrum m_bsdfVal;
+    Spectrum m_bsdfVal; // f * |cos|
+    float m_woPdf;
 };
 
 class PathGuiderIntegrator : public Integrator {
