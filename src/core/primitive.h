@@ -48,6 +48,8 @@ public:
     virtual float Pdf(LightRecord& lightRec) const = 0;
     // Return radiance
     virtual Spectrum EvalPdf(LightRecord& lightRec) const = 0;
+    // Sample photon's position, direction and flux
+    virtual Spectrum SamplePhoton(Float2& s1, Float2& s2, Ray& ray) const = 0;
 
     virtual bool IsDelta() const { return false; }
 };

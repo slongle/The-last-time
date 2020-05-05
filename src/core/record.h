@@ -23,13 +23,20 @@ public:
     const Primitive* m_primitive = nullptr;
 };
 
+enum TransportMode {
+    Radiance, 
+    Importance
+};
+
 class MaterialRecord {
 public:
     MaterialRecord() {}
-    MaterialRecord(const Float3& wi, const Float3& ns, const Float2& st)
-        :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_st(st) {}
-    MaterialRecord(const Float3& wi, const Float3& wo, const Float3& ns, const Float2& st)
-        :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_wo(m_frame.ToLocal(wo)), m_st(st) {} 
+    MaterialRecord(const Float3& wi, const Float3& ns, const Float2& st, 
+        const TransportMode& mode = Radiance)
+        :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_st(st), m_mode(mode) {}
+    MaterialRecord(const Float3& wi, const Float3& wo, const Float3& ns, const Float2& st, 
+        const TransportMode& mode = Radiance)
+        :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_wo(m_frame.ToLocal(wo)), m_st(st), m_mode(mode) {}
 
     Float3 ToLocal(const Float3& v) const { return m_frame.ToLocal(v); }
     Float3 ToWorld(const Float3& v) const { return m_frame.ToWorld(v); }
@@ -41,6 +48,7 @@ public:
     float m_pdf;
     float m_eta;
 
+    TransportMode m_mode;
 };
 
 class LightRecord {

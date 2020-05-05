@@ -1,0 +1,478 @@
+#include "sppm.h"
+
+void KDTree::Add(const Photon& photon)
+{
+    m_mutex.lock();
+    m_photons.push_back(photon);
+    m_bounds = Union(m_bounds, Bounds(photon.m_position));
+    m_mutex.unlock();
+}
+
+uint32_t KDTree::RecursiveBuild(uint32_t l, uint32_t r, const Bounds& bounds)
+{
+    int axis = -1, lc = -1, rc = -1;
+    uint32_t mid = (l + r) * 0.5f;
+
+    if (r - l > 1) {
+        axis = bounds.MaxAxis();
+        std::nth_element(m_photons.begin() + l, m_photons.begin() + mid, m_photons.begin() + r,
+            [&](const Photon& p1, const Photon& p2)->bool {
+                return p1.m_position[axis] < p2.m_position[axis];
+            });
+
+        Bounds lb, rb;
+        Split(bounds, axis, m_photons[mid].m_position[axis], lb, rb);
+
+        if (mid > l) {
+            lc = RecursiveBuild(l, mid, lb);
+        }
+        if (r > mid + 1) {
+            rc = RecursiveBuild(mid + 1, r, rb);
+        }
+    }
+
+    KDTreeNode node(bounds, axis, lc, rc, mid);
+    m_nodes.push_back(node);
+    return m_nodes.size() - 1;
+}
+
+void KDTree::Build()
+{
+    m_root = RecursiveBuild(0, m_photons.size(), m_bounds);
+}
+
+void KDTree::Clear()
+{
+    m_photons.clear();
+    m_nodes.clear();
+    m_bounds = Bounds();
+}
+
+void KDTree::Query(Float3 center, const float& radius, std::vector<Photon>& photons) const
+{    
+    float sqrRadius = std::sqr(radius);
+    std::stack<uint32_t> stack;
+    stack.push(m_root);
+    while (!stack.empty()) {
+        uint32_t idx = stack.top(); stack.pop();
+        const auto& node = m_nodes[idx];
+        const auto& photon = m_photons[node.m_photonIndex];        
+        float minSqrDistance =
+            std::sqr(std::max(0.f, std::max(center.x - node.m_bounds.m_pMax.x,
+                node.m_bounds.m_pMin.x - center.x))) +
+            std::sqr(std::max(0.f, std::max(center.y - node.m_bounds.m_pMax.y,
+                node.m_bounds.m_pMin.y - center.y))) +
+            std::sqr(std::max(0.f, std::max(center.z - node.m_bounds.m_pMax.z,
+                node.m_bounds.m_pMin.z - center.z)));
+        if (minSqrDistance <= sqrRadius) {
+            if (SqrLength(center - photon.m_position) <= sqrRadius) {
+                photons.push_back(photon);
+            }
+            if (node.m_children[0] != -1) {
+                stack.push(node.m_children[0]);
+            }
+            if (node.m_children[1] != -1) {
+                stack.push(node.m_children[1]);
+            }
+        }
+    }
+}
+
+void SPPMIntegrator::EmitPhoton(Sampler& sampler)
+{    
+    // Randomly pick an emitter
+    uint32_t lightNum = m_scene->m_lights.size();
+    uint32_t lightIdx = std::min(uint32_t(lightNum * sampler.Next1D()), lightNum - 1);
+    const auto& light = m_scene->m_lights[lightIdx];
+    // Sample photon
+    Ray ray;
+    Spectrum flux = light->SamplePhoton(sampler.Next2D(), sampler.Next2D(), ray);
+    flux *= lightNum;
+    //flux /= m_deltaPhotonNum;
+    // Trace photon
+    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {        
+        // Intersect test
+        HitRecord hitRec;
+        bool hit = m_scene->Intersect(ray, hitRec);
+        if (!hit) {
+            break;
+        }
+        auto& bsdf = hitRec.m_primitive->m_bsdf;
+        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
+        // Store photon
+        Photon photon(hitRec.m_geoRec.m_p, -ray.d, flux);
+        if (!isDelta) {
+            m_photonTree.Add(photon);
+        }
+        // Scatter photon
+        MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st, Importance);
+        Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
+        flux *= bsdfVal;
+        ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
+        // Russian roulette
+        if (bounce > 5) {
+            float q = std::min(0.99f, MaxComponent(flux));
+            if (sampler.Next1D() > q) {
+                break;
+            }
+            flux /= q;
+        }
+    }
+}
+
+Spectrum SPPMIntegrator::Li(Ray ray, Sampler& sampler)
+{
+    Spectrum radiance(0.f);
+    Spectrum throughput(1.f);
+    float eta = 1.f;
+    HitRecord hitRec;
+    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
+        bool hit = m_scene->Intersect(ray, hitRec);
+        if (!hit) {
+            // Environment Light
+            if (m_scene->m_environmentLight) {
+                radiance += throughput * m_scene->m_environmentLight->Eval(ray);
+            }
+            break;
+        }
+
+        // Area light
+        if (hitRec.m_primitive->IsAreaLight()) {
+            LightRecord lightRec(ray.o, hitRec.m_geoRec);
+            radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
+        }
+        
+        // Get basf
+        auto& bsdf = hitRec.m_primitive->m_bsdf;
+        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
+
+        // Estimate Li
+        if (!isDelta) {
+            std::vector<Photon> gatheredPhotons;
+            m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
+            Spectrum sum(0.f);
+            for (const auto& photon : gatheredPhotons) {
+                MaterialRecord matRec(-ray.d, photon.m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+                Spectrum bsdfVal = bsdf->Eval(matRec);
+                sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon.m_flux;
+            }
+            float area = M_PI * m_currentRadius * m_currentRadius;
+            radiance += throughput * sum / (area * m_deltaPhotonNum);
+            break;
+        }
+
+        // Sample BSDF            
+        MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+        Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
+        ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
+        if (bsdfVal.IsBlack()) {
+            break;
+        }
+        // Update throughput
+        throughput *= bsdfVal;
+
+        // Russian roulette
+        if (bounce > 5) {
+            float q = std::min(0.99f, MaxComponent(throughput));
+            if (sampler.Next1D() > q) {
+                break;
+            }
+            throughput /= q;
+        }
+    }
+
+    return radiance;
+}
+
+void SPPMIntegrator::Setup()
+{
+    Integrator::Setup();
+}
+
+void SPPMIntegrator::Start()
+{
+    Setup();
+
+    m_tiles.clear();
+    for (int j = 0; j < m_buffer->m_height; j += tile_size) {
+        for (int i = 0; i < m_buffer->m_width; i += tile_size) {
+            m_tiles.push_back({
+                {i, j},
+                {std::min(m_buffer->m_width - i, tile_size), std::min(m_buffer->m_height - j, tile_size)}
+                });
+        }
+    }
+    std::reverse(m_tiles.begin(), m_tiles.end());
+
+    m_photons.clear();
+    for (uint32_t i = 0; i < m_deltaPhotonNum; i++) {
+        m_photons.push_back(i);
+    }
+
+    m_renderingNum = 0;
+    m_rendering = true;    
+
+    m_renderThreads.resize(std::thread::hardware_concurrency());
+    //m_renderThreads.resize(1);
+    m_timer.Start();
+    m_controlThread = std::make_unique<std::thread>(&SPPMIntegrator::Render, this);
+}
+
+void SPPMIntegrator::Stop()
+{
+    m_rendering = false;
+}
+
+void SPPMIntegrator::Wait()
+{
+    if (m_controlThread->joinable()) {
+        m_controlThread->join();
+    }
+    assert(m_renderingNum == 0);
+}
+
+bool SPPMIntegrator::IsRendering()
+{
+    return m_rendering;
+}
+
+std::string SPPMIntegrator::ToString() const
+{
+    return fmt::format("SPPM\nnmax bounce : {0}\niteration : {1}\n# photon : {2}\nradius : {3}",
+        m_maxBounce, m_currentIteration, m_currentPhotonNum, m_currentRadius);
+}
+
+void SPPMIntegrator::Render()
+{
+    m_currentRadius = m_initialRadius;
+    m_currentPhotonNum = 0;
+    for (m_currentIteration = 0; m_currentIteration < m_maxIteration && m_rendering; m_currentIteration++) {        
+        m_currentPhotonIndex = 0;
+        m_currentTileIndex = 0;
+        // Photon pass
+        for (std::thread*& thread : m_renderThreads) {
+            thread = new std::thread(&SPPMIntegrator::PhotonIteration, this);
+        }
+        SynchronizeThreads();
+        //for (const auto& photon : m_photonTree.m_photons) {
+        //    DrawPoint(photon.m_position, Spectrum(1, 0, 0));
+        //}
+
+        // Construct photon structure
+        m_photonTree.Build();
+
+        // Camera pass
+        for (std::thread*& thread : m_renderThreads) {
+            thread = new std::thread(&SPPMIntegrator::RenderIteration, this, 1, m_currentIteration);
+        }
+        SynchronizeThreads();
+        
+        // Update settings
+        m_photonTree.Clear();
+        m_currentPhotonNum += m_deltaPhotonNum;
+        m_currentRadius = std::sqrt((m_currentIteration + m_alpha)/(m_currentIteration + 1)) * m_currentRadius;
+    }
+    m_rendering = false;
+    m_timer.Stop();
+    m_buffer->Save();
+}
+
+void SPPMIntegrator::PhotonIteration()
+{
+    ++m_renderingNum;
+
+    while (m_rendering) {
+        uint32_t photonIndex;
+        if (m_currentPhotonIndex < m_photons.size()) {
+            photonIndex = m_photons[m_currentPhotonIndex++];
+        }
+        else {
+            break;
+        }
+
+        if (m_rendering) {
+            Sampler sampler;
+            uint64_t seed = (uint64_t)m_currentIteration * m_deltaPhotonNum + photonIndex;
+            sampler.Setup(seed);
+            EmitPhoton(sampler);
+        }
+    }
+
+    m_renderingNum--;
+}
+
+void SPPMIntegrator::RenderIteration(const uint32_t& spp, const uint32_t& iteration)
+{
+    ++m_renderingNum;
+
+    while (m_rendering) {
+        Framebuffer::Tile tile;
+        if (m_currentTileIndex < m_tiles.size()) {
+            tile = m_tiles[m_currentTileIndex++];
+        }
+        else {
+            break;
+        }
+
+        if (m_rendering) {
+            RenderTile(tile, spp, iteration);
+        }
+    }
+
+    m_renderingNum--;
+}
+
+void SPPMIntegrator::RenderTile(
+    const Framebuffer::Tile& tile,
+    const uint32_t& spp,
+    const uint32_t& iteration)
+{
+    Sampler sampler;
+    uint64_t s = (tile.pos[1] * m_buffer->m_width + tile.pos[0]) +
+        iteration * (m_buffer->m_width * m_buffer->m_height);
+    sampler.Setup(s);
+
+    for (int j = 0; j < tile.res[1]; j++) {
+        for (int i = 0; i < tile.res[0]; i++) {
+            for (uint32_t k = 0; k < spp; k++) {
+                int x = i + tile.pos[0], y = j + tile.pos[1];
+                Ray ray;
+                m_camera->GenerateRay(Float2(x, y), sampler, ray);
+                Spectrum radiance = Li(ray, sampler);
+                m_buffer->AddSample(x, y, radiance);
+            }
+        }
+    }
+}
+
+void SPPMIntegrator::SynchronizeThreads()
+{
+    for (std::thread*& thread : m_renderThreads) {
+        thread->join();
+        delete thread;
+    }
+    assert(m_renderingNum == 0);
+}
+
+void SPPMIntegrator::Debug(DebugRecord& debugRec)
+{
+    if (debugRec.m_debugRay) {
+        Float2 pos = debugRec.m_rasterPosition;
+        if (pos.x >= 0 && pos.x < m_buffer->m_width &&
+            pos.y >= 0 && pos.y < m_buffer->m_height)
+        {
+            int x = pos.x, y = m_buffer->m_height - pos.y;
+            Sampler sampler;
+            unsigned int s = y * m_buffer->m_width + x;
+            sampler.Setup(s);
+            Ray ray;
+            m_camera->GenerateRay(Float2(x, y), sampler, ray);
+            DebugRay(ray, sampler);
+        }
+    }
+    if (debugRec.m_debugKDTree) {
+        m_currentPhotonIndex = 0;
+        PhotonIteration();
+        for (const auto& photon : m_photonTree.m_photons) {
+            DrawPoint(photon.m_position, Spectrum(1, 0, 0));
+        }
+    }
+}
+
+void SPPMIntegrator::DebugRay(Ray ray, Sampler& sampler)
+{
+    Spectrum throughput(1.f);
+    HitRecord hitRec;
+    bool hit = m_scene->Intersect(ray, hitRec);
+    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
+        if (!hit) {
+            break;
+        }
+
+        auto& bsdf = hitRec.m_primitive->m_bsdf;
+
+        if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
+            LightRecord lightRec(hitRec.m_geoRec.m_p);
+            Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
+            if (!emission.IsBlack()) {
+                /* Allocate a record for querying the BSDF */
+                MaterialRecord matRec(-ray.d, lightRec.m_wi, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+
+                /* Evaluate BSDF * cos(theta) and pdf */
+                Spectrum bsdfVal = bsdf->EvalPdf(matRec);
+
+                if (!bsdfVal.IsBlack()) {
+                    /* Weight using the power heuristic */
+                    float weight = PowerHeuristic(lightRec.m_pdf, matRec.m_pdf);
+                    Spectrum value = throughput * bsdfVal * emission * weight;
+
+                    Float3 p = hitRec.m_geoRec.m_p;
+                    Float3 q = lightRec.m_geoRec.m_p;
+                    DrawLine(p, q, Spectrum(1, 1, 0));
+                }
+            }
+        }
+
+        // Sample BSDF
+        {
+            // Sample BSDF * |cos| / pdf
+            MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+            Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
+            ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
+            if (bsdfVal.IsBlack()) {
+                break;
+            }
+
+            // Update throughput
+            throughput *= bsdfVal;
+
+            LightRecord lightRec;
+            Spectrum emission;
+            hit = m_scene->Intersect(ray, hitRec);
+            if (hit) {
+                if (hitRec.m_primitive->IsAreaLight()) {
+                    auto areaLight = hitRec.m_primitive->m_areaLight;
+                    lightRec = LightRecord(ray.o, hitRec.m_geoRec);
+                    emission = areaLight->EvalPdf(lightRec);
+                    lightRec.m_pdf /= m_scene->m_lights.size();
+                }
+                Float3 p = ray.o;
+                Float3 q = hitRec.m_geoRec.m_p;
+                DrawLine(p, q, Spectrum(1, 1, 1));
+            }
+            else {
+                // Environment Light
+                if (m_scene->m_environmentLight) {
+                    Float3 p = ray.o;
+                    Float3 q = ray.o + ray.d * 100.f;
+                    DrawLine(p, q, Spectrum(1, 0, 0));
+                }
+                else {
+                    break;
+                }
+            }
+
+            if (!emission.IsBlack()) {
+                // Heuristic
+                float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ?
+                    1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
+                Spectrum contribution = throughput * emission * weight;
+            }
+        }
+
+        if (bounce > 5) {
+            float q = std::min(0.99f, MaxComponent(throughput));
+            if (sampler.Next1D() > q) {
+                break;
+            }
+            throughput /= q;
+        }
+    }
+}
+
+float SPPMIntegrator::PowerHeuristic(float a, float b) const
+{
+    a *= a;
+    b *= b;
+    return a / (a + b);
+}

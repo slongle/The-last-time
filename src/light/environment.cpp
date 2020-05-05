@@ -71,6 +71,13 @@ Spectrum EnvironmentLight::EvalPdf(LightRecord& lightRec) const
     return m_texture->Evaluate(st);
 }
 
+Spectrum EnvironmentLight::SamplePhoton(Float2& s1, Float2& s2, Ray& ray) const
+{
+    std::cout << "No implementation!!!\n";
+    exit(-1);
+    return Spectrum();
+}
+
 void EnvironmentLight::TestSampling(const std::string& filename, const uint32_t& sampleNum) const
 {
     

@@ -7,6 +7,12 @@
 #include <glm/vec4.hpp>
 #include <glm/geometric.hpp>
 
+namespace std {
+    inline float sqr(float a) {
+        return a * a;
+    }
+};
+
 /*
 class Float3{
 public:
@@ -93,6 +99,7 @@ inline float Ray::shadowEpsilon = 1e-3;
 class Bounds{
 public:
     Bounds() :m_pMin(std::numeric_limits<float>::max()), m_pMax(std::numeric_limits<float>::min()) {}
+    Bounds(const Float3& p) :m_pMin(p), m_pMax(p) {}
     Bounds(const Float3& pMin, const Float3& pMax) :m_pMin(pMin), m_pMax(pMax) {}
     
     const Float3& operator[](const int& idx) const { return idx == 0 ? m_pMin : m_pMax; }
@@ -176,4 +183,9 @@ public:
 
 inline Bounds Union(const Bounds& b1, const Bounds& b2) {
     return Bounds(Min(b1.m_pMin, b2.m_pMin), Max(b1.m_pMax, b2.m_pMax));
+}
+
+inline void Split(const Bounds& bounds, int axis, float val, Bounds& lb, Bounds& rb) {
+    lb = Bounds(bounds), rb = Bounds(bounds);    
+    lb.m_pMax[axis] = rb.m_pMin[axis] = val;
 }

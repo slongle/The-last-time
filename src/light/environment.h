@@ -11,6 +11,7 @@ public:
     Spectrum Eval(LightRecord& lightRec) const { return Spectrum(0.f); }    
     float Pdf(LightRecord& lightRec) const { return 0.f; }    
     Spectrum EvalPdf(LightRecord& lightRec) const;
+    Spectrum SamplePhoton(Float2& s1, Float2& s2, Ray& ray) const;
     // Test
     void TestSampling(const std::string& filename, const uint32_t& sampleNum) const;
 

@@ -13,6 +13,7 @@
 #include "light/environment.h"
 #include "integrator/pathtracer.h"
 #include "integrator/pathguider.h"
+#include "integrator/sppm.h"
 #include "texture/consttexture.h"
 #include "texture/imagemap.h"
 
@@ -269,6 +270,15 @@ void Parse(const std::string& filename, Renderer& renderer)
             int initSpp = GetInt(integratorProperties, "init_spp", 1);
             int maxIteration = GetInt(integratorProperties, "max_iteration", 1);
             integrator = std::make_shared<PathGuiderIntegrator>(scene, camera, buffer, maxBounce, initSpp, maxIteration);
+        }
+        else if (type == "sppm") {
+            int maxBounce = GetInt(integratorProperties, "max_bounce", 10);            
+            int maxIteration = GetInt(integratorProperties, "max_iteration", 1);
+            int deltaPhotonNum = GetInt(integratorProperties, "delta_photon_num", 10000);
+            float initialRadius = GetFloat(integratorProperties, "initial_radius", 1);
+            float alpha = GetFloat(integratorProperties, "alpha", 2.f / 3.f);
+            integrator = std::make_shared<SPPMIntegrator>(scene, camera, buffer, maxBounce, 
+                maxIteration, deltaPhotonNum, initialRadius, alpha);
         }
         else {
             assert(false);

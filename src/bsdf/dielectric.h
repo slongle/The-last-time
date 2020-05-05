@@ -41,7 +41,7 @@ public:
             matRec.m_pdf = 1 - Fr;
             matRec.m_wo = Refract(matRec.m_wi, cosThetaT);
             matRec.m_eta = cosThetaT < 0.f ? m_eta : m_invEta;
-            float factor = cosThetaT < 0.f ? m_invEta : m_eta;
+            float factor = matRec.m_mode == Radiance ? (cosThetaT < 0.f ? m_invEta : m_eta) : 1.f;
             return m_transmittance->Evaluate(matRec.m_st) * (factor * factor);
         }
     }

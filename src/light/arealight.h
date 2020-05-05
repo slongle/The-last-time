@@ -11,6 +11,7 @@ public:
     Spectrum Eval(LightRecord& lightRec) const;
     float Pdf(LightRecord& lightRec) const;
     Spectrum EvalPdf(LightRecord& lightRec) const;
+    Spectrum SamplePhoton(Float2& s1, Float2& s2, Ray& ray) const;
 private:
     Spectrum m_radiance;
     std::shared_ptr<Shape> m_shape;

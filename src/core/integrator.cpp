@@ -1,5 +1,11 @@
 #include "integrator.h"
 
+void Integrator::DrawPoint(const Float3& p, const Spectrum& c)
+{
+    Float2 pScreen(Inverse(m_camera->m_screenToWorld).TransformPoint(p));
+    m_buffer->DrawCircle(pScreen.x, pScreen.y, 2, c);
+}
+
 void Integrator::DrawLine(const Float3& p, const Float3& q, const Spectrum& c)
 {
     Float2 pScreen(Inverse(m_camera->m_screenToWorld).TransformPoint(p));
