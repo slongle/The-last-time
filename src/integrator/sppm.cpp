@@ -139,7 +139,7 @@ Spectrum SPPMIntegrator::Li(Ray ray, Sampler& sampler)
         // Area light
         if (hitRec.m_primitive->IsAreaLight()) {
             LightRecord lightRec(ray.o, hitRec.m_geoRec);
-            //radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
+            radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
         }
         
         // Get basf
