@@ -6,6 +6,7 @@
 
 #include "shape/triangle.h"
 #include "bsdf/matte.h"
+#include "bsdf/mirror.h"
 #include "bsdf/dielectric.h"
 #include "bsdf/conductor.h"
 #include "bsdf/blendbsdf.h"
@@ -119,8 +120,12 @@ void Parse(const std::string& filename, Renderer& renderer)
             BSDF* bsdf = nullptr;
             if (type == "matte")
             {
-                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);                
+                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 bsdf = new Matte(reflectance, alpha);
+            }
+            else if (type == "mirror") {
+                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
+                bsdf = new Mirror(reflectance, alpha);
             }
             else if (type == "smooth_dielectric") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
@@ -260,12 +265,12 @@ void Parse(const std::string& filename, Renderer& renderer)
     {
         auto& integratorProperties = sceneFile["integrator"];
         std::string type = integratorProperties["type"];
-        if (type == "path_tracer") {
+        if (type == "path_tracer" || type == "pt") {
             int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
             int spp = GetInt(integratorProperties, "spp", 1);
             integrator = std::make_shared<PathIntegrator>(scene, camera, buffer, maxBounce, spp);
         }
-        else if (type == "path_guider") {
+        else if (type == "path_guider" || type == "pg") {
             int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
             int initSpp = GetInt(integratorProperties, "init_spp", 1);
             int maxIteration = GetInt(integratorProperties, "max_iteration", 1);
