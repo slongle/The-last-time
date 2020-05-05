@@ -2,8 +2,6 @@
 #include "integrator/pathguider.h"
 
 int main(int argc, char* argv[]) {
-	std::cout << sizeof(SDTreeNode) << std::endl;
-
 	std::string prefix = "E:/Document/Graphics/code/The-Last-time/scenes/Scenes/";
 	std::vector<std::string> scenes(100);
 	scenes[0] = "Box/Diffuse/scene.json";
@@ -14,6 +12,7 @@ int main(int argc, char* argv[]) {
 	scenes[5] = "2.Shader/Shader-ball/scene.json";
 	scenes[6] = "3.Volume/Homogeneous/scene.json";
 	scenes[7] = "5.Guide/Torus/scene.json";
+	scenes[8] = "6.Caustics/DiscoBall/scene.json";
 	std::string filename = prefix + scenes[7];
 
 	Renderer renderer(filename);

@@ -255,6 +255,7 @@ void Renderer::Render()
 	//Stop the renderer if it hasn't been already.
 	m_integrator->Stop();
 	m_integrator->Wait();
+    m_integrator->Save();
 	glfwSetWindowTitle(m_window, "Render done");
 
     // Cleanup

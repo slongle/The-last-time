@@ -96,12 +96,14 @@ void Framebuffer::Save(const std::string& prefix)
         if (m_sampleNum[i] == 0) {
             m_sampleNum[i] = 1;
         }
-        Spectrum c = (m_accumulate[i] / float(m_sampleNum[i]));
+        Spectrum c = (m_accumulate[i] / float(m_sampleNum[i]));        
         linearRGB[i * 3 + 0] = c.r;
         linearRGB[i * 3 + 1] = c.g;
         linearRGB[i * 3 + 2] = c.b;
     }
-    std::string filename = GetFileResolver()->string() + "/" + prefix + "_" + m_filename;
+    std::string filename = prefix == "" ? 
+        GetFileResolver()->string() + "/" + m_filename :
+        GetFileResolver()->string() + "/" + prefix + "_" + m_filename;
     WriteImage(filename, m_width, m_height, linearRGB);
     delete[] linearRGB;
 

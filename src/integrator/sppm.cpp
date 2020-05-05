@@ -88,12 +88,12 @@ void SPPMIntegrator::EmitPhoton(Sampler& sampler)
     Ray ray;
     Spectrum flux = light->SamplePhoton(sampler.Next2D(), sampler.Next2D(), ray);
     flux *= lightNum;
-    //flux /= m_deltaPhotonNum;
     // Trace photon
     for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {        
         // Intersect test
         HitRecord hitRec;
         bool hit = m_scene->Intersect(ray, hitRec);
+        //DrawLine(ray.o, hitRec.m_geoRec.m_p, Spectrum(1, 0, 0));
         if (!hit) {
             break;
         }
@@ -139,7 +139,7 @@ Spectrum SPPMIntegrator::Li(Ray ray, Sampler& sampler)
         // Area light
         if (hitRec.m_primitive->IsAreaLight()) {
             LightRecord lightRec(ray.o, hitRec.m_geoRec);
-            radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
+            //radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
         }
         
         // Get basf
@@ -246,17 +246,14 @@ void SPPMIntegrator::Render()
 {
     m_currentRadius = m_initialRadius;
     m_currentPhotonNum = 0;
-    for (m_currentIteration = 0; m_currentIteration < m_maxIteration && m_rendering; m_currentIteration++) {        
+    for (m_currentIteration = 0; m_currentIteration < m_maxIteration && m_rendering; m_currentIteration++) {                
         m_currentPhotonIndex = 0;
         m_currentTileIndex = 0;
         // Photon pass
         for (std::thread*& thread : m_renderThreads) {
             thread = new std::thread(&SPPMIntegrator::PhotonIteration, this);
         }
-        SynchronizeThreads();
-        //for (const auto& photon : m_photonTree.m_photons) {
-        //    DrawPoint(photon.m_position, Spectrum(1, 0, 0));
-        //}
+        SynchronizeThreads();        
 
         // Construct photon structure
         m_photonTree.Build();
@@ -268,7 +265,9 @@ void SPPMIntegrator::Render()
         SynchronizeThreads();
         
         // Update settings
-        m_photonTree.Clear();
+        if (m_currentIteration + 1 != m_maxIteration) {
+            m_photonTree.Clear();
+        }
         m_currentPhotonNum += m_deltaPhotonNum;
         m_currentRadius = std::sqrt((m_currentIteration + m_alpha)/(m_currentIteration + 1)) * m_currentRadius;
     }
@@ -370,96 +369,70 @@ void SPPMIntegrator::Debug(DebugRecord& debugRec)
             DebugRay(ray, sampler);
         }
     }
-    if (debugRec.m_debugKDTree) {
-        m_currentPhotonIndex = 0;
-        PhotonIteration();
+    if (debugRec.m_debugKDTree) {        
         for (const auto& photon : m_photonTree.m_photons) {
-            DrawPoint(photon.m_position, Spectrum(1, 0, 0));
+            DrawPoint(photon.m_position, Spectrum(1, 0, 0) * photon.m_flux.y());
         }
     }
 }
 
 void SPPMIntegrator::DebugRay(Ray ray, Sampler& sampler)
 {
+    Spectrum radiance(0.f);
     Spectrum throughput(1.f);
+    float eta = 1.f;
     HitRecord hitRec;
-    bool hit = m_scene->Intersect(ray, hitRec);
     for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
+        bool hit = m_scene->Intersect(ray, hitRec);
         if (!hit) {
+            // Environment Light
+            if (m_scene->m_environmentLight) {
+                radiance += throughput * m_scene->m_environmentLight->Eval(ray);
+            }
             break;
         }
 
+        // Area light
+        if (hitRec.m_primitive->IsAreaLight()) {
+            LightRecord lightRec(ray.o, hitRec.m_geoRec);
+            radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
+        }
+
+        // Draw ray
+        if (bounce != 0) {
+            DrawLine(ray.o, hitRec.m_geoRec.m_p, Spectrum(1, 1, 1));
+        }
+
+        // Get basf
         auto& bsdf = hitRec.m_primitive->m_bsdf;
+        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
 
-        if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
-            LightRecord lightRec(hitRec.m_geoRec.m_p);
-            Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
-            if (!emission.IsBlack()) {
-                /* Allocate a record for querying the BSDF */
-                MaterialRecord matRec(-ray.d, lightRec.m_wi, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-
-                /* Evaluate BSDF * cos(theta) and pdf */
-                Spectrum bsdfVal = bsdf->EvalPdf(matRec);
-
-                if (!bsdfVal.IsBlack()) {
-                    /* Weight using the power heuristic */
-                    float weight = PowerHeuristic(lightRec.m_pdf, matRec.m_pdf);
-                    Spectrum value = throughput * bsdfVal * emission * weight;
-
-                    Float3 p = hitRec.m_geoRec.m_p;
-                    Float3 q = lightRec.m_geoRec.m_p;
-                    DrawLine(p, q, Spectrum(1, 1, 0));
-                }
+        // Estimate Li
+        if (!isDelta) {
+            std::vector<Photon> gatheredPhotons;
+            m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
+            Spectrum sum(0.f);
+            for (const auto& photon : gatheredPhotons) {
+                MaterialRecord matRec(-ray.d, photon.m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+                Spectrum bsdfVal = bsdf->Eval(matRec);
+                sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon.m_flux;
             }
+            float area = M_PI * m_currentRadius * m_currentRadius;
+            radiance += throughput * sum / (area * m_deltaPhotonNum);
+            break;
         }
 
-        // Sample BSDF
-        {
-            // Sample BSDF * |cos| / pdf
-            MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-            Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
-            ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
-            if (bsdfVal.IsBlack()) {
-                break;
-            }
-
-            // Update throughput
-            throughput *= bsdfVal;
-
-            LightRecord lightRec;
-            Spectrum emission;
-            hit = m_scene->Intersect(ray, hitRec);
-            if (hit) {
-                if (hitRec.m_primitive->IsAreaLight()) {
-                    auto areaLight = hitRec.m_primitive->m_areaLight;
-                    lightRec = LightRecord(ray.o, hitRec.m_geoRec);
-                    emission = areaLight->EvalPdf(lightRec);
-                    lightRec.m_pdf /= m_scene->m_lights.size();
-                }
-                Float3 p = ray.o;
-                Float3 q = hitRec.m_geoRec.m_p;
-                DrawLine(p, q, Spectrum(1, 1, 1));
-            }
-            else {
-                // Environment Light
-                if (m_scene->m_environmentLight) {
-                    Float3 p = ray.o;
-                    Float3 q = ray.o + ray.d * 100.f;
-                    DrawLine(p, q, Spectrum(1, 0, 0));
-                }
-                else {
-                    break;
-                }
-            }
-
-            if (!emission.IsBlack()) {
-                // Heuristic
-                float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ?
-                    1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
-                Spectrum contribution = throughput * emission * weight;
-            }
+        // Sample BSDF            
+        MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+        Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
+        ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
+        if (bsdfVal.IsBlack()) {
+            break;
         }
+        // Update throughput
+        throughput *= bsdfVal;
 
+        // Russian roulette
         if (bounce > 5) {
             float q = std::min(0.99f, MaxComponent(throughput));
             if (sampler.Next1D() > q) {
