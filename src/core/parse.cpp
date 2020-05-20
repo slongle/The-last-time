@@ -43,6 +43,10 @@ int GetInt(const json::value_type& node, const std::string name, const int& defa
     return node.contains(name) ? node[name] : defaultValue;
 }
 
+bool GetBool(const json::value_type& node, const std::string name, const bool defaultValue) {
+    return node.contains(name) ? node[name] : defaultValue;
+}
+
 std::shared_ptr<Texture<Spectrum>> 
 GetSpectrumTexture(const json::value_type& node, const std::string name, 
     const Spectrum& defaultValue, const std::shared_ptr<Scene>& scene) 
@@ -213,6 +217,11 @@ void Parse(const std::string& filename, Renderer& renderer)
         std::cout << "# of primitives : " << primitiveNum << std::endl;
         for (auto& primitiveProperties : sceneFile["primitives"]) 
         {
+            bool hide = GetBool(primitiveProperties, "hide", false);
+            if (hide) {
+                continue;
+            }
+
             std::string shapeName = primitiveProperties["shape"];
             std::vector<std::shared_ptr<Shape>> shapes;
             if (scene->m_meshes.count(shapeName)) {
@@ -260,6 +269,11 @@ void Parse(const std::string& filename, Renderer& renderer)
         std::cout << "# of lights : " << lightNum << std::endl;
         for (auto& lightProperties : sceneFile["lights"])
         {
+            bool hide = GetBool(lightProperties, "hide", false);
+            if (hide) {
+                continue;
+            }
+
             std::string lightType = lightProperties["type"];
             if (lightType == "environment") {
                 auto texture = GetSpectrumTexture(lightProperties, "texture", Spectrum(1.f), scene);

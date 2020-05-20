@@ -28,7 +28,7 @@ Spectrum EnvironmentLight::Sample(LightRecord& lightRec, Float2& s) const
 {
     float pdf;
     Float2 st = m_distribution->Sample(s, pdf);
-    float theta = (1 - st.y) * TWO_PI, phi = (1 - st.x)* M_PI;
+    float theta = (1 - st.y) * TWO_PI, phi = (1 - st.x) * M_PI;
 
     Float3 p = Float3(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi), std::cos(theta)) * m_radius;
     Float3 d = Normalize(p - lightRec.m_ref);
@@ -42,8 +42,7 @@ Spectrum EnvironmentLight::Sample(LightRecord& lightRec, Float2& s) const
     lightRec.m_geoRec.m_p = p;
     lightRec.m_geoRec.m_pdf = pdf;
     lightRec.m_geoRec.m_st = lightRec.m_geoRec.m_uv = st;
-            
-    //std::cout << t << std::endl;
+
     lightRec.m_wi = d;
     lightRec.m_pdf = lightRec.m_geoRec.m_pdf / (2 * M_PI * M_PI * std::sin(theta));
     lightRec.m_shadowRay = Ray(lightRec.m_ref, lightRec.m_wi, Ray::epsilon, t * (1 - Ray::shadowEpsilon));
@@ -53,9 +52,9 @@ Spectrum EnvironmentLight::Sample(LightRecord& lightRec, Float2& s) const
 
 Spectrum EnvironmentLight::EvalPdf(LightRecord& lightRec) const
 {
-    float a = Dot(lightRec.m_wi, lightRec.m_wi), 
-          b = 2.f * Dot(lightRec.m_ref, lightRec.m_wi), 
-          c = Dot(lightRec.m_ref, lightRec.m_ref) - (m_radius * m_radius);
+    float a = Dot(lightRec.m_wi, lightRec.m_wi),
+        b = 2.f * Dot(lightRec.m_ref, lightRec.m_wi),
+        c = Dot(lightRec.m_ref, lightRec.m_ref) - (m_radius * m_radius);
     float det = std::sqrt(b * b - 4 * a * c);
     float t = (-b + det) / (2 * a);
     Float3 p = Normalize(lightRec.m_ref + lightRec.m_wi * t);
@@ -80,7 +79,7 @@ Spectrum EnvironmentLight::SamplePhoton(Float2& s1, Float2& s2, Ray& ray) const
 
 void EnvironmentLight::TestSampling(const std::string& filename, const uint32_t& sampleNum) const
 {
-    
+
     uint32_t w = m_texture->m_width, h = m_texture->m_height;
     Framebuffer buffer(filename, w, h);
 
@@ -97,7 +96,7 @@ void EnvironmentLight::TestSampling(const std::string& filename, const uint32_t&
     buffer.Save();
     return;
     */
-    
+
     Sampler sampler;
     for (uint32_t i = 0; i < sampleNum; i++) {
         float pdf;
@@ -107,5 +106,5 @@ void EnvironmentLight::TestSampling(const std::string& filename, const uint32_t&
     }
 
     buffer.Save();
-    
+
 }
