@@ -200,42 +200,42 @@ Spectrum Scene::SampleLight(LightRecord& lightRec, const Float2& _s, const std::
 
 Spectrum Scene::EvalLight(bool hit, const Ray& ray, const HitRecord& hitRec) const
 {
-    Spectrum ret(0.f);
-    if (!hit) {
-        // Environment Light
-        if (m_environmentLight) {
-            ret = m_environmentLight->Eval(ray);
+    Spectrum emission(0.f);
+    if (hit) {
+        if (hitRec.m_primitive->IsAreaLight()) {
+            LightRecord lightRec(ray.o, hitRec.m_geoRec);
+            emission = hitRec.m_primitive->m_areaLight->Eval(lightRec);
         }
     }
     else {
-        if (hitRec.m_primitive->IsAreaLight()) {
-            LightRecord lightRec(ray.o, hitRec.m_geoRec);
-            ret = hitRec.m_primitive->m_areaLight->Eval(lightRec);
+        // Environment Light
+        for (const auto& envLight : m_environmentLights) {
+            emission += envLight->Eval(ray);
         }
     }
-    return ret;
+    return emission;
 }
 
 Spectrum Scene::EvalPdfLight(bool hit, const Ray& ray, const HitRecord& hitRec, LightRecord& lightRec) const
 {
-    Spectrum ret(0.f);
+    Spectrum emission(0.f);
     if (hit) {
         if (hitRec.m_primitive->IsAreaLight()) {
             auto areaLight = hitRec.m_primitive->m_areaLight;
             lightRec = LightRecord(ray.o, hitRec.m_geoRec);
-            ret = areaLight->EvalPdf(lightRec);
+            emission = areaLight->EvalPdf(lightRec);
             lightRec.m_pdf /= m_lights.size();
         }
     }
     else {
         // Environment Light
-        if (m_environmentLight) {
+        for (const auto& envLight : m_environmentLights) {
             lightRec = LightRecord(ray);
-            ret = m_environmentLight->EvalPdf(lightRec);
+            emission = envLight->EvalPdf(lightRec);
             lightRec.m_pdf /= m_lights.size();
         }
     }
-    return ret;
+    return emission;
 }
 
 std::string Scene::ToString() const

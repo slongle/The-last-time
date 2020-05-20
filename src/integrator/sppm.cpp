@@ -128,18 +128,10 @@ Spectrum SPPMIntegrator::Li(Ray ray, Sampler& sampler)
     HitRecord hitRec;
     for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
         bool hit = m_scene->Intersect(ray, hitRec);
-        if (!hit) {
-            // Environment Light
-            if (m_scene->m_environmentLight) {
-                radiance += throughput * m_scene->m_environmentLight->Eval(ray);
-            }
-            break;
-        }
+        radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
 
-        // Area light
-        if (hitRec.m_primitive->IsAreaLight()) {
-            LightRecord lightRec(ray.o, hitRec.m_geoRec);
-            radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
+        if (!hit) {
+            break;
         }
         
         // Get basf
@@ -384,19 +376,7 @@ void SPPMIntegrator::DebugRay(Ray ray, Sampler& sampler)
     HitRecord hitRec;
     for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
         bool hit = m_scene->Intersect(ray, hitRec);
-        if (!hit) {
-            // Environment Light
-            if (m_scene->m_environmentLight) {
-                radiance += throughput * m_scene->m_environmentLight->Eval(ray);
-            }
-            break;
-        }
-
-        // Area light
-        if (hitRec.m_primitive->IsAreaLight()) {
-            LightRecord lightRec(ray.o, hitRec.m_geoRec);
-            radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
-        }
+        radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
 
         // Draw ray
         if (bounce != 0) {

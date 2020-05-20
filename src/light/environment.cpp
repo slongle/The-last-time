@@ -90,13 +90,6 @@ void EnvironmentLight::TestSampling(const std::string& filename, const uint32_t&
         }
     }
 
-    /*for (int i = 0; i < 10; i++) {
-        buffer.DrawCircle(i, 0, 3, Spectrum(1, 0, 0));
-    }
-    buffer.Save();
-    return;
-    */
-
     Sampler sampler;
     for (uint32_t i = 0; i < sampleNum; i++) {
         float pdf;

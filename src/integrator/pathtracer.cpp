@@ -9,11 +9,12 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
     HitRecord hitRec;
     bool hit = m_scene->Intersect(ray, hitRec);
     for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
+        // Eval direct light at first bounce
+        if (bounce == 0) {
+            radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
+        }
+        // No hit
         if (!hit) {
-            // Environment Light
-            if (bounce == 0 && m_scene->m_environmentLight) {
-                radiance += throughput * m_scene->m_environmentLight->Eval(ray);
-            }
             break;
         }
 
@@ -57,27 +58,8 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
             eta *= matRec.m_eta;
 
             LightRecord lightRec;
-            Spectrum emission;
             hit = m_scene->Intersect(ray, hitRec);
-            if (hit) {
-                if (hitRec.m_primitive->IsAreaLight()) {
-                    auto areaLight = hitRec.m_primitive->m_areaLight;
-                    lightRec = LightRecord(ray.o, hitRec.m_geoRec);
-                    emission = areaLight->EvalPdf(lightRec);
-                    lightRec.m_pdf /= m_scene->m_lights.size();
-                }
-            }
-            else {
-                // Environment Light
-                if (m_scene->m_environmentLight) {
-                    lightRec = LightRecord(ray);
-                    emission = m_scene->m_environmentLight->EvalPdf(lightRec);
-                    lightRec.m_pdf /= m_scene->m_lights.size();
-                }
-                else {
-                    break;
-                }
-            }
+            Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
 
             if (!emission.IsBlack()) {
                 // Heuristic
@@ -122,7 +104,7 @@ Spectrum PathIntegrator::LiVolume(Ray ray, Sampler& sampler)
 
             auto& phase = ray.m_medium->m_phaseFunction;
 
-            // Sample light                                    
+            // Sample light
             {
                 LightRecord lightRec(mediumRec.m_p);
                 Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), ray.m_medium);
@@ -138,7 +120,6 @@ Spectrum PathIntegrator::LiVolume(Ray ray, Sampler& sampler)
                     }
                 }
             }
-            
 
             // Sample phase function
             {
@@ -205,7 +186,6 @@ Spectrum PathIntegrator::LiVolume(Ray ray, Sampler& sampler)
                 }
             }
 
-
             // Sample BSDF
             {
                 // Sample BSDF * |cos| / pdf
@@ -234,7 +214,7 @@ Spectrum PathIntegrator::LiVolume(Ray ray, Sampler& sampler)
                     float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ?
                         1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
                     radiance += throughput * emission * weight;
-                }                
+                }
                 ray = Ray(rayO, newDirection, medium);
                 hit = m_scene->Intersect(ray, hitRec);
             }
@@ -384,10 +364,6 @@ Spectrum PathIntegrator::NormalCheck(Ray ray, Sampler& sampler)
 
     if (!hit) {
         return radiance;
-        // Environment Light
-        if (m_scene->m_environmentLight) {
-            return m_scene->m_environmentLight->Eval(ray);
-        }
     }
 
     Float2 st = hitRec.m_geoRec.m_st;
@@ -468,7 +444,7 @@ void PathIntegrator::DebugRay(Ray ray, Sampler& sampler)
             }
             else {
                 // Environment Light
-                if (m_scene->m_environmentLight) {
+                if (m_scene->m_environmentLights.empty()) {
                     Float3 p = ray.o;
                     Float3 q = ray.o + ray.d * 100.f;
                     DrawLine(p, q, Spectrum(1, 0, 0));

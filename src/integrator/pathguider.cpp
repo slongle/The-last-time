@@ -249,8 +249,10 @@ Spectrum PathGuiderIntegrator::Li(Ray ray, Sampler& sampler)
     for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
         if (!hit) {
             // Environment Light
-            if (bounce == 0 && m_scene->m_environmentLight) {
-                radiance += throughput * m_scene->m_environmentLight->Eval(ray);
+            if (bounce == 0) {
+                for (const auto& envLight : m_scene->m_environmentLights) {
+                    radiance += throughput * envLight->Eval(ray);
+                }
             }
             break;
         }
@@ -323,13 +325,10 @@ Spectrum PathGuiderIntegrator::Li(Ray ray, Sampler& sampler)
             }
             else {
                 // Environment Light
-                if (m_scene->m_environmentLight) {
+                for (const auto& envLight : m_scene->m_environmentLights) {
                     lightRec = LightRecord(ray);
-                    emission = m_scene->m_environmentLight->EvalPdf(lightRec);
+                    emission = envLight->EvalPdf(lightRec);
                     lightRec.m_pdf /= m_scene->m_lights.size();
-                }
-                else {
-                    break;
                 }
             }
 
@@ -677,7 +676,7 @@ void PathGuiderIntegrator::DebugRay(Ray ray, Sampler& sampler)
             }
             else {
                 // Environment Light
-                if (m_scene->m_environmentLight) {
+                if (m_scene->m_environmentLights.empty()) {
                     Float3 p = ray.o;
                     Float3 q = ray.o + ray.d * 100.f;
                     DrawLine(p, q, Spectrum(1, 0, 0));

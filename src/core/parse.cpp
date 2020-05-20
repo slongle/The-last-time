@@ -279,7 +279,7 @@ void Parse(const std::string& filename, Renderer& renderer)
                 auto texture = GetSpectrumTexture(lightProperties, "texture", Spectrum(1.f), scene);
                 auto light = std::shared_ptr<EnvironmentLight>(new EnvironmentLight(texture));
                 scene->m_lights.push_back(light);
-                scene->m_environmentLight = light;
+                scene->m_environmentLights.push_back(light);
             }
             else {
                 assert(false);

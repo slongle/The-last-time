@@ -26,7 +26,7 @@ public:
     std::shared_ptr<EmbreeBVH> m_embreeBvh = nullptr;
     std::vector<Primitive> m_primitives;
     std::vector<std::shared_ptr<Light>> m_lights;
-    std::shared_ptr<EnvironmentLight> m_environmentLight = nullptr;
+    std::vector<std::shared_ptr<EnvironmentLight>> m_environmentLights;    
     Bounds m_bounds;
 
 
