@@ -1,7 +1,7 @@
 ﻿#include "core/renderer.h"
 #include "integrator/pathguider.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {	
 	std::string prefix = "E:/Document/Graphics/code/The-Last-time/scenes/Scenes/";
 	std::vector<std::string> scenes(100);
 	scenes[0] = "Box/Diffuse/scene.json";
@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
 	scenes[6] = "3.Volume/Homogeneous/scene.json";
 	scenes[7] = "5.Guide/Torus/scene.json";
 	scenes[8] = "6.Caustics/DiscoBall/scene.json";
-	std::string filename = prefix + scenes[7];
+	std::string filename = prefix + scenes[6];
 
 	Renderer renderer(filename);
 	renderer.Render();

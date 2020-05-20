@@ -4,7 +4,7 @@
 Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 {
     Spectrum radiance(0.f);
-    Spectrum throughput(1.f);    
+    Spectrum throughput(1.f);
     float eta = 1.f;
     HitRecord hitRec;
     bool hit = m_scene->Intersect(ray, hitRec);
@@ -22,9 +22,9 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
             radiance += throughput * hitRec.m_primitive->m_areaLight->Eval(lightRec);
         }
 
-        auto& bsdf = hitRec.m_primitive->m_bsdf;        
+        auto& bsdf = hitRec.m_primitive->m_bsdf;
 
-        if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {            
+        if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
             LightRecord lightRec(hitRec.m_geoRec.m_p);
             Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
             if (!emission.IsBlack()) {
@@ -33,7 +33,7 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 
                 /* Evaluate BSDF * cos(theta) and pdf */
                 Spectrum bsdfVal = bsdf->EvalPdf(matRec);
-                
+
                 if (!bsdfVal.IsBlack()) {
                     /* Weight using the power heuristic */
                     float weight = PowerHeuristic(lightRec.m_pdf, matRec.m_pdf);
@@ -81,12 +81,165 @@ Spectrum PathIntegrator::Li(Ray ray, Sampler& sampler)
 
             if (!emission.IsBlack()) {
                 // Heuristic
-                float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ? 
-                    1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);                
+                float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ?
+                    1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
                 radiance += throughput * emission * weight;
             }
         }
 
+        if (bounce > 5) {
+            float q = std::min(0.99f, MaxComponent(throughput * eta * eta));
+            if (sampler.Next1D() > q) {
+                break;
+            }
+            throughput /= q;
+        }
+    }
+    return radiance;
+}
+
+Spectrum PathIntegrator::LiVolume(Ray ray, Sampler& sampler)
+{
+    Spectrum radiance(0.f);
+    Spectrum throughput(1.f);
+    float eta = 1.f;
+    HitRecord hitRec;
+    bool hit = m_scene->Intersect(ray, hitRec);
+    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
+        // Sample medium
+        MediumRecord mediumRec;
+        if (hit && ray.m_medium) {
+            throughput *= ray.m_medium->Sample(ray, mediumRec, sampler);
+        }
+        if (throughput.IsBlack()) {
+            break;
+        }
+        // Medium internal
+        if (mediumRec.m_internal) {
+            if (!hit) {
+                break;
+            }
+
+            auto& phase = ray.m_medium->m_phaseFunction;
+
+            // Sample light                                    
+            {
+                LightRecord lightRec(mediumRec.m_p);
+                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), ray.m_medium);
+                if (!emission.IsBlack()) {
+                    // Allocate a record for querying the phase function
+                    PhaseFunctionRecord phaseRec(-ray.d, lightRec.m_wi);
+                    // Evaluate phase and pdf
+                    Spectrum phaseVal = phase->EvalPdf(phaseRec);
+                    if (!phaseVal.IsBlack()) {
+                        // Weight using the power heuristic
+                        float weight = PowerHeuristic(lightRec.m_pdf, phaseRec.m_pdf);
+                        radiance += throughput * phaseVal * emission * weight;
+                    }
+                }
+            }
+            
+
+            // Sample phase function
+            {
+                // Sample phase / pdf
+                PhaseFunctionRecord phaseRec(-ray.d);
+                Spectrum phaseVal = phase->Sample(phaseRec, sampler.Next2D());
+                auto medium = ray.m_medium;
+                ray = Ray(mediumRec.m_p, phaseRec.m_wo, ray.m_medium);
+                // Update throughput
+                throughput *= phaseVal;
+                // Eval light                
+                Spectrum transmittance;
+                hit = m_scene->IntersectTr(ray, hitRec, transmittance);
+                ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
+                LightRecord lightRec;
+                Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
+                emission *= transmittance;
+                if (!emission.IsBlack()) {
+                    // Weight using the power heuristic
+                    float weight = PowerHeuristic(phaseRec.m_pdf, lightRec.m_pdf);
+                    radiance += throughput * emission * weight;
+                }
+
+                ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
+                hit = m_scene->Intersect(ray, hitRec);
+            }
+        }
+        // Medium external
+        else {
+            // Eval direct light at first bounce
+            if (bounce == 0) {
+                radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
+            }
+            // No hit
+            if (!hit) {
+                break;
+            }
+
+            auto& bsdf = hitRec.m_primitive->m_bsdf;
+            // Hit medium interface, not surface
+            if (!bsdf) {
+                auto medium = hitRec.GetMedium(ray.d);
+                ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);
+                hit = m_scene->Intersect(ray, hitRec);
+
+                bounce--;
+                continue;
+            }
+
+            // Sample light            
+            if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
+                LightRecord lightRec(hitRec.m_geoRec.m_p);
+                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
+                if (!emission.IsBlack()) {
+                    // Allocate a record for querying the BSDF
+                    MaterialRecord matRec(-ray.d, lightRec.m_wi, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+                    // Evaluate BSDF * cos(theta) and pdf
+                    Spectrum bsdfVal = bsdf->EvalPdf(matRec);
+                    if (!bsdfVal.IsBlack()) {
+                        // Weight using the power heuristic
+                        float weight = PowerHeuristic(lightRec.m_pdf, matRec.m_pdf);
+                        radiance += throughput * bsdfVal * emission * weight;
+                    }
+                }
+            }
+
+
+            // Sample BSDF
+            {
+                // Sample BSDF * |cos| / pdf
+                MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+                Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
+                /// Get medium
+                Float3 newDirection = matRec.ToWorld(matRec.m_wo);
+                auto medium = hitRec.GetMedium(newDirection);
+                Float3 rayO = hitRec.m_geoRec.m_p;
+                ray = Ray(rayO, newDirection, medium);
+                if (bsdfVal.IsBlack()) {
+                    break;
+                }
+                // Update throughput
+                throughput *= bsdfVal;
+                eta *= matRec.m_eta;
+                // Eval light                
+                Spectrum transmittance;
+                hit = m_scene->IntersectTr(ray, hitRec, transmittance);
+                LightRecord lightRec;
+                ray = Ray(rayO, newDirection, medium);
+                Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
+                emission *= transmittance;
+                if (!emission.IsBlack()) {
+                    // Weight using the power heuristic
+                    float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ?
+                        1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
+                    radiance += throughput * emission * weight;
+                }                
+                ray = Ray(rayO, newDirection, medium);
+                hit = m_scene->Intersect(ray, hitRec);
+            }
+        }
+        // Russian roulette
         if (bounce > 5) {
             float q = std::min(0.99f, MaxComponent(throughput * eta * eta));
             if (sampler.Next1D() > q) {
@@ -151,10 +304,11 @@ std::string PathIntegrator::ToString() const
 
 void PathIntegrator::Debug(DebugRecord& debugRec)
 {
+    //return;
     if (debugRec.m_debugRay) {
         Float2 pos = debugRec.m_rasterPosition;
-        if (pos.x >= 0 && pos.x < m_buffer->m_width && 
-            pos.y >= 0 && pos.y < m_buffer->m_height) 
+        if (pos.x >= 0 && pos.x < m_buffer->m_width &&
+            pos.y >= 0 && pos.y < m_buffer->m_height)
         {
             int x = pos.x, y = m_buffer->m_height - pos.y;
             Sampler sampler;
@@ -162,9 +316,9 @@ void PathIntegrator::Debug(DebugRecord& debugRec)
             sampler.Setup(s);
             Ray ray;
             m_camera->GenerateRay(Float2(x, y), sampler, ray);
-            DebugRay(ray, sampler);            
+            DebugRayVolume(ray, sampler);
         }
-    }    
+    }
 }
 
 void PathIntegrator::Setup()
@@ -193,10 +347,10 @@ void PathIntegrator::ThreadWork()
         if (m_rendering) {
             RenderTile(tile);
         }
-    }    
+    }
 
     m_renderingNum--;
-    if (m_renderingNum == 0) {        
+    if (m_renderingNum == 0) {
         m_rendering = false;
         m_timer.Stop();
         m_buffer->Save();
@@ -215,7 +369,7 @@ void PathIntegrator::RenderTile(const Framebuffer::Tile& tile)
                 int x = i + tile.pos[0], y = j + tile.pos[1];
                 Ray ray;
                 m_camera->GenerateRay(Float2(x, y), sampler, ray);
-                Spectrum radiance = Li(ray, sampler);
+                Spectrum radiance = LiVolume(ray, sampler);
                 m_buffer->AddSample(x, y, radiance);
             }
         }
@@ -306,7 +460,7 @@ void PathIntegrator::DebugRay(Ray ray, Sampler& sampler)
                     auto areaLight = hitRec.m_primitive->m_areaLight;
                     lightRec = LightRecord(ray.o, hitRec.m_geoRec);
                     emission = areaLight->EvalPdf(lightRec);
-                    lightRec.m_pdf /= m_scene->m_lights.size();                    
+                    lightRec.m_pdf /= m_scene->m_lights.size();
                 }
                 Float3 p = ray.o;
                 Float3 q = hitRec.m_geoRec.m_p;
@@ -326,7 +480,7 @@ void PathIntegrator::DebugRay(Ray ray, Sampler& sampler)
 
             if (!emission.IsBlack()) {
                 // Heuristic
-                float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ? 
+                float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ?
                     1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
                 Spectrum contribution = throughput * emission * weight;
             }
@@ -334,6 +488,157 @@ void PathIntegrator::DebugRay(Ray ray, Sampler& sampler)
 
         if (bounce > 5) {
             float q = std::min(0.99f, MaxComponent(throughput));
+            if (sampler.Next1D() > q) {
+                break;
+            }
+            throughput /= q;
+        }
+    }
+}
+
+void PathIntegrator::DebugRayVolume(Ray ray, Sampler& sampler) {
+    Spectrum radiance(0.f);
+    Spectrum throughput(1.f);
+    float eta = 1.f;
+    HitRecord hitRec;
+    bool hit = m_scene->Intersect(ray, hitRec);
+    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
+        // Sample medium
+        MediumRecord mediumRec;
+        if (hit && ray.m_medium) {
+            throughput *= ray.m_medium->Sample(ray, mediumRec, sampler);
+        }
+        if (throughput.IsBlack()) {
+            break;
+        }
+        // Medium internal
+        if (mediumRec.m_internal) {
+            if (!hit) {
+                break;
+            }
+
+            auto& phase = ray.m_medium->m_phaseFunction;
+
+            // Sample light                        
+            {
+                LightRecord lightRec(mediumRec.m_p);
+                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), ray.m_medium);
+                if (!emission.IsBlack()) {
+                    // Allocate a record for querying the phase function
+                    PhaseFunctionRecord phaseRec(-ray.d, lightRec.m_wi);
+                    // Evaluate phase and pdf
+                    Spectrum phaseVal = phase->EvalPdf(phaseRec);
+                    if (!phaseVal.IsBlack()) {
+                        // Weight using the power heuristic
+                        float weight = PowerHeuristic(lightRec.m_pdf, phaseRec.m_pdf);
+                        radiance += throughput * phaseVal * emission * weight;
+                    }
+                }
+            }
+
+            // Sample phase function
+            {
+                // Sample phase / pdf
+                PhaseFunctionRecord phaseRec(-ray.d);
+                Spectrum phaseVal = phase->Sample(phaseRec, sampler.Next2D());
+                auto medium = ray.m_medium;
+                ray = Ray(mediumRec.m_p, phaseRec.m_wo, ray.m_medium);
+                // Update throughput
+                throughput *= phaseVal;
+                // Eval light
+                Spectrum transmittance;
+                hit = m_scene->IntersectTr(ray, hitRec, transmittance);
+                ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
+                LightRecord lightRec;
+                Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
+                emission *= transmittance;
+                if (!emission.IsBlack()) {
+                    // Weight using the power heuristic
+                    float weight = PowerHeuristic(phaseRec.m_pdf, lightRec.m_pdf);
+                    radiance += throughput * emission * weight;
+                }
+
+                ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
+                hit = m_scene->Intersect(ray, hitRec);
+            }
+        }
+        // Medium external
+        else {
+            // Eval direct light at first bounce
+            if (bounce == 0) {
+                radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
+            }
+            // No hit
+            if (!hit) {
+                break;
+            }
+
+            auto& bsdf = hitRec.m_primitive->m_bsdf;
+            // Hit medium interface, not surface
+            if (!bsdf) {
+                auto medium = hitRec.GetMedium(ray.d);
+                ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);
+                hit = m_scene->Intersect(ray, hitRec);
+
+                bounce--;
+                continue;
+            }
+
+            // Sample light
+            if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
+                LightRecord lightRec(hitRec.m_geoRec.m_p);
+                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
+                if (!emission.IsBlack()) {
+                    // Allocate a record for querying the BSDF
+                    MaterialRecord matRec(-ray.d, lightRec.m_wi, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+                    // Evaluate BSDF * cos(theta) and pdf
+                    Spectrum bsdfVal = bsdf->EvalPdf(matRec);
+                    if (!bsdfVal.IsBlack()) {
+                        // Weight using the power heuristic
+                        float weight = PowerHeuristic(lightRec.m_pdf, matRec.m_pdf);
+                        radiance += throughput * bsdfVal * emission * weight;
+                    }
+                }
+            }
+
+
+            // Sample BSDF
+            {
+                // Sample BSDF * |cos| / pdf
+                MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+                Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
+                /// Get medium
+                Float3 newDirection = matRec.ToWorld(matRec.m_wo);
+                auto medium = hitRec.GetMedium(newDirection);
+                Float3 rayO = hitRec.m_geoRec.m_p;
+                ray = Ray(rayO, newDirection, medium);
+                if (bsdfVal.IsBlack()) {
+                    break;
+                }
+                // Update throughput
+                throughput *= bsdfVal;
+                eta *= matRec.m_eta;
+                // Eval light
+                Spectrum transmittance(0.f);
+                hit = m_scene->IntersectTr(ray, hitRec, transmittance);
+                LightRecord lightRec;
+                ray = Ray(rayO, newDirection, medium);
+                Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
+                emission *= transmittance;
+                if (!emission.IsBlack()) {
+                    // Weight using the power heuristic
+                    float weight = bsdf->IsDelta(hitRec.m_geoRec.m_st) ?
+                        1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
+                    radiance += throughput * emission * weight;
+                }
+
+                ray = Ray(rayO, newDirection, medium);
+                hit = m_scene->Intersect(ray, hitRec);
+            }
+        }
+        // Russian roulette
+        if (bounce > 5) {
+            float q = std::min(0.99f, MaxComponent(throughput * eta * eta));
             if (sampler.Next1D() > q) {
                 break;
             }

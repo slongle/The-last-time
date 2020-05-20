@@ -12,6 +12,8 @@
 #include "bsdf/blendbsdf.h"
 #include "light/arealight.h"
 #include "light/environment.h"
+#include "medium/hg.h"
+#include "medium/homogeneous.h"
 #include "integrator/pathtracer.h"
 #include "integrator/pathguider.h"
 #include "integrator/sppm.h"
@@ -90,6 +92,35 @@ void Parse(const std::string& filename, Renderer& renderer)
     io.close();
 
     auto scene = std::make_shared<Scene>();
+
+    // Medium
+    {
+        int mediumNum = sceneFile["media"].size();
+        std::cout << "# of media : " << mediumNum << std::endl;
+        for (auto& mediumProperties : sceneFile["media"]) {
+            std::string mediumName = mediumProperties["name"];
+            std::string mediumType = mediumProperties["type"];
+            
+            PhaseFunction* pf = nullptr;
+            {
+                auto& pfProperties = mediumProperties["phase_function"];
+                std::string pfType = pfProperties["type"];
+                if (pfType == "henyey_greenstein") {
+                    float g = GetFloat(pfProperties, "g", 0.f);
+                    pf = new HenyeyGreenstein(g);
+                }
+            }
+
+            Medium* medium = nullptr;
+            if (mediumType == "homogeneous") {
+                Spectrum sigmaA = GetSpectrum(mediumProperties, "sigma_a", Spectrum(0.5f));
+                Spectrum sigmaS = GetSpectrum(mediumProperties, "sigma_s", Spectrum(0.5f));
+                medium = new HomogeneousMedium(std::shared_ptr<PhaseFunction>(pf), sigmaA, sigmaS);
+            }
+
+            scene->AddMedium(mediumName, std::shared_ptr<Medium>(medium));
+        }
+    }
 
     // Texture
     {
@@ -199,19 +230,25 @@ void Parse(const std::string& filename, Renderer& renderer)
             std::string bsdfName = primitiveProperties["bsdf"];
             std::shared_ptr<BSDF> bsdf = scene->GetBSDF(bsdfName);
 
+            std::string inMedium = primitiveProperties["interior_media"];
+            std::string outMedium = primitiveProperties["exterior_media"];
+            auto inMediumPtr = scene->GetMedium(inMedium);
+            auto outMediumPtr = scene->GetMedium(outMedium);
+            MediumInterface mi(inMediumPtr, outMediumPtr);
+
             if (primitiveProperties.count("area_light")) {
                 auto& areaLightProperties = primitiveProperties["area_light"];
                 Spectrum radiance = GetSpectrum(areaLightProperties, "radiance", Spectrum(1.f));
                 float scale = GetFloat(areaLightProperties, "scale", 1.f);
                 for (const auto& shape : shapes) {
-                    std::shared_ptr<AreaLight> areaLight(new AreaLight(radiance * scale, shape));
-                    scene->m_primitives.emplace_back(shape, bsdf, areaLight);
+                    std::shared_ptr<AreaLight> areaLight(new AreaLight(radiance * scale, shape, mi));
+                    scene->m_primitives.emplace_back(shape, bsdf, areaLight, mi);
                     scene->m_lights.push_back(areaLight);
                 }
             }
             else {
                 for (const auto& shape : shapes) {                    
-                    scene->m_primitives.emplace_back(shape, bsdf);
+                    scene->m_primitives.emplace_back(shape, bsdf, mi);
                 }
             }
         }

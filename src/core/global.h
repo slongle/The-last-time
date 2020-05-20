@@ -48,6 +48,8 @@
 #define SQRT_TWO     1.41421356237309504880f
 #define INV_SQRT_TWO 0.70710678118654752440f
 
+class Medium;
+
 inline std::shared_ptr<std::filesystem::path> GetFileResolver(){
     static std::shared_ptr<std::filesystem::path> path(new std::filesystem::path());
     return path;

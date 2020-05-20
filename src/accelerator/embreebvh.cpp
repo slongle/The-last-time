@@ -69,6 +69,7 @@ bool EmbreeBVH::Intersect(Ray& ray, HitRecord& hitRec) const
     float t = query.ray.tfar;
     int meshIdx = query.hit.geomID;
     int triangleIdx = query.hit.primID;
+    ray.tMax = t;
     hitRec.m_t = t;
     hitRec.m_geoRec.m_uv = Float2(u, v);
     m_meshes[meshIdx]->SetGeometryRecord(triangleIdx, hitRec.m_geoRec);

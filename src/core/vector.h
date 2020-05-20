@@ -60,7 +60,7 @@ inline float AbsDot(const Float3& u, const Float3& v) {
     return std::abs(glm::dot(u, v));
 }
 
-inline Float3 Cross(const Float3& u,const Float3& v) {
+inline Float3 Cross(const Float3& u, const Float3& v) {
     return glm::cross(u, v);
 }
 
@@ -80,13 +80,18 @@ inline Float3 Max(const Float3& v1, const Float3& v2) {
 class Ray {
 public:
     Ray() {}
-    Ray(const Float3& _o, const Float3& _d)
-        :o(_o), d(_d), tMin(epsilon), tMax(std::numeric_limits<float>::infinity()) {}
-    Ray(const Float3& _o, const Float3& _d, const float& _tMin, const float& _tMax)
-        :o(_o), d(_d), tMin(_tMin), tMax(_tMax) {}
+    Ray(const Float3& _o, const Float3& _d,
+        const std::shared_ptr<Medium>& _m = nullptr)
+        :o(_o), d(_d), tMin(epsilon), tMax(std::numeric_limits<float>::infinity()), m_medium(_m) {}
+    Ray(const Float3& _o, const Float3& _d, const float& _tMin, const float& _tMax,
+        const std::shared_ptr<Medium>& _m = nullptr)
+        :o(_o), d(_d), tMin(_tMin), tMax(_tMax), m_medium(_m) {}
+
+    Float3 operator ()(const float& t) const { return o + d * t; }
 
     Float3 o, d;
     float tMin, tMax;
+    std::shared_ptr<Medium> m_medium;
 
     static float epsilon;
     static float shadowEpsilon;
@@ -96,14 +101,14 @@ inline float Ray::epsilon = 1e-4;
 inline float Ray::shadowEpsilon = 1e-3;
 
 
-class Bounds{
+class Bounds {
 public:
     Bounds() :m_pMin(std::numeric_limits<float>::max()), m_pMax(std::numeric_limits<float>::min()) {}
     Bounds(const Float3& p) :m_pMin(p), m_pMax(p) {}
     Bounds(const Float3& pMin, const Float3& pMax) :m_pMin(pMin), m_pMax(pMax) {}
-    
+
     const Float3& operator[](const int& idx) const { return idx == 0 ? m_pMin : m_pMax; }
-    
+
     float Area() const {
         Float3 diag = m_pMax - m_pMin;
         return 2.f * (diag.x * diag.y + diag.x * diag.z + diag.y * diag.z);
@@ -133,12 +138,12 @@ public:
                 float t2 = (maxVal - origin) / ray.d[i];
                 if (t1 > t2) {
                     std::swap(t1, t2);
-                }                    
+                }
                 nearT = std::max(t1, nearT);
                 farT = std::min(t2, farT);
                 if (!(nearT <= farT)) {
                     return false;
-                }                    
+                }
             }
         }
 
@@ -149,9 +154,9 @@ public:
         const Bounds& bounds = *this;
 
         // Check for ray intersection against $x$ and $y$ slabs
-        float tMin = (bounds[    dirIsNeg[0]].x - ray.o.x) * invDir.x;
+        float tMin = (bounds[dirIsNeg[0]].x - ray.o.x) * invDir.x;
         float tMax = (bounds[1 - dirIsNeg[0]].x - ray.o.x) * invDir.x;
-        float tyMin = (bounds[    dirIsNeg[1]].y - ray.o.y) * invDir.y;
+        float tyMin = (bounds[dirIsNeg[1]].y - ray.o.y) * invDir.y;
         float tyMax = (bounds[1 - dirIsNeg[1]].y - ray.o.y) * invDir.y;
         //if (tMin > tMax) std::swap(tMin, tMax);
         //if (tyMin > tyMax) std::swap(tyMin, tyMax);
@@ -162,7 +167,7 @@ public:
         if (tyMax < tMax) tMax = tyMax;
 
         // Check for ray intersection against $z$ slab
-        float tzMin = (bounds[    dirIsNeg[2]].z - ray.o.z) * invDir.z;
+        float tzMin = (bounds[dirIsNeg[2]].z - ray.o.z) * invDir.z;
         float tzMax = (bounds[1 - dirIsNeg[2]].z - ray.o.z) * invDir.z;
         //if (tzMin > tzMax) std::swap(tzMin, tzMax);
 
@@ -186,6 +191,6 @@ inline Bounds Union(const Bounds& b1, const Bounds& b2) {
 }
 
 inline void Split(const Bounds& bounds, int axis, float val, Bounds& lb, Bounds& rb) {
-    lb = Bounds(bounds), rb = Bounds(bounds);    
+    lb = Bounds(bounds), rb = Bounds(bounds);
     lb.m_pMax[axis] = rb.m_pMin[axis] = val;
 }

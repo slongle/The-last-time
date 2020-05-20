@@ -14,6 +14,7 @@ Spectrum AreaLight::Sample(LightRecord& lightRec, Float2& s) const
         return m_radiance / lightRec.m_pdf;
     }
     else {
+        lightRec.m_pdf = 0.f;
         return Spectrum(0.f);
     }
 }

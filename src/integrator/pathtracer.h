@@ -17,6 +17,7 @@ public:
         : Integrator(scene, camera, buffer), m_maxBounce(maxBounce), m_spp(spp) {}
 
     Spectrum Li(Ray ray, Sampler& sampler);
+    Spectrum LiVolume(Ray ray, Sampler& sampler);
     void Start();
     void Stop();
     void Wait();
@@ -33,6 +34,7 @@ private:
     // Debug
     Spectrum NormalCheck(Ray ray, Sampler& sampler);
     void DebugRay(Ray ray, Sampler& sampler);
+    void DebugRayVolume(Ray ray, Sampler& sampler);
 private:
     // Muti-thread setting
     bool m_rendering;

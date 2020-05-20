@@ -2,7 +2,7 @@
 #include "core/framebuffer.h"
 
 EnvironmentLight::EnvironmentLight(const std::shared_ptr<Texture<Spectrum>>& texture)
-    :m_texture(texture)
+    :Light(MediumInterface(nullptr, nullptr)), m_texture(texture)
 {
     std::vector<float> img;
     for (uint32_t i = 0; i < m_texture->m_height; i++) {

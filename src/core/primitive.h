@@ -38,8 +38,39 @@ protected:
     std::shared_ptr<Texture<float>> m_alpha;
 };
 
+class PhaseFunction {
+public:
+    // Return f * |cos|
+    virtual Spectrum EvalPdf(PhaseFunctionRecord& phaseRec) const = 0;
+    // Return f * |cos| / pdf
+    virtual Spectrum Sample(PhaseFunctionRecord& phaseRec, Float2& s) const = 0;
+};
+
+class Medium {
+public:
+    Medium(const std::shared_ptr<PhaseFunction>& pf) :m_phaseFunction(pf) {}
+
+    virtual Spectrum Sample(const Ray& ray, MediumRecord& mediumRec, Sampler& sampler) const = 0;
+    virtual Spectrum Transmittance(const Ray& ray) const = 0;
+
+    std::shared_ptr<PhaseFunction> m_phaseFunction;
+};
+
+class MediumInterface {
+public:
+    MediumInterface(
+        std::shared_ptr<Medium> insideMedium,
+        std::shared_ptr<Medium> outsideMedium)
+        :m_insideMedium(insideMedium), m_outsideMedium(outsideMedium) {}
+
+    std::shared_ptr<Medium> m_insideMedium;
+    std::shared_ptr<Medium> m_outsideMedium;
+};
+
 class Light {
 public:
+    Light(const MediumInterface& mi) :m_mediumInterface(mi) {}
+
     // Return radiance / p(omega) = radiance / (p(area) * dist^2 / cos)
     virtual Spectrum Sample(LightRecord& lightRec, Float2& s) const = 0;
     // Return radiance
@@ -52,6 +83,8 @@ public:
     virtual Spectrum SamplePhoton(Float2& s1, Float2& s2, Ray& ray) const = 0;
 
     virtual bool IsDelta() const { return false; }
+
+    MediumInterface m_mediumInterface;
 };
 
 class Primitive {
@@ -59,19 +92,22 @@ public:
     Primitive(
         std::shared_ptr<Shape> shape,
         std::shared_ptr<BSDF> bsdf,
-        std::shared_ptr<AreaLight> areaLight)
-        :m_shape(shape), m_bsdf(bsdf), m_areaLight(areaLight)
+        std::shared_ptr<AreaLight> areaLight,
+        MediumInterface mi)
+        :m_shape(shape), m_bsdf(bsdf), m_areaLight(areaLight), m_mediumInterface(mi)
     {}
 
     Primitive(
         std::shared_ptr<Shape> shape,
-        std::shared_ptr<BSDF> bsdf)
-        :m_shape(shape), m_bsdf(bsdf)
+        std::shared_ptr<BSDF> bsdf,
+        MediumInterface mi)
+        :m_shape(shape), m_bsdf(bsdf), m_mediumInterface(mi)
     {}
-
+    
     bool IsAreaLight() const { return m_areaLight != nullptr; }
 
     std::shared_ptr<Shape> m_shape;
     std::shared_ptr<BSDF> m_bsdf;
     std::shared_ptr<AreaLight> m_areaLight;
+    MediumInterface m_mediumInterface;
 };

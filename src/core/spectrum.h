@@ -24,6 +24,12 @@ public:
     RGBSpectrum(const std::string& filename);
     RGBSpectrum(const Float3& v) :r(std::fabs(v.x)), g(std::fabs(v.y)), b(std::fabs(v.z)) {}
 
+    float operator [] (const uint32_t& i) const {
+        if (i == 0) return r;
+        else if (i == 1) return g;
+        else return b;
+    }
+
     RGBSpectrum operator * (float v) const { return RGBSpectrum(r * v, g * v, b * v); }
     RGBSpectrum operator / (float v) const { assert(v != 0.f); return RGBSpectrum(r / v, g / v, b / v); }
     RGBSpectrum& operator /= (float v) { assert(v != 0.f); r /= v; g /= v; b /= v; return *this; }
@@ -35,6 +41,7 @@ public:
     RGBSpectrum& operator *= (const RGBSpectrum& v) { r *= v.r; g *= v.g; b *= v.b; return *this; }
     RGBSpectrum operator / (const RGBSpectrum& v) const { return RGBSpectrum(r / v.r, g / v.g, b / v.b); }
 
+    float Average() const { return double(r + g + b) / 3; }
     float y() const { return (r * 0.299) + (g * 0.587) + (b * 0.114); }
     bool IsBlack() const { return r == 0 && g == 0 && b == 0; }
 
@@ -44,6 +51,7 @@ public:
 
     float r, g, b;
 
+    friend RGBSpectrum Exp(const RGBSpectrum& s) { return RGBSpectrum(std::exp(s.r), std::exp(s.g), std::exp(s.b)); }
     friend RGBSpectrum Sqrt(const RGBSpectrum& s) { return RGBSpectrum(Sqrt(s.r), Sqrt(s.g), Sqrt(s.b)); }
     friend float MaxComponent(const RGBSpectrum& s) { return std::max(s.r, std::max(s.g, s.b)); }
     friend std::ostream& operator <<(std::ostream& os, const RGBSpectrum& s) {

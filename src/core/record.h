@@ -5,6 +5,7 @@
 #include "camera.h"
 
 class Primitive;
+class BSDF;
 
 class GeometryRecord {
 public:
@@ -17,6 +18,9 @@ public:
 
 class HitRecord {
 public:
+
+    std::shared_ptr<Medium> GetMedium(const Float3& d) const;
+    std::shared_ptr<BSDF> GetBSDF() const;
 
     float m_t;
     GeometryRecord m_geoRec;
@@ -51,6 +55,26 @@ public:
     TransportMode m_mode;
 };
 
+class PhaseFunctionRecord {
+public:
+    PhaseFunctionRecord() {}
+    PhaseFunctionRecord(const Float3& wi) :m_wi(wi) {}
+    PhaseFunctionRecord(const Float3& wi, const Float3& wo) :m_wi(wi), m_wo(wo) {}
+
+    Float3 m_wo, m_wi;
+    float m_pdf;
+};
+
+class MediumRecord {
+public:
+    MediumRecord() {}
+
+    bool m_internal = false;
+    float m_t;
+    float m_pdf;
+    Float3 m_p;
+};
+
 class LightRecord {
 public:
     LightRecord() {}
@@ -64,7 +88,7 @@ public:
     GeometryRecord m_geoRec;
     Float3 m_wi;
     float m_pdf;
-    Ray m_shadowRay;
+    Ray m_shadowRay;    
 };
 
 class DebugRecord { 

@@ -4,8 +4,9 @@
 
 class AreaLight :public Light {
 public:
-    AreaLight(const Spectrum& radiance, const std::shared_ptr<Shape> shape)
-        :m_radiance(radiance), m_shape(shape) {}
+    AreaLight(const Spectrum& radiance, const std::shared_ptr<Shape> shape,
+        const MediumInterface& mi)
+        :Light(mi), m_radiance(radiance), m_shape(shape) {}
 
     Spectrum Sample(LightRecord& lightRec, Float2& s) const;
     Spectrum Eval(LightRecord& lightRec) const;
