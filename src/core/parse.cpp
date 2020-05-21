@@ -240,8 +240,8 @@ void Parse(const std::string& filename, Renderer& renderer)
             std::string bsdfName = primitiveProperties["bsdf"];
             std::shared_ptr<BSDF> bsdf = scene->GetBSDF(bsdfName);
 
-            std::string inMedium = primitiveProperties["interior_media"];
-            std::string outMedium = primitiveProperties["exterior_media"];
+            std::string inMedium = primitiveProperties["interior_medium"];
+            std::string outMedium = primitiveProperties["exterior_medium"];
             auto inMediumPtr = scene->GetMedium(inMedium);
             auto outMediumPtr = scene->GetMedium(outMedium);
             MediumInterface mi(inMediumPtr, outMediumPtr);
@@ -296,7 +296,13 @@ void Parse(const std::string& filename, Renderer& renderer)
         Float3 pos = GetFloat3(cameraProperties["transform"], "position", Float3(0, 1, 0));
         Float3 look = GetFloat3(cameraProperties["transform"], "lookat", Float3(0, 0, 0));
         Float3 up = GetFloat3(cameraProperties["transform"], "up", Float3(0, 0, 1));
-        camera = std::make_shared<Camera>(LookAt(pos, look, up), fov);
+
+        std::string mediumName = GetString(cameraProperties, "medium", "");
+        std::cout << mediumName << std::endl;
+        auto mediumPtr = scene->GetMedium(mediumName);
+        std::cout << mediumPtr << std::endl;
+
+        camera = std::make_shared<Camera>(LookAt(pos, look, up), fov, mediumPtr);
     }
 
     std::shared_ptr<Framebuffer> buffer = nullptr;

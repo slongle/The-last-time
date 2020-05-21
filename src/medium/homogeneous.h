@@ -24,8 +24,8 @@ public:
 
     Spectrum Sample(const Ray& ray, MediumRecord& mediumRec, Sampler& sampler) const {
         float maxT = std::min(ray.tMax, std::numeric_limits<float>::max()), t;
-        uint32_t channel = std::min(int(sampler.Next1D() * 3), 2);
 
+        uint32_t channel = std::min(int(sampler.Next1D() * 3), 2);
         t = -std::log(1 - sampler.Next1D()) / m_sigmaT[channel];
         mediumRec.m_internal = t < maxT;
         t = std::min(t, maxT);

@@ -85,7 +85,7 @@ void Scene::AddSpectrumTexture(const std::string& name, const std::shared_ptr<Te
 
 void Scene::Setup()
 {
-    assert(!m_lights.empty() || m_environmentLight);
+    assert(!m_lights.empty() || !m_environmentLights.empty());
     std::cout << "Building BVH" << std::endl;
     for (Primitive& p: m_primitives) {
         m_bounds = Union(m_bounds, p.m_shape->GetBounds());
