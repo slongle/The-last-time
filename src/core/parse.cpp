@@ -27,7 +27,7 @@ Spectrum ArrayToSpectrum(const json::value_type& node) {
     return Spectrum(node[0], node[1], node[2]);
 }
 
-Spectrum GetSpectrum(const json::value_type& node, const std::string name, const Spectrum& defaultValue) {    
+Spectrum GetSpectrum(const json::value_type& node, const std::string name, const Spectrum& defaultValue) {
     return node.contains(name) ? Spectrum(node[name][0], node[name][1], node[name][2]) : defaultValue;
 }
 
@@ -47,9 +47,9 @@ bool GetBool(const json::value_type& node, const std::string name, const bool de
     return node.contains(name) ? node[name] : defaultValue;
 }
 
-std::shared_ptr<Texture<Spectrum>> 
-GetSpectrumTexture(const json::value_type& node, const std::string name, 
-    const Spectrum& defaultValue, const std::shared_ptr<Scene>& scene) 
+std::shared_ptr<Texture<Spectrum>>
+GetSpectrumTexture(const json::value_type& node, const std::string name,
+    const Spectrum& defaultValue, const std::shared_ptr<Scene>& scene)
 {
     if (!node.contains(name)) {
         return std::shared_ptr<Texture<Spectrum>>(new ConstTexture<Spectrum>(defaultValue));
@@ -66,8 +66,8 @@ GetSpectrumTexture(const json::value_type& node, const std::string name,
 }
 
 std::shared_ptr<Texture<float>>
-GetFloatTexture(const json::value_type& node, const std::string name, 
-    const float& defaultValue, const std::shared_ptr<Scene>& scene) 
+GetFloatTexture(const json::value_type& node, const std::string name,
+    const float& defaultValue, const std::shared_ptr<Scene>& scene)
 {
     if (!node.contains(name)) {
         return std::shared_ptr<Texture<float>>(new ConstTexture<float>(defaultValue));
@@ -104,7 +104,7 @@ void Parse(const std::string& filename, Renderer& renderer)
         for (auto& mediumProperties : sceneFile["media"]) {
             std::string mediumName = mediumProperties["name"];
             std::string mediumType = mediumProperties["type"];
-            
+
             PhaseFunction* pf = nullptr;
             {
                 auto& pfProperties = mediumProperties["phase_function"];
@@ -117,9 +117,10 @@ void Parse(const std::string& filename, Renderer& renderer)
 
             Medium* medium = nullptr;
             if (mediumType == "homogeneous") {
-                Spectrum sigmaA = GetSpectrum(mediumProperties, "sigma_a", Spectrum(0.5f));
-                Spectrum sigmaS = GetSpectrum(mediumProperties, "sigma_s", Spectrum(0.5f));
-                medium = new HomogeneousMedium(std::shared_ptr<PhaseFunction>(pf), sigmaA, sigmaS);
+                Spectrum density = GetSpectrum(mediumProperties, "density", Spectrum(1));
+                Spectrum albedo = GetSpectrum(mediumProperties, "albedo", Spectrum(0.5f));
+                float scale = GetFloat(mediumProperties, "scale", 1);
+                medium = new HomogeneousMedium(std::shared_ptr<PhaseFunction>(pf), density, albedo, scale);
             }
 
             scene->AddMedium(mediumName, std::shared_ptr<Medium>(medium));
@@ -147,7 +148,7 @@ void Parse(const std::string& filename, Renderer& renderer)
     {
         int BSDFNum = sceneFile["bsdfs"].size();
         std::cout << "# of BSDFs : " << BSDFNum << std::endl;
-        for (auto& bsdfProperties : sceneFile["bsdfs"]) 
+        for (auto& bsdfProperties : sceneFile["bsdfs"])
         {
             std::string BSDFName = bsdfProperties["name"];
             std::string type = bsdfProperties["type"];
@@ -204,8 +205,8 @@ void Parse(const std::string& filename, Renderer& renderer)
                 std::string filename = shape["filename"];
                 std::shared_ptr<Mesh> mesh = LoadMesh(filename);
                 scene->AddMesh(shapeName, mesh);
-            } 
-            else{
+            }
+            else {
                 assert(false);
             }
         }
@@ -215,7 +216,7 @@ void Parse(const std::string& filename, Renderer& renderer)
     {
         int primitiveNum = sceneFile["primitives"].size();
         std::cout << "# of primitives : " << primitiveNum << std::endl;
-        for (auto& primitiveProperties : sceneFile["primitives"]) 
+        for (auto& primitiveProperties : sceneFile["primitives"])
         {
             bool hide = GetBool(primitiveProperties, "hide", false);
             if (hide) {
@@ -228,12 +229,12 @@ void Parse(const std::string& filename, Renderer& renderer)
                 std::shared_ptr<Mesh> mesh = scene->GetMesh(shapeName);
                 scene->m_orderedMeshes.push_back(mesh);
                 shapes.reserve(mesh->m_triangleNum);
-                for (uint32_t i = 0; i < mesh->m_triangleNum; i++){
+                for (uint32_t i = 0; i < mesh->m_triangleNum; i++) {
                     shapes.emplace_back(new Triangle(mesh, i));
                 }
             }
             else {
-                
+
             }
 
             std::string bsdfName = primitiveProperties["bsdf"];
@@ -256,7 +257,7 @@ void Parse(const std::string& filename, Renderer& renderer)
                 }
             }
             else {
-                for (const auto& shape : shapes) {                    
+                for (const auto& shape : shapes) {
                     scene->m_primitives.emplace_back(shape, bsdf, mi);
                 }
             }
@@ -283,7 +284,7 @@ void Parse(const std::string& filename, Renderer& renderer)
             }
             else {
                 assert(false);
-            }            
+            }
         }
     }
 
@@ -294,7 +295,7 @@ void Parse(const std::string& filename, Renderer& renderer)
         float fov = GetFloat(cameraProperties, "fov", 25.f);
         Float3 pos = GetFloat3(cameraProperties["transform"], "position", Float3(0, 1, 0));
         Float3 look = GetFloat3(cameraProperties["transform"], "lookat", Float3(0, 0, 0));
-        Float3 up = GetFloat3(cameraProperties["transform"], "up", Float3(0, 0, 1));        
+        Float3 up = GetFloat3(cameraProperties["transform"], "up", Float3(0, 0, 1));
         camera = std::make_shared<Camera>(LookAt(pos, look, up), fov);
     }
 
@@ -328,12 +329,12 @@ void Parse(const std::string& filename, Renderer& renderer)
             integrator = std::make_shared<PathGuiderIntegrator>(scene, camera, buffer, maxBounce, initSpp, maxIteration);
         }
         else if (type == "sppm") {
-            int maxBounce = GetInt(integratorProperties, "max_bounce", 10);            
+            int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
             int maxIteration = GetInt(integratorProperties, "max_iteration", 1);
             int deltaPhotonNum = GetInt(integratorProperties, "delta_photon_num", 10000);
             float initialRadius = GetFloat(integratorProperties, "initial_radius", 1);
             float alpha = GetFloat(integratorProperties, "alpha", 2.f / 3.f);
-            integrator = std::make_shared<SPPMIntegrator>(scene, camera, buffer, maxBounce, 
+            integrator = std::make_shared<SPPMIntegrator>(scene, camera, buffer, maxBounce,
                 maxIteration, deltaPhotonNum, initialRadius, alpha);
         }
         else {
