@@ -296,12 +296,10 @@ void Parse(const std::string& filename, Renderer& renderer)
         Float3 pos = GetFloat3(cameraProperties["transform"], "position", Float3(0, 1, 0));
         Float3 look = GetFloat3(cameraProperties["transform"], "lookat", Float3(0, 0, 0));
         Float3 up = GetFloat3(cameraProperties["transform"], "up", Float3(0, 0, 1));
-
+        // Get medium
         std::string mediumName = GetString(cameraProperties, "medium", "");
-        std::cout << mediumName << std::endl;
         auto mediumPtr = scene->GetMedium(mediumName);
-        std::cout << mediumPtr << std::endl;
-
+        // Construct camera
         camera = std::make_shared<Camera>(LookAt(pos, look, up), fov, mediumPtr);
     }
 
