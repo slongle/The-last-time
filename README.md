@@ -63,8 +63,8 @@ The images below are from my old renderer [Rainbow](https://github.com/slongle/R
 ![](images/cornell-box-sphere-heat.png)  
 ![](images/veach-mis-heat.jpg)  
 Veach thesis multiple importance sampling test scene. Rendered using pathtracing with multiple importance sampling.  
-![vol-caustic](https://i.postimg.cc/ryHf24pD/0002.png)  
+![](images/vol-caustic-final.png)  
 Homogeneous medium(volumetric caustic WIP)  
-![hetvol](https://i.postimg.cc/9MJN7NVb/0001.png)  
+![](images/hetvol.jpg)  
 Heterogeneous medium  
 Rendered using volumetric unidirectional pathtracing.  
