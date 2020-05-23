@@ -1,6 +1,6 @@
 # The-Last-time
 
-![](images/cover.png)
+![](https://github.com/slongle/The-last-time/blob/master/images/cover.png)
 
 ## Building
 
@@ -45,23 +45,23 @@ Or use `./setup_builds.bat`.
 
 ### Select Images
 
-![](images/glory_4096spp.png)  
+![](https://github.com/slongle/The-last-time/blob/master/images/glory_4096spp.png)  
 Crepuscular beam  
-![](images/envbunny_spp=512_density=10_albedo=1.png)  
+![](https://github.com/slongle/The-last-time/blob/master/images/envbunny_spp=512_density=10_albedo=1.png)  
 Homogeneous medium with HG phase function (density = 10, albedo = 1, g = 0), multi-scatter  
-![](images/scene_SPPM_5000.png)  
+![](https://github.com/slongle/The-last-time/blob/master/images/scene_SPPM_5000.png)  
 Stochastic progressive photon mapping, initial radius = 0.2, alpha = 0.5, iteration = 5000  
-![](images/torus_SPPM_10k.png)  
+![](https://github.com/slongle/The-last-time/blob/master/images/torus_SPPM_10k.png)  
 Stochastic progressive photon mapping, initial radius = 0.05, alpha = 0.5, iteration = 10000  
-![](images/globe_64spp.png)  
+![](https://github.com/slongle/The-last-time/blob/master/images/globe_64spp.png)  
 Blend BSDF of smooth dielectric and matte, Au conductor BSDF (convert SPD to RGB)  
-![](images/scene_1024spp.png)  
+![](https://github.com/slongle/The-last-time/blob/master/images/scene_1024spp.png)  
 Alpha texture for leaf  
-![](images/pbrt-book_64spp.png)  
+![](https://github.com/slongle/The-last-time/blob/master/images/pbrt-book_64spp.png)  
 The images below are from my old renderer [Rainbow](https://github.com/slongle/Rainbow).  
-![](images/cornell-box-heat.jpg)  
-![](images/cornell-box-sphere-heat.png)  
-![](images/veach-mis-heat.jpg)  
+![](https://github.com/slongle/The-last-time/blob/master/images/cornell-box-heat.jpg)  
+![](https://github.com/slongle/The-last-time/blob/master/images/cornell-box-sphere-heat.png)  
+![](https://github.com/slongle/The-last-time/blob/master/images/veach-mis-heat.jpg)  
 Veach thesis multiple importance sampling test scene. Rendered using pathtracing with multiple importance sampling.  
 ![vol-caustic](https://i.postimg.cc/ryHf24pD/0002.png)  
 Homogeneous medium(volumetric caustic WIP)  
