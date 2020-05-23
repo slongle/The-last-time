@@ -45,41 +45,41 @@ Or use `./setup_builds.bat`.
 
 ### Select Images
 
-![](images/glory_4096spp.png){:width="1024"}
+![](images/glory_4096spp.png)
 
 <p><center><font size="2">Crepuscular beam</font></center></p>
-![](images/envbunny_spp=512_density=10_albedo=1.png){:width="1024"}  
+![](images/envbunny_spp=512_density=10_albedo=1.png)
 
 <p><center><font size="2">Homogeneous medium with HG phase function (density = 10, albedo = 1, g = 0), multi-scatter</font></center></p>
 
 
-![](images/scene_SPPM_5000.png){:width="1024"}
+![](images/scene_SPPM_5000.png)
 
-<p><center><font size="2">Stochastic progressive photon mapping, initial radius = 0.2, $\alpha$ = 0.5, iteration = 5000</font></center></p>
+<p><center><font size="2">Stochastic progressive photon mapping, initial radius = 0.2, alpha = 0.5, iteration = 5000</font></center></p>
 
 
-![](images/torus_SPPM_10k.png){:width="1024"}
+![](images/torus_SPPM_10k.png)
 
-<p><center><font size="2">Stochastic progressive photon mapping, initial radius = 0.05, $\alpha$ = 0.5, iteration = 10000</font></center></p>
-![](images/globe_64spp.png){:width="1024"}
+<p><center><font size="2">Stochastic progressive photon mapping, initial radius = 0.05, alpha = 0.5, iteration = 10000</font></center></p>
+![](images/globe_64spp.png)
 
 <p><center><font size="2">Blend BSDF of smooth dielectric and matte, Au conductor BSDF (convert SPD to RGB)</font></center></p>
-![](images/scene_1024spp.png){:width="1024"}
+![](images/scene_1024spp.png)
 
 <p><center><font size="2">Alpha texture for leaf</font></center></p>
-![](images/pbrt-book_64spp.png){:width="1024"}
+![](images/pbrt-book_64spp.png)
 
 The images below are from my old renderer [Rainbow](https://github.com/slongle/Rainbow).
 
-![](images/cornell-box-heat.jpg){:width="1024"}
+![](images/cornell-box-heat.jpg)
 
-![](images/cornell-box-sphere-heat.png){:width="1024"}
+![](images/cornell-box-sphere-heat.png)
 
-![](images/veach-mis-heat.jpg){:width="1024"}
+![](images/veach-mis-heat.jpg)
 
 <p><center><font size="2">Veach thesis multiple importance sampling test scene. Rendered using pathtracing with multiple importance sampling.</font></center></p>
-![vol-caustic](https://i.postimg.cc/ryHf24pD/0002.png){:width="1024"}  
+![vol-caustic](https://i.postimg.cc/ryHf24pD/0002.png)
 <p><center><font size="2">Homogeneous medium(volumetric caustic WIP)  </font></center></p>  
-![hetvol](https://i.postimg.cc/9MJN7NVb/0001.png){:width="1024"}    
+![hetvol](https://i.postimg.cc/9MJN7NVb/0001.png)
 <p><center><font size="2">Heterogeneous medium </font></center></p>
 Rendered using volumetric unidirectional pathtracing.
