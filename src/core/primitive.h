@@ -34,6 +34,7 @@ public:
     virtual Spectrum EvalPdf(MaterialRecord& matRec) const = 0;
 
     virtual bool IsDelta(const Float2& st) const;
+    virtual bool IsTransparent() const;
 protected:
     std::shared_ptr<Texture<float>> m_alpha;
 };

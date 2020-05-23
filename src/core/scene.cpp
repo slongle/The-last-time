@@ -125,10 +125,18 @@ bool Scene::IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance) co
         if (!hit) {
             return false;
         }
-        if (hitRec.GetBSDF()) {
+        const auto& bsdf = hitRec.m_primitive->m_bsdf;
+        if (bsdf && !bsdf->IsTransparent()) {
             return true;
         }
-        ray = Ray(hitRec.m_geoRec.m_p, ray.d, hitRec.GetMedium(ray.d));
+        if (bsdf->IsTransparent()) {
+            MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+            transmittance *= bsdf->Sample(matRec, Float2(0, 0));
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d, ray.m_medium);
+        }
+        else {
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d, hitRec.GetMedium(ray.d));
+        }
     }
 }
 
@@ -153,9 +161,12 @@ bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance) const
     while (true) {
         HitRecord hitRec;
         bool hit = Intersect(ray, hitRec);
-        if (hit && hitRec.GetBSDF()) {
-            transmittance = Spectrum(0.f);
-            return true;
+        const auto& bsdf = hitRec.m_primitive->m_bsdf;
+        if (hit && bsdf) {
+            if (!bsdf->IsTransparent()) {
+                transmittance = Spectrum(0.f);
+                return true;
+            }
         }
 
         if (ray.m_medium) {
@@ -165,9 +176,17 @@ bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance) const
         if (!hit) {
             return false;
         }
-
-        t -= ray.tMax;
-        ray = Ray(hitRec.m_geoRec.m_p, ray.d, Ray::epsilon, t, hitRec.GetMedium(ray.d));
+        
+        if (bsdf) {
+            MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+            transmittance *= bsdf->Sample(matRec, Float2(0, 0));
+            t -= ray.tMax;
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d, Ray::epsilon, t, ray.m_medium);
+        }
+        else {
+            t -= ray.tMax;
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d, Ray::epsilon, t, hitRec.GetMedium(ray.d));
+        }
     }
 }
 

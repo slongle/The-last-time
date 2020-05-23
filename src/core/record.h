@@ -34,13 +34,13 @@ enum TransportMode {
 
 class MaterialRecord {
 public:
-    MaterialRecord() {}
+    MaterialRecord() :m_eta(1) {}
     MaterialRecord(const Float3& wi, const Float3& ns, const Float2& st, 
         const TransportMode& mode = Radiance)
-        :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_st(st), m_mode(mode) {}
+        :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_st(st), m_mode(mode), m_eta(1) {}
     MaterialRecord(const Float3& wi, const Float3& wo, const Float3& ns, const Float2& st, 
         const TransportMode& mode = Radiance)
-        :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_wo(m_frame.ToLocal(wo)), m_st(st), m_mode(mode) {}
+        :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_wo(m_frame.ToLocal(wo)), m_st(st), m_mode(mode), m_eta(1) {}
 
     Float3 ToLocal(const Float3& v) const { return m_frame.ToLocal(v); }
     Float3 ToWorld(const Float3& v) const { return m_frame.ToWorld(v); }

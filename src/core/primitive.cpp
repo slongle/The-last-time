@@ -18,3 +18,8 @@ bool BSDF::IsDelta(const Float2& st) const
     bool opaque = !(m_alpha->Evaluate(st) >= 0.99f);
     return opaque;
 }
+
+bool BSDF::IsTransparent() const
+{
+    return false;
+}

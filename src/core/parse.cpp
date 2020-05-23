@@ -10,6 +10,7 @@
 #include "bsdf/dielectric.h"
 #include "bsdf/conductor.h"
 #include "bsdf/blendbsdf.h"
+#include "bsdf/transparent.h"
 #include "light/arealight.h"
 #include "light/environment.h"
 #include "medium/hg.h"
@@ -185,6 +186,10 @@ void Parse(const std::string& filename, Renderer& renderer)
                 std::shared_ptr<BSDF> bsdf1 = scene->GetBSDF(bsdf1Name);
                 std::shared_ptr<BSDF> bsdf2 = scene->GetBSDF(bsdf2Name);
                 bsdf = new BlendBSDF(weight, bsdf1, bsdf2, alpha);
+            }
+            else if (type == "transparent") {
+                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
+                bsdf = new Transparent(reflectance, alpha);
             }
             else {
                 assert(false);

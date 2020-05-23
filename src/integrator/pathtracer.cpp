@@ -244,7 +244,7 @@ void PathIntegrator::Start()
                 });
         }
     }
-    std::reverse(m_tiles.begin(), m_tiles.end());
+    //std::reverse(m_tiles.begin(), m_tiles.end());
 
     m_renderingNum = 0;
     m_rendering = true;
@@ -487,6 +487,11 @@ void PathIntegrator::DebugRayVolume(Ray ray, Sampler& sampler) {
         if (throughput.IsBlack()) {
             break;
         }
+        if (hit) {
+            Float3 p = ray.o;
+            Float3 q = hitRec.m_geoRec.m_p;
+            DrawLine(p, q, Spectrum(1, 1, 0));
+        }
         // Medium internal
         if (mediumRec.m_internal) {
             if (!hit) {
@@ -495,7 +500,7 @@ void PathIntegrator::DebugRayVolume(Ray ray, Sampler& sampler) {
 
             auto& phase = ray.m_medium->m_phaseFunction;
 
-            // Sample light                        
+            // Sample light
             {
                 LightRecord lightRec(mediumRec.m_p);
                 Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), ray.m_medium);
@@ -521,7 +526,7 @@ void PathIntegrator::DebugRayVolume(Ray ray, Sampler& sampler) {
                 ray = Ray(mediumRec.m_p, phaseRec.m_wo, ray.m_medium);
                 // Update throughput
                 throughput *= phaseVal;
-                // Eval light
+                // Eval light                
                 Spectrum transmittance;
                 hit = m_scene->IntersectTr(ray, hitRec, transmittance);
                 ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
@@ -560,7 +565,7 @@ void PathIntegrator::DebugRayVolume(Ray ray, Sampler& sampler) {
                 continue;
             }
 
-            // Sample light
+            // Sample light            
             if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
                 LightRecord lightRec(hitRec.m_geoRec.m_p);
                 Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
@@ -576,7 +581,6 @@ void PathIntegrator::DebugRayVolume(Ray ray, Sampler& sampler) {
                     }
                 }
             }
-
 
             // Sample BSDF
             {
@@ -594,8 +598,8 @@ void PathIntegrator::DebugRayVolume(Ray ray, Sampler& sampler) {
                 // Update throughput
                 throughput *= bsdfVal;
                 eta *= matRec.m_eta;
-                // Eval light
-                Spectrum transmittance(0.f);
+                // Eval light                
+                Spectrum transmittance;
                 hit = m_scene->IntersectTr(ray, hitRec, transmittance);
                 LightRecord lightRec;
                 ray = Ray(rayO, newDirection, medium);
@@ -607,7 +611,6 @@ void PathIntegrator::DebugRayVolume(Ray ray, Sampler& sampler) {
                         1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
                     radiance += throughput * emission * weight;
                 }
-
                 ray = Ray(rayO, newDirection, medium);
                 hit = m_scene->Intersect(ray, hitRec);
             }
