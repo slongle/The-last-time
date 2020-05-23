@@ -46,40 +46,25 @@ Or use `./setup_builds.bat`.
 ### Select Images
 
 ![](images/glory_4096spp.png)
-
-<p><center><font size="2">Crepuscular beam</font></center></p>
+Crepuscular beam
 ![](images/envbunny_spp=512_density=10_albedo=1.png)
-
-<p><center><font size="2">Homogeneous medium with HG phase function (density = 10, albedo = 1, g = 0), multi-scatter</font></center></p>
-
-
+Homogeneous medium with HG phase function (density = 10, albedo = 1, g = 0), multi-scatter
 ![](images/scene_SPPM_5000.png)
-
-<p><center><font size="2">Stochastic progressive photon mapping, initial radius = 0.2, alpha = 0.5, iteration = 5000</font></center></p>
-
-
+Stochastic progressive photon mapping, initial radius = 0.2, alpha = 0.5, iteration = 5000
 ![](images/torus_SPPM_10k.png)
-
-<p><center><font size="2">Stochastic progressive photon mapping, initial radius = 0.05, alpha = 0.5, iteration = 10000</font></center></p>
+Stochastic progressive photon mapping, initial radius = 0.05, alpha = 0.5, iteration = 10000
 ![](images/globe_64spp.png)
-
-<p><center><font size="2">Blend BSDF of smooth dielectric and matte, Au conductor BSDF (convert SPD to RGB)</font></center></p>
+Blend BSDF of smooth dielectric and matte, Au conductor BSDF (convert SPD to RGB)
 ![](images/scene_1024spp.png)
-
-<p><center><font size="2">Alpha texture for leaf</font></center></p>
+Alpha texture for leaf
 ![](images/pbrt-book_64spp.png)
-
 The images below are from my old renderer [Rainbow](https://github.com/slongle/Rainbow).
-
 ![](images/cornell-box-heat.jpg)
-
 ![](images/cornell-box-sphere-heat.png)
-
 ![](images/veach-mis-heat.jpg)
-
-<p><center><font size="2">Veach thesis multiple importance sampling test scene. Rendered using pathtracing with multiple importance sampling.</font></center></p>
+Veach thesis multiple importance sampling test scene. Rendered using pathtracing with multiple importance sampling.
 ![vol-caustic](https://i.postimg.cc/ryHf24pD/0002.png)
-<p><center><font size="2">Homogeneous medium(volumetric caustic WIP)  </font></center></p>  
+Homogeneous medium(volumetric caustic WIP)
 ![hetvol](https://i.postimg.cc/9MJN7NVb/0001.png)
-<p><center><font size="2">Heterogeneous medium </font></center></p>
+Heterogeneous medium
 Rendered using volumetric unidirectional pathtracing.
