@@ -1,7 +1,11 @@
 ﻿#include "core/renderer.h"
 #include "integrator/pathguider.h"
 
-int main(int argc, char* argv[]) {	
+
+int main(int argc, char* argv[]) {
+	google::InitGoogleLogging("Render");
+	google::InstallFailureSignalHandler();
+
 	std::string prefix = "E:/Document/Graphics/code/The-Last-time/scenes/Scenes/";
 	std::vector<std::string> scenes(100);
 	scenes[0] = "Box/Diffuse/scene.json";
@@ -15,7 +19,7 @@ int main(int argc, char* argv[]) {
 	scenes[8] = "3.Volume/Glory/scene.json";
 	scenes[9] = "5.Guide/Torus/scene.json";
 	scenes[10] = "6.Caustics/DiscoBall/scene.json";
-	std::string filename = prefix + scenes[8];
+	std::string filename = prefix + scenes[5];
 
 	Renderer renderer(filename);
 	renderer.Render();

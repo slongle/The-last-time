@@ -25,9 +25,11 @@ public:
     virtual bool IsRendering() = 0;
     virtual void Save();
     virtual std::string ToString() const = 0;
-    //Debug
+    // Debug
     virtual void Debug(DebugRecord& debugRec) {}
 protected:
+    float PowerHeuristic(float a, float b) const;
+    // Debug
     void DrawPoint(const Float3& p, const Spectrum& c);
     void DrawLine(const Float3& p, const Float3& q, const Spectrum& c);
     void DrawBounds(const Bounds& bounds, const Spectrum& c);

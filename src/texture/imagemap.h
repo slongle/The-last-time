@@ -8,8 +8,9 @@ public:
     ImageTexture(const int& w, const int& h, const std::shared_ptr<T[]>& ptr)
         :Texture<T>(w, h), m_image(ptr) {}
     T Evaluate(const Float2& uv) const;
+    T LookUp(const Float2& pos) const;
 private:
-    std::shared_ptr<T[]> m_image;
+    std::shared_ptr<T[]> m_image;    
 };
 
 extern template class ImageTexture<float>;

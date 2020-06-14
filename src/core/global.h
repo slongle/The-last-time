@@ -37,6 +37,7 @@
 #include <stack>
 
 #include <fmt/format.h>
+#include <glog/logging.h>
 
 #undef M_PI
 
@@ -60,4 +61,9 @@ inline std::string GetFileExtension(const std::string& filename) {
     std::transform(ext.begin(), ext.end(), ext.begin(),
         [](const unsigned char& c) {return std::tolower(c); });
     return ext;
+}
+
+template<typename T>
+inline T Lerp(const T& l, const T& r, const float& s) {
+    return l * (1 - s) + r * s;
 }

@@ -24,6 +24,7 @@ public:
     void AddSample(int x, int y, const Spectrum& s);
     void Save(const std::string& prefix = "");
     sRGB* GetsRGBBuffer() const;
+    sRGB GetPixelSpectrum(const Int2& pos) const;
     // Debug
     void SetVal(int x, int y, const Spectrum& s);
     void DrawCircle(float cx, float cy, float r, const Spectrum& s);

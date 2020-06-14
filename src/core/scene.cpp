@@ -129,7 +129,7 @@ bool Scene::IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance) co
         if (bsdf && !bsdf->IsTransparent()) {
             return true;
         }
-        if (bsdf->IsTransparent()) {
+        if (bsdf && bsdf->IsTransparent()) {
             MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
             transmittance *= bsdf->Sample(matRec, Float2(0, 0));
             ray = Ray(hitRec.m_geoRec.m_p, ray.d, ray.m_medium);
@@ -194,6 +194,9 @@ Spectrum Scene::SampleLight(LightRecord& lightRec, const Float2& _s, const std::
 {
     Float2 s(_s);
     uint32_t lightNum = m_lights.size();
+    if (lightNum == 0) {
+        return Spectrum(0.f);
+    }
     /* Randomly pick an emitter */
     uint32_t lightIdx = std::min(uint32_t(lightNum * s.x), lightNum - 1);
     float lightChoosePdf = 1.f / lightNum;

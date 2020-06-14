@@ -1,5 +1,12 @@
 #include "integrator.h"
 
+float Integrator::PowerHeuristic(float a, float b) const
+{
+    a *= a;
+    b *= b;
+    return a / (a + b);
+}
+
 void Integrator::DrawPoint(const Float3& p, const Spectrum& c)
 {
     Float2 pScreen(Inverse(m_camera->m_screenToWorld).TransformPoint(p));

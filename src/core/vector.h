@@ -30,6 +30,14 @@ typedef glm::ivec2 Int2;
 
 //inline void ReSample(Float2& s, const float& v) {}
 
+inline Float2 operator * (const Float2& u, const Int2& v) {
+    return Float2(u.x * v.x, u.y * v.y);
+}
+
+inline Float2 operator + (const Float2& u, const Int2& v) {
+    return Float2(u.x + v.x, u.y + v.y);
+}
+
 inline std::ostream& operator << (std::ostream& os, const Float2& v) {
     os << v.x << ' ' << v.y;
     return os;
@@ -38,6 +46,11 @@ inline std::ostream& operator << (std::ostream& os, const Float2& v) {
 inline std::ostream& operator << (std::ostream& os, const Float3& v) {
     os << v.x << ' ' << v.y << ' ' << v.z;
     return os;
+}
+
+inline Float2 Mod(const Float2& u, const Int2& v) {
+    return Float2(u.x - int(u.x) / v.x * v.x,
+        u.y - int(u.y) / v.y * v.y);
 }
 
 inline float Length(const Float3& v) {

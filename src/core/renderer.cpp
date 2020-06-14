@@ -196,7 +196,7 @@ void Renderer::Render()
         }
         {
             ImGui::SetNextWindowPos(ImVec2(m_buffer->m_width, 200));
-            ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, 200));
+            ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, 500));
             ImGui::Begin("Debug");
             int px, py;
             ImGuiIO& io = ImGui::GetIO();
@@ -207,7 +207,19 @@ void Renderer::Render()
             ImGui::Checkbox(fmt::format("Debug ray : ({0}, {1})", px, py).c_str(), &debugRay);
             ImGui::Checkbox(fmt::format("Debug kd-tree").c_str(), &debugKDTree);
             clearDebugBuffer = ImGui::Button("Clear debug buffer");
+            // Color
+            sRGB color(0.f);
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    color = m_buffer->GetPixelSpectrum(Int2((px + dx), m_buffer->m_height - (py + dy)));
+                    ImGui::ColorEdit3("", (float*)(&color));                    
+                }
+            }
+
             ImGui::End();
+        }
+        {
+            
         }
         {
             //ImGui::ShowDemoWindow();
@@ -238,7 +250,7 @@ void Renderer::Render()
             }
             if (clearDebugBuffer) {
                 m_buffer->ClearDebugBuffer();
-            }
+            }            
             m_integrator->Debug(debugRec);
         }
 

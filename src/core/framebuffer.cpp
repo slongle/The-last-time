@@ -119,6 +119,17 @@ sRGB* Framebuffer::GetsRGBBuffer() const
     return m_outputBuffer;
 }
 
+sRGB Framebuffer::GetPixelSpectrum(const Int2& pos) const
+{
+    if (0 <= pos.x && pos.x < m_width && 0 <= pos.y && pos.y < m_height) {
+        int idx = pos.y * m_width + pos.x;
+        return m_image[idx];
+    }
+    else {
+        return sRGB();
+    }
+}
+
 void Framebuffer::ClearDebugBuffer()
 {
     memset(m_debugBuffer, 0, sizeof(sRGB) * m_width * m_height);

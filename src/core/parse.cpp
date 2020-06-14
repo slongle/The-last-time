@@ -16,6 +16,7 @@
 #include "medium/hg.h"
 #include "medium/homogeneous.h"
 #include "integrator/pathtracer.h"
+#include "integrator/volumepathtracer.h"
 #include "integrator/pathguider.h"
 #include "integrator/sppm.h"
 #include "texture/consttexture.h"
@@ -283,7 +284,9 @@ void Parse(const std::string& filename, Renderer& renderer)
             std::string lightType = lightProperties["type"];
             if (lightType == "environment") {
                 auto texture = GetSpectrumTexture(lightProperties, "texture", Spectrum(1.f), scene);
-                auto light = std::shared_ptr<EnvironmentLight>(new EnvironmentLight(texture));
+                float radius = GetFloat(lightProperties, "radius", 10000.f);
+                float scale = GetFloat(lightProperties, "scale", 1.f);
+                auto light = std::shared_ptr<EnvironmentLight>(new EnvironmentLight(texture, radius, scale));
                 scene->m_lights.push_back(light);
                 scene->m_environmentLights.push_back(light);
             }
@@ -345,6 +348,11 @@ void Parse(const std::string& filename, Renderer& renderer)
             float alpha = GetFloat(integratorProperties, "alpha", 2.f / 3.f);
             integrator = std::make_shared<SPPMIntegrator>(scene, camera, buffer, maxBounce,
                 maxIteration, deltaPhotonNum, initialRadius, alpha);
+        }
+        else if (type == "volume_path_tracer" || type == "vpt") {
+            int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
+            int spp = GetInt(integratorProperties, "spp", 1);
+            integrator = std::make_shared<VolumePathIntegrator>(scene, camera, buffer, maxBounce, spp);
         }
         else {
             assert(false);

@@ -6,9 +6,9 @@
 #include <thread>
 #include <mutex>
 
-class PathIntegrator : public Integrator {
+class VolumePathIntegrator : public Integrator {
 public:
-    PathIntegrator(
+    VolumePathIntegrator(
         const std::shared_ptr<Scene>& scene,
         const std::shared_ptr<Camera>& camera,
         const std::shared_ptr<Framebuffer>& buffer,
@@ -17,19 +17,6 @@ public:
         : Integrator(scene, camera, buffer), m_maxBounce(maxBounce), m_spp(spp) {}
 
     Spectrum Li(Ray ray, Sampler& sampler);
-    Spectrum EvalLight(
-        bool hit, 
-        const Ray& ray, 
-        const HitRecord& hitRec) const;
-    Spectrum EvalPdfLight(
-        bool hit, 
-        const Ray& ray, 
-        const HitRecord& hitRec, 
-        LightRecord& lightRec) const;
-    Spectrum SampleLight(
-        LightRecord& lightRec, 
-        Float2& s) const;
-    // Schedule
     void Start();
     void Stop();
     void Wait();
@@ -41,6 +28,8 @@ private:
     void Setup();
     void ThreadWork();
     void RenderTile(const Framebuffer::Tile& tile);
+    // Misc
+    float PowerHeuristic(float a, float b) const;
     // Debug
     Spectrum NormalCheck(Ray ray, Sampler& sampler);
     void DebugRay(Ray ray, Sampler& sampler);

@@ -30,9 +30,7 @@ std::shared_ptr<float[]> ReadImage(
     stbi_set_flip_vertically_on_load(true);
     const std::string ext = GetFileExtension(filename);
     float* ptr = stbi_loadf(filename.c_str(), width, height, channel, reqChannel);
-    if (!ptr) {
-        std::cout << "Can't load image : " << filename << std::endl;
-    }
+    LOG_IF(FATAL, !ptr) << "Can't load image : " << filename;
     //std::cout << ptr[0] << ' ' << ptr[1] << ' ' << ptr[2] << std::endl;
     return std::shared_ptr<float[]>(ptr);
 }

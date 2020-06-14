@@ -72,7 +72,7 @@ class Light {
 public:
     Light(const MediumInterface& mi) :m_mediumInterface(mi) {}
 
-    // Return radiance / p(omega) = radiance / (p(area) * dist^2 / cos)
+    // Return radiance / p(omega)
     virtual Spectrum Sample(LightRecord& lightRec, Float2& s) const = 0;
     // Return radiance
     virtual Spectrum Eval(LightRecord& lightRec) const = 0;

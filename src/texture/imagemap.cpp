@@ -5,9 +5,27 @@
 template<typename T>
 inline T ImageTexture<T>::Evaluate(const Float2& uv) const
 {
-    Float2 st = uv * Float2(m_width, m_height);
-    Int2 pos((int(st.x) + m_width) % m_width, (int(st.y) + m_height) % m_height);
-    return m_image[pos.y * m_width + pos.x];
+    Float2 st = uv * m_resolution;
+    Float2 p00 = Mod(st + m_resolution + Float2(0, 0), m_resolution);
+    Float2 p01 = Mod(st + m_resolution + Float2(0, 1), m_resolution);
+    Float2 p10 = Mod(st + m_resolution + Float2(1, 0), m_resolution);
+    Float2 p11 = Mod(st + m_resolution + Float2(1, 1), m_resolution);
+    Float2 dxdy = Mod(st, Float2(1, 1));
+    T c00 = LookUp(p00);
+    T c01 = LookUp(p01);
+    T c10 = LookUp(p10);
+    T c11 = LookUp(p11);
+    T c0 = Lerp(c00, c10, dxdy.x);
+    T c1 = Lerp(c01, c11, dxdy.x);
+    T c = Lerp(c0, c1, dxdy.y);
+    return c;
+    //return m_image[int(p00.y) * m_resolution.x + int(p00.x)];
+}
+
+template<typename T>
+T ImageTexture<T>::LookUp(const Float2& pos) const
+{
+    return m_image[int(pos.y) * m_resolution.x + int(pos.x)];
 }
 
 template class ImageTexture<float>;
