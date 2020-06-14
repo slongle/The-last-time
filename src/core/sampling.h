@@ -43,8 +43,8 @@ public:
     float Pdf(const float& s) const;
     float GetSum() const { return m_sum; }
 
-private:
     std::vector<float> m_func, m_cdf;
+private:
     float m_sum;
 };
 
