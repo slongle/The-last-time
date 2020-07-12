@@ -4,7 +4,7 @@
 
 #include "spectrum.h"
 
-const int tile_size = 4;
+const int tile_size = 16;
 
 // For GLFW, the bottom-left corner is (0, 0)
 

@@ -136,12 +136,17 @@ Spectrum PathIntegrator::SampleLight(LightRecord& lightRec, Float2& s) const
     Spectrum emission = light->Sample(lightRec, s);
     // Occlude test
     if (lightRec.m_pdf != 0) {
-        Spectrum transmittance(0.f);
-        if (m_scene->Occlude(lightRec.m_shadowRay)) {
+        Spectrum throughput(1.f);
+        bool occlude = m_scene->OccludeTransparent(lightRec.m_shadowRay, throughput);
+        //bool occlude = m_scene->Occlude(lightRec.m_shadowRay);
+        if (occlude) {
             return Spectrum(0.0f);
         }
+        if (throughput.r != 1) {
+            std::cout << throughput << std::endl;
+        }
         lightRec.m_pdf *= lightChoosePdf;
-        emission /= lightChoosePdf;
+        emission *= throughput / lightChoosePdf;
         return emission;
     }
     else {
@@ -268,6 +273,7 @@ void PathIntegrator::RenderTile(const Framebuffer::Tile& tile)
                 Ray ray;
                 m_camera->GenerateRay(Float2(x, y), sampler, ray);
                 Spectrum radiance = Li(ray, sampler);
+                //Spectrum radiance = NormalCheck(ray, sampler);
                 m_buffer->AddSample(x, y, radiance);
             }
         }

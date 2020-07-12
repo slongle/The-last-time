@@ -153,6 +153,31 @@ bool Scene::Occlude(Ray& ray) const
     return false;
 }
 
+bool Scene::OccludeTransparent(Ray& ray, Spectrum& throughput) const
+{
+    float t = ray.tMax;
+    HitRecord hitRec;
+    while(true){
+        bool hit = m_embreeBvh->Intersect(ray, hitRec);
+        if (!hit) {
+            return false;
+        }
+        else {            
+            auto bsdf = hitRec.GetBSDF();
+            if (bsdf->IsTransparent()) {
+                MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+                throughput *= bsdf->Sample(matRec, Float2());
+                t -= ray.tMax;
+                ray.o = ray(ray.tMax);
+            }
+            else {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance) const
 {
     Ray ray = _ray;

@@ -26,14 +26,16 @@ file(GLOB SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/bsdf/*.cpp
     ${CMAKE_SOURCE_DIR}/src/core/*.h
     ${CMAKE_SOURCE_DIR}/src/core/*.cpp
-    ${CMAKE_SOURCE_DIR}/src/ext/*.h
-    ${CMAKE_SOURCE_DIR}/src/ext/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/ext/stb_image/*.h
+    ${CMAKE_SOURCE_DIR}/src/ext/stb_image/*.cpp
     ${CMAKE_SOURCE_DIR}/src/gui/*.h
     ${CMAKE_SOURCE_DIR}/src/gui/*.cpp
     ${CMAKE_SOURCE_DIR}/src/integrator/*.h
     ${CMAKE_SOURCE_DIR}/src/integrator/*.cpp
     ${CMAKE_SOURCE_DIR}/src/light/*.h
     ${CMAKE_SOURCE_DIR}/src/light/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/medium/*.h
+    ${CMAKE_SOURCE_DIR}/src/medium/*.cpp
     ${CMAKE_SOURCE_DIR}/src/shape/*.h
     ${CMAKE_SOURCE_DIR}/src/shape/*.cpp
     ${CMAKE_SOURCE_DIR}/src/texture/*.h

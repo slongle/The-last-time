@@ -26,6 +26,11 @@ public:
     static inline const float deltaEpsilon = 1e-3;
     static inline float CosTheta(const Float3& v) { return v.z; }
     static inline float AbsCosTheta(const Float3& v) { return std::fabs(v.z); }
+    static inline float Cos2Theta(const Float3& v) { return v.z * v.z; }
+    static inline float Sin2Theta(const Float3& v) { return 1 - v.z * v.z; }
+    static inline float Tan2Theta(const Float3& v) { return 1 / (v.z * v.z) - 1; }
+    static inline float Sin2Phi(const Float3& v) { return v.y * v.y / Sin2Theta(v); }
+    static inline float Cos2Phi(const Float3& v) { return v.x * v.x / Sin2Theta(v); }
     static inline float SphericalPhi(const Float3& v) { return std::atan2(v.y, v.x) + M_PI; }
     static inline float SphericalTheta(const Float3& v) { return std::acos(v.z); }
     static inline bool SameHemisphere(const Float3& u, const Float3& v) { return u.z * v.z >= 0; }

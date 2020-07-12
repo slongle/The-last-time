@@ -185,49 +185,52 @@ void Renderer::Render()
 
         // Auxiliary windows
         bool clearDebugBuffer = false;
+        ImGui::SetNextWindowPos(ImVec2(m_buffer->m_width, 0), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, m_buffer->m_height), ImGuiCond_FirstUseEver);
+        ImGui::Begin("");
+        if (ImGui::CollapsingHeader("Overview"))
         {
-            ImGui::SetNextWindowPos(ImVec2(m_buffer->m_width, 0));
-            ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, 200));
-            ImGui::Begin("Overview");
             std::string integratorString = m_integrator->ToString();
             std::string sceneString = m_scene->ToString();
             ImGui::Text((integratorString + "\n\n" + sceneString).c_str());
-            ImGui::End();
         }
+        if (ImGui::CollapsingHeader("Debug"))
         {
-            ImGui::SetNextWindowPos(ImVec2(m_buffer->m_width, 200));
-            ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, 500));
-            ImGui::Begin("Debug");
             int px, py;
             ImGuiIO& io = ImGui::GetIO();
             if (ImGui::IsMousePosValid()) {
                 px = io.MousePos.x;
                 py = io.MousePos.y;
             }
-            ImGui::Checkbox(fmt::format("Debug ray : ({0}, {1})", px, py).c_str(), &debugRay);
-            ImGui::Checkbox(fmt::format("Debug kd-tree").c_str(), &debugKDTree);
-            clearDebugBuffer = ImGui::Button("Clear debug buffer");
-            // Color
-            sRGB color(0.f);
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    color = m_buffer->GetPixelSpectrum(Int2((px + dx), m_buffer->m_height - (py + dy)));
-                    ImGui::ColorEdit3("", (float*)(&color));                    
-                }
+            // Visualize
+            if (ImGui::TreeNode("Visualize")) 
+            {
+                ImGui::Checkbox(fmt::format("Debug ray : ({0}, {1})", px, py).c_str(), &debugRay);
+                ImGui::Checkbox(fmt::format("Debug kd-tree").c_str(), &debugKDTree);
+                clearDebugBuffer = ImGui::Button("Clear debug buffer");
+                ImGui::TreePop();
             }
-
-            ImGui::End();
+            // Color
+            if (ImGui::TreeNode("Color")) 
+            {
+                sRGB color(0.f);
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        color = m_buffer->GetPixelSpectrum(Int2((px + dx), m_buffer->m_height - (py + dy)));
+                        ImGui::ColorEdit3("", (float*)(&color));
+                    }
+                }
+                ImGui::TreePop();
+            }
         }
-        {
-            
-        }
+        ImGui::End();
         {
             //ImGui::ShowDemoWindow();
         }
 
         // Renderer core
         Draw();
-        // Render done
+        // Render done        
         if (!m_integrator->IsRendering()) {
             m_integrator->Stop();
             m_integrator->Wait();
@@ -253,6 +256,7 @@ void Renderer::Render()
             }            
             m_integrator->Debug(debugRec);
         }
+        
 
         // Rendering
         ImGui::Render();

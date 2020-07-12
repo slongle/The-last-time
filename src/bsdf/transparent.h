@@ -43,6 +43,7 @@ public:
         return m_reflectance->Evaluate(matRec.m_st);
     }
     bool IsDelta(const Float2& st) const { return true; }
+    bool IsTransparent() const { return true; }
 
 private:
     std::shared_ptr<Texture<Spectrum>> m_reflectance;

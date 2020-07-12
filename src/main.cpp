@@ -1,6 +1,6 @@
 ﻿#include "core/renderer.h"
 #include "integrator/pathguider.h"
-
+#include "bsdf/transparent.h"
 
 int main(int argc, char* argv[]) {
 	google::InitGoogleLogging("Render");
@@ -19,7 +19,8 @@ int main(int argc, char* argv[]) {
 	scenes[8] = "3.Volume/Glory/scene.json";
 	scenes[9] = "5.Guide/Torus/scene.json";
 	scenes[10] = "6.Caustics/DiscoBall/scene.json";
-	std::string filename = prefix + scenes[5];
+	scenes[11] = "6.Caustics/Water/scene.json";
+	std::string filename = prefix + scenes[11];
 
 	Renderer renderer(filename);
 	renderer.Render();

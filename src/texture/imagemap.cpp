@@ -6,10 +6,10 @@ template<typename T>
 inline T ImageTexture<T>::Evaluate(const Float2& uv) const
 {
     Float2 st = uv * m_resolution;
-    Float2 p00 = Mod(st + m_resolution + Float2(0, 0), m_resolution);
-    Float2 p01 = Mod(st + m_resolution + Float2(0, 1), m_resolution);
-    Float2 p10 = Mod(st + m_resolution + Float2(1, 0), m_resolution);
-    Float2 p11 = Mod(st + m_resolution + Float2(1, 1), m_resolution);
+    Float2 p00 = Mod(Mod(st + Float2(0, 0), m_resolution) + m_resolution, m_resolution);
+    Float2 p01 = Mod(Mod(st + Float2(0, 1), m_resolution) + m_resolution, m_resolution);
+    Float2 p10 = Mod(Mod(st + Float2(1, 0), m_resolution) + m_resolution, m_resolution);
+    Float2 p11 = Mod(Mod(st + Float2(1, 1), m_resolution) + m_resolution, m_resolution);
     Float2 dxdy = Mod(st, Float2(1, 1));
     T c00 = LookUp(p00);
     T c01 = LookUp(p01);

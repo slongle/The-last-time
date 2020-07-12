@@ -22,7 +22,7 @@
 #include "texture/consttexture.h"
 #include "texture/imagemap.h"
 
-#include "ext/json/json.hpp"
+#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 Spectrum ArrayToSpectrum(const json::value_type& node) {

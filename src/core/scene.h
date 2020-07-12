@@ -15,6 +15,7 @@ public:
     bool Intersect(Ray& ray, HitRecord& hitRec) const;
     bool IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance) const;
     bool Occlude(Ray& ray) const;
+    bool OccludeTransparent(Ray& ray, Spectrum& throughput) const;
     bool OccludeTr(Ray& ray, Spectrum& transmittance) const;
 
     Spectrum SampleLight(LightRecord& lightRec, const Float2& s, const std::shared_ptr<Medium> medium = nullptr) const;
