@@ -12,10 +12,12 @@
 - glfw3
 - glew
 - fmt
+- glog
+- nlohmann-json
 
 If you don't know how to add the three libraries, I recommend you use some package manager like `vcpkg`.  
 ```bash
- > vcpkg install embree3 openvdb tinyobjloader imgui glfw3 glew fmt:x64-windows  
+ > vcpkg install embree3 openvdb tinyobjloader imgui glfw3 glew fmt glog nlohmann-json:x64-windows  
  > vcpkg integrate install 
 ```
 ### Build
@@ -53,6 +55,8 @@ Homogeneous medium with HG phase function (density = 10, albedo = 1, g = 0), mul
 Stochastic progressive photon mapping, initial radius = 0.2, alpha = 0.5, iteration = 5000  
 ![](images/torus_SPPM_10k.png)  
 Stochastic progressive photon mapping, initial radius = 0.05, alpha = 0.5, iteration = 10000  
+![](images/scene_1024_1kiiteration_100kdelta.png)
+Stochastic progressive photon mapping, initial radius = 0.05, alpha = 0.3, iteration = 1000, # of delta photon = 100k  
 ![](images/globe_64spp.png)  
 Blend BSDF of smooth dielectric and matte, Au conductor BSDF (convert SPD to RGB)  
 ![](images/scene_1024spp.png)  
