@@ -1,5 +1,5 @@
 # The-last-time
-
+![C/C++ CI](https://github.com/slongle/The-last-time/workflows/C/C++%20CI/badge.svg?branch=master)  
 ![](images/cover.png)
 
 ## Building
