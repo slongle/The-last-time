@@ -7,11 +7,24 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  Windows:
+    runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: vcpkg test
-      run: vcpkg search openvdb
+    - name: Checking Out Source Code
+      uses: actions/checkout@v1
+    - name: Setup MSBuild.exe
+      uses: warrenbuckley/Setup-MSBuild@v1
+    - name: Get Cache Directory
+      id: cache-dir
+      run: |
+          echo ::set-output name=dir::%CD%
+      shell: cmd
+    - name: Install Dependencies
+      run: vcpkg install embree3
+      shell: cmd
+    - name: Build Release Version
+      run: make release
+      shell: cmd
+    - name: Build Debug Version
+      run: make debug
+      shell: cmd
