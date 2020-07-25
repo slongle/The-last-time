@@ -29,6 +29,7 @@ public:
         else if (i == 1) return g;
         else return b;
     }
+    bool IsNaN() const { return std::isnan(r) | std::isnan(g) | std::isnan(b); }
 
     RGBSpectrum operator * (float v) const { return RGBSpectrum(r * v, g * v, b * v); }
     RGBSpectrum operator / (float v) const { assert(v != 0.f); return RGBSpectrum(r / v, g / v, b / v); }

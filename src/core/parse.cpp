@@ -171,6 +171,14 @@ void Parse(const std::string& filename, Renderer& renderer)
                 float eta = GetFloat(bsdfProperties, "eta", 1.5f);
                 bsdf = new SmoothDielectric(reflectance, transmittance, eta, alpha);
             }
+            else if (type == "rough_dielectric") {
+                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
+                auto transmittance = GetSpectrumTexture(bsdfProperties, "transmittance", Spectrum(1.f), scene);
+                float eta = GetFloat(bsdfProperties, "eta", 1.5f);
+                float alphaU = GetFloat(bsdfProperties, "alphaU", 0.5);
+                float alphaV = GetFloat(bsdfProperties, "alphaV", 0.5);
+                bsdf = new RoughDielectric(reflectance, transmittance, eta, alphaU, alphaV, alpha);
+            }
             else if (type == "smooth_conductor") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 std::string materialName = GetString(bsdfProperties, "material", "Al");
@@ -179,6 +187,15 @@ void Parse(const std::string& filename, Renderer& renderer)
                 bsdf = new SmoothConductor(reflectance, eta, k, alpha);
                 //std::cout << k << std::endl;
                 //std::cout << eta << std::endl;
+            }
+            else if (type == "rough_conductor") {
+                auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
+                std::string materialName = GetString(bsdfProperties, "material", "Al");
+                Spectrum k(GetFileResolver()->string() + "/spds/" + materialName + ".k.spd");
+                Spectrum eta(GetFileResolver()->string() + "/spds/" + materialName + ".eta.spd");                
+                float alphaU = GetFloat(bsdfProperties, "alphaU", 0.5);
+                float alphaV = GetFloat(bsdfProperties, "alphaV", 0.5);
+                bsdf = new RoughConductor(reflectance, eta, k, alphaU, alphaV, alpha);
             }
             else if (type == "blend") {
                 auto weight = GetFloatTexture(bsdfProperties, "weight", 0.5f, scene);

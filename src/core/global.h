@@ -21,6 +21,7 @@
 
 // non ¨C DLL-interface class 'std::runtime_error' used as base for DLL-interface class
 #pragma warning(disable : 4275)  // warning in fmtlib 
+#pragma warning(disable : 4566)  // warning in fmtlib
 
 #endif
 
@@ -38,6 +39,8 @@
 
 #include <fmt/format.h>
 #include <glog/logging.h>
+
+#include "utility/math.h"
 
 #undef M_PI
 

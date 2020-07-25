@@ -84,7 +84,7 @@ void Renderer::InitializeGUI()
     // Create window with graphics context
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     m_window = glfwCreateWindow(
-        static_cast<int>(m_buffer->m_width + auxiliaryWidth), static_cast<int>(std::max(500, m_buffer->m_height)),
+        static_cast<int>(m_buffer->m_width + auxiliaryWidth), static_cast<int>(m_buffer->m_height),
         "Renderer", NULL, NULL);
     if (m_window == NULL) {
         assert(false);
@@ -185,9 +185,9 @@ void Renderer::Render()
 
         // Auxiliary windows
         bool clearDebugBuffer = false;
-        ImGui::SetNextWindowPos(ImVec2(m_buffer->m_width, 0), ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, m_buffer->m_height), ImGuiCond_FirstUseEver);
-        ImGui::Begin("");
+        ImGui::SetNextWindowPos(ImVec2(m_buffer->m_width, 0), 1);
+        ImGui::SetNextWindowSize(ImVec2(auxiliaryWidth, m_buffer->m_height), 1);
+        ImGui::Begin("Browser");
         if (ImGui::CollapsingHeader("Overview"))
         {
             std::string integratorString = m_integrator->ToString();
@@ -197,10 +197,15 @@ void Renderer::Render()
         if (ImGui::CollapsingHeader("Debug"))
         {
             int px, py;
+            int click_px, click_py;
             ImGuiIO& io = ImGui::GetIO();
             if (ImGui::IsMousePosValid()) {
                 px = io.MousePos.x;
                 py = io.MousePos.y;
+                if (ImGui::IsMouseClicked(0)) {
+                    click_px = io.MousePos.x;
+                    click_py = io.MousePos.y;
+                }
             }
             // Visualize
             if (ImGui::TreeNode("Visualize")) 
@@ -216,7 +221,8 @@ void Renderer::Render()
                 sRGB color(0.f);
                 for (int dx = -1; dx <= 1; dx++) {
                     for (int dy = -1; dy <= 1; dy++) {
-                        color = m_buffer->GetPixelSpectrum(Int2((px + dx), m_buffer->m_height - (py + dy)));
+                        color = m_buffer->GetPixelSpectrum(
+                            Int2((click_px + dx), m_buffer->m_height - (click_py + dy)));
                         ImGui::ColorEdit3("", (float*)(&color));
                     }
                 }
