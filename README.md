@@ -61,7 +61,16 @@ Stochastic progressive photon mapping, initial radius = 0.05, alpha = 0.3, itera
 Blend BSDF of smooth dielectric and matte, Au conductor BSDF (convert SPD to RGB)  
 ![](images/scene_1024spp.png)  
 Alpha texture for leaf  
-![](images/pbrt-book_64spp.png)  
+![](images/pbrt-book_64spp.png) 
+![](images/scene_RoughConductor_0.1_0.1_512spp.png)   
+Rough conductor, alpha_u = 0.1, alpha_v = 0.1  
+![](images/scene_RoughConductor_0.005_0.1_512spp.png)   
+Rough conductor, alpha_u = 0.005, alpha_v = 0.1  
+![](images/scene_RoughDielectric_0.1_0.1_512spp.png)   
+Rough dielectric, alpha_u = 0.1, alpha_v = 0.1  
+![](images/scene_RoughDielectric_0.005_0.1_512spp.png)   
+Rough dielectric, alpha_u = 0.005, alpha_v = 0.1  
+
 The images below are from my old renderer [Rainbow](https://github.com/slongle/Rainbow).  
 ![](images/cornell-box-heat.jpg)  
 ![](images/cornell-box-sphere-heat.png)  
