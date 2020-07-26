@@ -113,6 +113,9 @@ public:
         Microfacet microfacet(Float2(m_alphaU, m_alphaV));
         Float3 wh = microfacet.SampleVisible(sign * matRec.m_wi, s); 
         float pdf_wh = microfacet.PdfVisible(sign * matRec.m_wi, wh);
+        if (pdf_wh == 0) {
+            return Spectrum(0.f);
+        }
         float D = microfacet.D(wh);
 
         float cosThetaT;
@@ -196,15 +199,18 @@ public:
 
         Float3 wi = math::signum(Frame::CosTheta(matRec.m_wi)) * matRec.m_wi;
         matRec.m_pdf = microfacet.PdfVisible(wi, wh) * dwh_dwo * (reflect ? F : 1 - F);
+        if (matRec.m_pdf == 0) {
+            return Spectrum(0.f);
+        }
          
         if (reflect) {
-            Spectrum fs = F * D * G / (4 * Frame::AbsCosTheta(matRec.m_wi));            
+            float fs = F * D * G / (4 * Frame::AbsCosTheta(matRec.m_wi));            
             return m_reflectance->Evaluate(matRec.m_st) * fs;
         }
         else {
             float eta = Frame::CosTheta(matRec.m_wi) > 0.0f ? m_eta : m_invEta;
             float sqrtDenom = Dot(matRec.m_wi, wh) + eta * Dot(matRec.m_wo, wh);
-            Spectrum fs = (1 - F) * G * D * AbsDot(matRec.m_wo, wh) * AbsDot(matRec.m_wi, wh)
+            float fs = (1 - F) * G * D * AbsDot(matRec.m_wo, wh) * AbsDot(matRec.m_wi, wh)
                 * eta * eta / (Frame::AbsCosTheta(matRec.m_wi) * sqrtDenom * sqrtDenom);
             float factor = matRec.m_mode == Radiance ? 
                 (Frame::CosTheta(matRec.m_wi) > 0.0f ? m_invEta : m_eta) : 1.f;            
@@ -216,7 +222,7 @@ public:
     }
 private:
     Float3 Reflect(const Float3& v, const Float3& n) const {
-        return 2 * Dot(v, n) * n - v;        
+        return 2 * Dot(v, n) * n - v;
     }
 
     Float3 Refract(const Float3& v, const Float3& n, const float& cosThetaT) const {

@@ -167,7 +167,7 @@ void PathIntegrator::Start()
                 });
         }
     }
-    //std::reverse(m_tiles.begin(), m_tiles.end());
+    std::reverse(m_tiles.begin(), m_tiles.end());
 
     m_renderingNum = 0;
     m_rendering = true;

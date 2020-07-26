@@ -26,7 +26,9 @@ Float3 Microfacet::SampleVisible(const Float3& wi, Float2& u) const
 float Microfacet::PdfVisible(const Float3& wi, const Float3& m) const
 {
     float cosTheta = Frame::AbsCosTheta(wi);
-    LOG_IF(FATAL, cosTheta == 0) << "Divide zero.";
+    if (cosTheta == 0) {
+        return 0;
+    }
     float result = D(m) * G1(wi, m) * std::abs(Dot(wi, m)) / cosTheta;
     return result;
 }
