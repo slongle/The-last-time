@@ -40,7 +40,7 @@ Or use `./setup_builds.bat`.
 **Advanced Global Illumination**: Volumetric Unidirectional Path Tracing (Quasi-Monte Carlo), Stochastic progressive photon mapping, Primary Sample Space Metroplis Light Transport (Kelemen-style MLT), Path Guider (WIP).    
 **Geometry**: Support triangle and quad meshes with instancing. Also can support sphere and box.  
 **Lights**: Support point light, spot light, area light(rectangle and sphere).  
-**Materials and BSDFs**: Support physically based BSDFs, including multiple microfacet models (Beckmann), smooth and rough versions of Fresnel conductors, specular dielectrics, transparent BSDF, blend BSDF.   
+**Materials and BSDFs**: Support physically based BSDFs, including multiple microfacet models (GGX), smooth and rough versions of Fresnel conductors, specular dielectrics, transparent BSDF, blend BSDF.   
 **Media**: Support homogeneous and heterogeneous medium.  
 **Acceleration Structure System**: Use SAH-BVH acceleration.  
 **Render Mode**: Adaptive, Progressive and Final mode.  
@@ -52,11 +52,11 @@ Crepuscular beam
 ![](images/envbunny_spp=512_density=10_albedo=1.png)  
 Homogeneous medium with HG phase function (density = 10, albedo = 1, g = 0), multi-scatter  
 ![](images/scene_SPPM_5000.png)  
-Stochastic progressive photon mapping, initial radius = 0.2, alpha = 0.5, iteration = 5000  
+Initial radius = 0.2, alpha = 0.5, iteration = 5000  
 ![](images/torus_SPPM_10k.png)  
-Stochastic progressive photon mapping, initial radius = 0.05, alpha = 0.5, iteration = 10000  
+Initial radius = 0.05, alpha = 0.5, iteration = 10000  
 ![](images/scene_1024_1kiiteration_100kdelta.png)
-Stochastic progressive photon mapping, initial radius = 0.05, alpha = 0.3, iteration = 1000, # of delta photon = 100k  
+Initial radius = 0.05, alpha = 0.3, iteration = 1000, # of delta photon = 100k  
 ![](images/globe_64spp.png)  
 Blend BSDF of smooth dielectric and matte, Au conductor BSDF (convert SPD to RGB)  
 ![](images/scene_1024spp.png)  
