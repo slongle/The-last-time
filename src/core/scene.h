@@ -13,12 +13,12 @@ public:
     void Setup();
 
     bool Intersect(Ray& ray, HitRecord& hitRec) const;
-    bool IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance) const;
+    bool IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance, Sampler& sampler) const;
     bool Occlude(Ray& ray) const;
     bool OccludeTransparent(Ray& ray, Spectrum& throughput) const;
-    bool OccludeTr(Ray& ray, Spectrum& transmittance) const;
+    bool OccludeTr(Ray& ray, Spectrum& transmittance, Sampler& sampler) const;
 
-    Spectrum SampleLight(LightRecord& lightRec, const Float2& s, const std::shared_ptr<Medium> medium = nullptr) const;
+    Spectrum SampleLight(LightRecord& lightRec, const Float2& s, Sampler& sampler, const std::shared_ptr<Medium> medium = nullptr) const;
     Spectrum EvalLight(bool hit, const Ray& ray, const HitRecord& hitRec) const;
     Spectrum EvalPdfLight(bool hit, const Ray& ray, const HitRecord& hitRec, LightRecord& lightRec) const;
     std::string ToString() const;

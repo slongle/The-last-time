@@ -114,13 +114,13 @@ bool Scene::Intersect(Ray& ray, HitRecord& hitRec) const
     return hit;
 }
 
-bool Scene::IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance) const
+bool Scene::IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance, Sampler& sampler) const
 {
     transmittance = Spectrum(1.f);
     while (true) {
         bool hit = Intersect(ray, hitRec);
         if (ray.m_medium) {
-            transmittance *= ray.m_medium->Transmittance(ray);
+            transmittance *= ray.m_medium->Transmittance(ray, sampler);
         }
         if (!hit) {
             return false;
@@ -178,7 +178,7 @@ bool Scene::OccludeTransparent(Ray& ray, Spectrum& throughput) const
     return false;
 }
 
-bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance) const
+bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance, Sampler& sampler) const
 {
     Ray ray = _ray;
     float t = _ray.tMax;
@@ -195,7 +195,7 @@ bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance) const
         }
 
         if (ray.m_medium) {
-            transmittance *= ray.m_medium->Transmittance(ray);
+            transmittance *= ray.m_medium->Transmittance(ray, sampler);
         }
 
         if (!hit) {
@@ -215,7 +215,7 @@ bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance) const
     }
 }
 
-Spectrum Scene::SampleLight(LightRecord& lightRec, const Float2& _s, const std::shared_ptr<Medium> medium) const
+Spectrum Scene::SampleLight(LightRecord& lightRec, const Float2& _s, Sampler& sampler, const std::shared_ptr<Medium> medium) const
 {
     Float2 s(_s);
     uint32_t lightNum = m_lights.size();
@@ -232,7 +232,7 @@ Spectrum Scene::SampleLight(LightRecord& lightRec, const Float2& _s, const std::
 
     if (lightRec.m_pdf != 0) {
         Spectrum transmittance(0.f);
-        if (OccludeTr(lightRec.m_shadowRay, transmittance)) {
+        if (OccludeTr(lightRec.m_shadowRay, transmittance, sampler)) {
             return Spectrum(0.0f);
         }
         emission *= transmittance;

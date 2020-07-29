@@ -52,6 +52,7 @@ public:
 
     float r, g, b;
 
+    friend RGBSpectrum operator * (float v, const RGBSpectrum& s) { return RGBSpectrum(s.r * v, s.g * v, s.b * v); }
     friend RGBSpectrum Exp(const RGBSpectrum& s) { return RGBSpectrum(std::exp(s.r), std::exp(s.g), std::exp(s.b)); }
     friend RGBSpectrum Sqrt(const RGBSpectrum& s) { return RGBSpectrum(Sqrt(s.r), Sqrt(s.g), Sqrt(s.b)); }
     friend float MaxComponent(const RGBSpectrum& s) { return std::max(s.r, std::max(s.g, s.b)); }

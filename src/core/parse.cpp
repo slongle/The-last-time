@@ -15,6 +15,7 @@
 #include "light/environment.h"
 #include "medium/hg.h"
 #include "medium/homogeneous.h"
+#include "medium/heterogeneous.h"
 #include "integrator/pathtracer.h"
 #include "integrator/volumepathtracer.h"
 #include "integrator/pathguider.h"
@@ -123,6 +124,17 @@ void Parse(const std::string& filename, Renderer& renderer)
                 Spectrum albedo = GetSpectrum(mediumProperties, "albedo", Spectrum(0.5f));
                 float scale = GetFloat(mediumProperties, "scale", 1);
                 medium = new HomogeneousMedium(std::shared_ptr<PhaseFunction>(pf), density, albedo, scale);
+            }
+            else if (mediumType == "heterogeneous") {
+                std::string filename = GetString(mediumProperties, "filename", "");
+                std::string densityName = GetString(mediumProperties, "density", "density");
+                Spectrum albedo = GetSpectrum(mediumProperties, "albedo", Spectrum(0.5f));
+                float scale = GetFloat(mediumProperties, "scale", 1);                
+                medium = new HeterogeneousMedium(
+                    std::shared_ptr<PhaseFunction>(pf), filename, densityName, albedo, scale);                
+            }
+            else {
+                LOG(FATAL) << "Wrong medium type " << mediumType;
             }
 
             scene->AddMedium(mediumName, std::shared_ptr<Medium>(medium));

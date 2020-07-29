@@ -28,7 +28,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
             // Sample light
             {
                 LightRecord lightRec(mediumRec.m_p);
-                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), ray.m_medium);
+                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), sampler, ray.m_medium);
                 if (!emission.IsBlack()) {
                     // Allocate a record for querying the phase function
                     PhaseFunctionRecord phaseRec(-ray.d, lightRec.m_wi);
@@ -53,7 +53,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                 throughput *= phaseVal;
                 // Eval light                
                 Spectrum transmittance;
-                hit = m_scene->IntersectTr(ray, hitRec, transmittance);
+                hit = m_scene->IntersectTr(ray, hitRec, transmittance, sampler);
                 ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
                 LightRecord lightRec;
                 Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
@@ -93,7 +93,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
             // Sample light            
             if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
                 LightRecord lightRec(hitRec.m_geoRec.m_p);
-                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
+                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), sampler);
                 if (!emission.IsBlack()) {
                     // Allocate a record for querying the BSDF
                     MaterialRecord matRec(-ray.d, lightRec.m_wi, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
@@ -125,7 +125,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                 eta *= matRec.m_eta;
                 // Eval light                
                 Spectrum transmittance;
-                hit = m_scene->IntersectTr(ray, hitRec, transmittance);
+                hit = m_scene->IntersectTr(ray, hitRec, transmittance, sampler);
                 LightRecord lightRec;
                 ray = Ray(rayO, newDirection, medium);
                 Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
@@ -333,7 +333,7 @@ void VolumePathIntegrator::DebugRay(Ray ray, Sampler& sampler) {
             // Sample light
             {
                 LightRecord lightRec(mediumRec.m_p);
-                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), ray.m_medium);
+                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), sampler, ray.m_medium);
                 if (!emission.IsBlack()) {
                     // Allocate a record for querying the phase function
                     PhaseFunctionRecord phaseRec(-ray.d, lightRec.m_wi);
@@ -358,7 +358,7 @@ void VolumePathIntegrator::DebugRay(Ray ray, Sampler& sampler) {
                 throughput *= phaseVal;
                 // Eval light                
                 Spectrum transmittance;
-                hit = m_scene->IntersectTr(ray, hitRec, transmittance);
+                hit = m_scene->IntersectTr(ray, hitRec, transmittance, sampler);
                 ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
                 LightRecord lightRec;
                 Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
@@ -398,7 +398,7 @@ void VolumePathIntegrator::DebugRay(Ray ray, Sampler& sampler) {
             // Sample light            
             if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
                 LightRecord lightRec(hitRec.m_geoRec.m_p);
-                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
+                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), sampler);
                 if (!emission.IsBlack()) {
                     // Allocate a record for querying the BSDF
                     MaterialRecord matRec(-ray.d, lightRec.m_wi, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
@@ -430,7 +430,7 @@ void VolumePathIntegrator::DebugRay(Ray ray, Sampler& sampler) {
                 eta *= matRec.m_eta;
                 // Eval light                
                 Spectrum transmittance;
-                hit = m_scene->IntersectTr(ray, hitRec, transmittance);
+                hit = m_scene->IntersectTr(ray, hitRec, transmittance, sampler);
                 LightRecord lightRec;
                 ray = Ray(rayO, newDirection, medium);
                 Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);

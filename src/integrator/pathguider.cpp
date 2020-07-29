@@ -269,7 +269,7 @@ Spectrum PathGuiderIntegrator::Li(Ray ray, Sampler& sampler)
 
         if (!isDelta) {
             LightRecord lightRec(hitRec.m_geoRec.m_p);
-            Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
+            Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), sampler);
             if (!emission.IsBlack()) {
                 /* Allocate a record for querying the BSDF */
                 MaterialRecord matRec(-ray.d, lightRec.m_wi, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
@@ -627,7 +627,7 @@ void PathGuiderIntegrator::DebugRay(Ray ray, Sampler& sampler)
 
         if (!bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
             LightRecord lightRec(hitRec.m_geoRec.m_p);
-            Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D());
+            Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), sampler);
             if (!emission.IsBlack()) {
                 /* Allocate a record for querying the BSDF */
                 MaterialRecord matRec(-ray.d, lightRec.m_wi, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);

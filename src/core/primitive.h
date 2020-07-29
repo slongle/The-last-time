@@ -52,7 +52,7 @@ public:
     Medium(const std::shared_ptr<PhaseFunction>& pf) :m_phaseFunction(pf) {}
 
     virtual Spectrum Sample(const Ray& ray, MediumRecord& mediumRec, Sampler& sampler) const = 0;
-    virtual Spectrum Transmittance(const Ray& ray) const = 0;
+    virtual Spectrum Transmittance(const Ray& ray, Sampler& sampler) const = 0;
 
     std::shared_ptr<PhaseFunction> m_phaseFunction;
 };

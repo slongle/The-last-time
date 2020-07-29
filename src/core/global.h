@@ -22,6 +22,8 @@
 // non ¨C DLL-interface class 'std::runtime_error' used as base for DLL-interface class
 #pragma warning(disable : 4275)  // warning in fmtlib 
 #pragma warning(disable : 4566)  // warning in fmtlib
+#pragma warning(disable : 4146)  // warning in OpenVDB
+#pragma warning(disable : 4251)  // warning in OpenVDB
 
 #endif
 

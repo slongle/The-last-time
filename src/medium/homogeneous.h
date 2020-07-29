@@ -45,7 +45,7 @@ public:
         return mediumRec.m_internal ? m_sigmaS * Tr / pdf : Tr / pdf;
     }
 
-    Spectrum Transmittance(const Ray& ray) const {
+    Spectrum Transmittance(const Ray& ray, Sampler& sampler) const {
         float t = std::min(ray.tMax, std::numeric_limits<float>::max());
         Spectrum Tr = Exp(m_sigmaT * (-t));
         return Tr;
