@@ -110,7 +110,7 @@ public:
     static float shadowEpsilon;
 };
 
-inline float Ray::epsilon = 1e-4;
+inline float Ray::epsilon = 2e-4;
 inline float Ray::shadowEpsilon = 1e-3;
 
 

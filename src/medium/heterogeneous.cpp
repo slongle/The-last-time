@@ -44,7 +44,7 @@ Spectrum HeterogeneousMedium::Sample(const Ray& ray, MediumRecord& mediumRec, Sa
     mediumRec.m_internal = true;
     while (true) {
         float s = sampler.Next1D();
-        t -= std::log(1 - s) * m_invMaxDensity;
+        t -= std::log(1 - s) * m_invMaxDensity / m_scale;
         if (t >= d) {
             mediumRec.m_p = ray(d);
             mediumRec.m_t = d;
@@ -53,7 +53,7 @@ Spectrum HeterogeneousMedium::Sample(const Ray& ray, MediumRecord& mediumRec, Sa
             break;
         }
         float density = Density(ray(t));
-        Tr *= (1 - density * m_invMaxDensity);
+        //Tr *= (1 - density * m_invMaxDensity);
         pdf *= (1 - density * m_invMaxDensity);
         if (sampler.Next1D() <= density * m_invMaxDensity) {
             mediumRec.m_p = ray(t);
@@ -71,13 +71,22 @@ Spectrum HeterogeneousMedium::Transmittance(const Ray& ray, Sampler& sampler) co
     float d = ray.tMax;
     LOG_IF(FATAL, d == std::numeric_limits<float>::infinity()) << "The estimated ray is infinity.";
     float t = 0;
-    Spectrum Tr = 1;
-    while (true) {
+    float Tr = 1;
+    while (true) {        
         float s = sampler.Next1D();
-        t -= std::log(1 - s) * m_invMaxDensity;
+        t -= std::log(1 - s) * m_invMaxDensity / m_scale;
         if (t >= d) break;
         float density = Density(ray(t));
         Tr *= (1 - density * m_invMaxDensity);
+
+        const float rrThreshold = .1;
+        if (Tr < rrThreshold) {
+            float q = std::max((float).05, 1 - Tr);
+            if (sampler.Next1D() < q) {
+                return Spectrum(0.);
+            }
+            Tr /= 1 - q;
+        }
     }
     return Tr;
 }
