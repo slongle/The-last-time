@@ -92,7 +92,7 @@ Float3 EnvironmentLight::GetIntersectPoint(const Ray& ray) const
 {
     //return ray.d;
     float a = Dot(ray.d, ray.d), b = 2.f * Dot(ray.o, ray.d), c = Dot(ray.o, ray.o) - (m_radius * m_radius);    
-    LOG_IF(FATAL, b * b - 4 * a * c < 0) << "Environment light's radius is too small";    
+    LOG_IF(FATAL, b * b - 4 * a * c < 0) << ray.o << "Environment light's radius is too small";
     float det = std::sqrt(b * b - 4 * a * c);
     float t = (-b + det) / (2 * a);
     Float3 p = Normalize(ray.o + ray.d * t);

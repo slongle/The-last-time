@@ -119,11 +119,11 @@ bool Scene::IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance, Sa
     transmittance = Spectrum(1.f);
     while (true) {
         bool hit = Intersect(ray, hitRec);
-        if (ray.m_medium) {
-            transmittance *= ray.m_medium->Transmittance(ray, sampler);
-        }
         if (!hit) {
             return false;
+        }
+        if (ray.m_medium) {
+            transmittance *= ray.m_medium->Transmittance(ray, sampler);
         }
         const auto& bsdf = hitRec.m_primitive->m_bsdf;
         if (bsdf && !bsdf->IsTransparent()) {
@@ -194,12 +194,12 @@ bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance, Sampler& sampler) cons
             }
         }
 
-        if (ray.m_medium) {
-            transmittance *= ray.m_medium->Transmittance(ray, sampler);
-        }
-
         if (!hit) {
             return false;
+        }
+
+        if (ray.m_medium) {
+            transmittance *= ray.m_medium->Transmittance(ray, sampler);
         }
         
         if (bsdf) {

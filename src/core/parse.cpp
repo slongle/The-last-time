@@ -13,6 +13,7 @@
 #include "bsdf/transparent.h"
 #include "light/arealight.h"
 #include "light/environment.h"
+#include "light/directional.h"
 #include "medium/hg.h"
 #include "medium/homogeneous.h"
 #include "medium/heterogeneous.h"
@@ -318,6 +319,13 @@ void Parse(const std::string& filename, Renderer& renderer)
                 auto light = std::shared_ptr<EnvironmentLight>(new EnvironmentLight(texture, radius, scale));
                 scene->m_lights.push_back(light);
                 scene->m_environmentLights.push_back(light);
+            }
+            else if (lightType == "directional") {
+                Float3 direction = GetFloat3(lightProperties, "direction", Float3(1, 0, 0));
+                Spectrum irradiance = GetSpectrum(lightProperties, "irradiance", Spectrum(1.f));
+                float scale = GetFloat(lightProperties, "scale", 1.f);
+                auto light = std::shared_ptr<DirectionalLight>(new DirectionalLight(irradiance * scale, direction));
+                scene->m_lights.push_back(light);
             }
             else {
                 assert(false);
