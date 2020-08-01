@@ -17,11 +17,12 @@ int main(int argc, char* argv[]) {
 	scenes[7] = "3.Volume/Equiangular/scene.json";
 	scenes[8] = "3.Volume/Glory/scene.json";
 	scenes[9] = "3.Volume/Cloud/scene.json";
-	scenes[10] = "5.Guide/Torus/scene.json";
-	scenes[11] = "6.Caustics/DiscoBall/scene.json";
-	scenes[12] = "6.Caustics/Water/scene.json";
-	scenes[13] = "6.Caustics/VolumeCaustics/scene.json";
-	std::string filename = prefix + scenes[9];
+	scenes[10] = "3.Volume/Smoke/scene.json";
+	scenes[11] = "5.Guide/Torus/scene.json";
+	scenes[12] = "6.Caustics/DiscoBall/scene.json";
+	scenes[13] = "6.Caustics/Water/scene.json";
+	scenes[14] = "6.Caustics/VolumeCaustics/scene.json";
+	std::string filename = prefix + scenes[6];
 
 	Renderer renderer(filename);
 	renderer.Render();

@@ -4,13 +4,13 @@
 
 std::shared_ptr<Mesh> Scene::GetMesh(const std::string& name)
 {
-    assert(m_meshes.count(name) == 1);
+    LOG_IF(FATAL, !m_meshes.count(name)) << "No reference mesh named " << name << ".";
     return m_meshes[name];
 }
 
 std::shared_ptr<Shape> Scene::GetShape(const std::string& name)
 {
-    assert(m_shapes.count(name) == 1);
+    LOG_IF(FATAL, !m_shapes.count(name)) << "No reference shape named " << name << ".";
     return m_shapes[name];
 }
 
@@ -20,30 +20,39 @@ std::shared_ptr<Medium> Scene::GetMedium(const std::string& name)
         return m_media[name];
     }
     else {
-        return std::shared_ptr<Medium>(nullptr);
+        if (name == "") {
+            return std::shared_ptr<Medium>(nullptr);
+        }
+        else {
+            LOG(FATAL) << "No reference medium named " << name << ".";
+        }
     }
 }
 
 std::shared_ptr<BSDF> Scene::GetBSDF(const std::string& name)
 {
-    //assert(m_BSDFs.count(name) == 1);
     if (m_BSDFs.count(name)) {
         return m_BSDFs[name];
     }
     else {
-        return std::shared_ptr<BSDF>(nullptr);
+        if (name == "") {
+            return std::shared_ptr<BSDF>(nullptr);
+        }
+        else {
+            LOG(FATAL) << "No reference BSDF named " << name << ".";
+        }
     }
 }
 
 std::shared_ptr<Texture<float>> Scene::GetFloatTexture(const std::string& name)
 {
-    assert(m_floatTextures.count(name) == 1);
+    LOG_IF(FATAL, !m_floatTextures.count(name)) << "No reference float texture named " << name << ".";
     return m_floatTextures[name];    
 }
 
 std::shared_ptr<Texture<Spectrum>> Scene::GetSpectrumTexture(const std::string& name)
 {
-    assert(m_spectrumTextures.count(name) == 1);
+    LOG_IF(FATAL, !m_spectrumTextures.count(name)) << "No reference spectrum texture named " << name << ".";
     return m_spectrumTextures[name];
 }
 

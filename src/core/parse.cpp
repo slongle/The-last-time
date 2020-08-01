@@ -127,12 +127,13 @@ void Parse(const std::string& filename, Renderer& renderer)
                 medium = new HomogeneousMedium(std::shared_ptr<PhaseFunction>(pf), density, albedo, scale);
             }
             else if (mediumType == "heterogeneous") {
+                //std::string estimator = GetString(mediumProperties, "estimator", "ratio_tracking");
                 std::string filename = GetString(mediumProperties, "filename", "");
                 std::string densityName = GetString(mediumProperties, "density", "density");
                 Spectrum albedo = GetSpectrum(mediumProperties, "albedo", Spectrum(0.5f));
                 float scale = GetFloat(mediumProperties, "scale", 1);                
                 medium = new HeterogeneousMedium(
-                    std::shared_ptr<PhaseFunction>(pf), filename, densityName, albedo, scale);                
+                    std::shared_ptr<PhaseFunction>(pf), filename, densityName, albedo, scale);
             }
             else {
                 LOG(FATAL) << "Wrong medium type " << mediumType;
@@ -261,18 +262,14 @@ void Parse(const std::string& filename, Renderer& renderer)
 
             std::string shapeName = primitiveProperties["shape"];
             std::vector<std::shared_ptr<Shape>> shapes;
-            if (scene->m_meshes.count(shapeName)) {
-                std::shared_ptr<Mesh> mesh = scene->GetMesh(shapeName);
-                scene->m_orderedMeshes.push_back(mesh);
-                shapes.reserve(mesh->m_triangleNum);
-                for (uint32_t i = 0; i < mesh->m_triangleNum; i++) {
-                    shapes.emplace_back(new Triangle(mesh, i));
-                }
+                        
+            std::shared_ptr<Mesh> mesh = scene->GetMesh(shapeName);
+            scene->m_orderedMeshes.push_back(mesh);
+            shapes.reserve(mesh->m_triangleNum);
+            for (uint32_t i = 0; i < mesh->m_triangleNum; i++) {
+                shapes.emplace_back(new Triangle(mesh, i));
             }
-            else {
-
-            }
-
+            
             std::string bsdfName = primitiveProperties["bsdf"];
             std::shared_ptr<BSDF> bsdf = scene->GetBSDF(bsdfName);
 

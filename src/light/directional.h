@@ -5,7 +5,7 @@
 class DirectionalLight :public Light {
 public:
     DirectionalLight(const Spectrum& irrandance, const Float3& direction)
-        :Light(MediumInterface(nullptr, nullptr)), m_irrandance(irrandance), m_direction(direction) {}
+        :Light(MediumInterface(nullptr, nullptr)), m_irrandance(irrandance), m_direction(Normalize(direction)) {}
 
     Spectrum Sample(LightRecord& lightRec, Float2& s) const;
     Spectrum Eval(LightRecord& lightRec) const;
