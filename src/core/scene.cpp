@@ -202,15 +202,12 @@ bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance, Sampler& sampler) cons
                 return true;
             }
         }
-
         if (!hit) {
             return false;
-        }
-
+        }        
         if (ray.m_medium) {
             transmittance *= ray.m_medium->Transmittance(ray, sampler);
-        }
-        
+        }        
         if (bsdf) {
             MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
             transmittance *= bsdf->Sample(matRec, Float2(0, 0));

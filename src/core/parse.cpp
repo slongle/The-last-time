@@ -23,6 +23,7 @@
 #include "integrator/sppm.h"
 #include "texture/consttexture.h"
 #include "texture/imagemap.h"
+#include "texture/checker.h"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -106,6 +107,11 @@ void Parse(const std::string& filename, Renderer& renderer)
         int mediumNum = sceneFile["media"].size();
         std::cout << "# of media : " << mediumNum << std::endl;
         for (auto& mediumProperties : sceneFile["media"]) {
+            bool hide = GetBool(mediumProperties, "hide", false);
+            if (hide) {
+                continue;
+            }
+
             std::string mediumName = mediumProperties["name"];
             std::string mediumType = mediumProperties["type"];
 
@@ -129,11 +135,15 @@ void Parse(const std::string& filename, Renderer& renderer)
             else if (mediumType == "heterogeneous") {
                 //std::string estimator = GetString(mediumProperties, "estimator", "ratio_tracking");
                 std::string filename = GetString(mediumProperties, "filename", "");
+                bool lefthand = GetBool(mediumProperties, "left_hand", true);
                 std::string densityName = GetString(mediumProperties, "density", "density");
+                bool blackbody = GetBool(mediumProperties, "blackbody", false);
+                std::string temperatureName = GetString(mediumProperties, "temperature", "temperature");
                 Spectrum albedo = GetSpectrum(mediumProperties, "albedo", Spectrum(0.5f));
                 float scale = GetFloat(mediumProperties, "scale", 1);                
                 medium = new HeterogeneousMedium(
-                    std::shared_ptr<PhaseFunction>(pf), filename, densityName, albedo, scale);
+                    std::shared_ptr<PhaseFunction>(pf), 
+                    filename, lefthand, densityName, blackbody, temperatureName, albedo, scale);
             }
             else {
                 LOG(FATAL) << "Wrong medium type " << mediumType;
@@ -150,12 +160,21 @@ void Parse(const std::string& filename, Renderer& renderer)
         for (auto& textureProperties : sceneFile["textures"]) {
             std::string textureName = textureProperties["name"];
             std::string type = textureProperties["type"];
-            std::string filename = textureProperties["filename"];
             if (type == "float") {
+                std::string filename = textureProperties["filename"];
                 scene->AddFloatTexture(textureName, CreateFloatImageTexture(filename));
             }
-            else {
+            else if (type == "rgb") {
+                std::string filename = textureProperties["filename"];
                 scene->AddSpectrumTexture(textureName, CreateSpectrumImageTexture(filename));
+            }
+            else if (type == "checker") {
+                Spectrum color0 = GetSpectrum(textureProperties, "color0", Spectrum(0.8f));
+                Spectrum color1 = GetSpectrum(textureProperties, "color1", Spectrum(0.2f));
+                float scale_x = GetFloat(textureProperties, "scale_x", 1);
+                float scale_y = GetFloat(textureProperties, "scale_y", 1);
+                scene->AddSpectrumTexture(textureName,
+                    std::shared_ptr<CheckerTexture>(new CheckerTexture(color0, color1, Float2(scale_x, scale_y))));
             }
         }
     }

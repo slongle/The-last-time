@@ -3,33 +3,36 @@
 HeterogeneousMedium::HeterogeneousMedium(
     const std::shared_ptr<PhaseFunction>& pf, 
     const std::string& filename,
+    const bool& lefthand,
     const std::string& densityName,
+    const bool& blackbody,
+    const std::string& temperatureName,
     const Spectrum& albedo,
     const float& scale)
-    : Medium(pf), m_albedo(albedo), m_scale(scale), m_sampler({})
+    : Medium(pf), m_lefthand(lefthand), m_blackbody(blackbody), m_albedo(albedo), m_scale(scale), 
+    m_densitySampler({}), m_temperatureSampler({})
 {
     openvdb::initialize();
     openvdb::io::File file(GetFileResolver()->string() + "/" + filename);
     std::cout << "Loading " << filename << std::endl;
-    file.open();    
 
-    openvdb::GridBase::Ptr baseGrid;   
-    for (openvdb::io::File::NameIterator nameIter = file.beginName();
-        nameIter != file.endName(); ++nameIter)
-    {
-        if (nameIter.gridName() == densityName) {
-            baseGrid = file.readGrid(nameIter.gridName());            
-            break;
-        }
+    file.open();    
+    openvdb::GridBase::Ptr densityBaseGrid;
+    densityBaseGrid = file.readGrid(densityName);
+    if (m_blackbody) {
+        openvdb::GridBase::Ptr temperatureBaseGrid;
+        temperatureBaseGrid = file.readGrid(densityName);
+    }
+    file.close();    
+
+    m_densityGrid = openvdb::gridPtrCast<openvdb::FloatGrid>(densityBaseGrid);
+    m_densitySampler = VDBFloatSampler(*m_densityGrid);
+    if (m_blackbody) {
+        m_temperatureGrid = openvdb::gridPtrCast<openvdb::FloatGrid>(densityBaseGrid);
+        m_temperatureSampler = VDBFloatSampler(*m_densityGrid);
     }
 
-    file.close();
-    LOG_IF(FATAL, !baseGrid) << "Miss the volume named " << densityName;
-
-    m_grid = openvdb::gridPtrCast<openvdb::FloatGrid>(baseGrid);
-    m_sampler = VDBFloatSampler(*m_grid);    
-
-    m_grid->evalMinMax(m_minDensity, m_maxDensity);
+    m_densityGrid->evalMinMax(m_minDensity, m_maxDensity);
     m_invMaxDensity = m_maxDensity == 0 ? 0 : 1.f / m_maxDensity;
     //std::cout << m_minVal << ' ' << m_maxVal << std::endl;
 }
@@ -94,7 +97,18 @@ Spectrum HeterogeneousMedium::Transmittance(const Ray& ray, Sampler& sampler) co
 
 float HeterogeneousMedium::Density(const Float3& _pWorld) const
 {
-    auto pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.z, -_pWorld.y);
-    float ret = m_sampler.wsSample(pWorld);
+    openvdb::Vec3d pWorld;
+    if (m_lefthand) {
+        pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.z, -_pWorld.y);
+    }
+    else {        
+        pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.y, _pWorld.z);
+    }
+    float ret = m_densitySampler.wsSample(pWorld);
     return ret;
+}
+
+Spectrum HeterogeneousMedium::BlackbodyRadiance(const Float3& p) const
+{
+    return Spectrum(0.f);
 }
