@@ -9,7 +9,8 @@ HeterogeneousMedium::HeterogeneousMedium(
     : Medium(pf), m_albedo(albedo), m_scale(scale), m_sampler({})
 {
     openvdb::initialize();
-    openvdb::io::File file(GetFileResolver()->string() + "/volumes/" + filename);
+    openvdb::io::File file(GetFileResolver()->string() + "/" + filename);
+    std::cout << "Loading " << filename << std::endl;
     file.open();    
 
     openvdb::GridBase::Ptr baseGrid;   

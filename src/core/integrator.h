@@ -6,6 +6,10 @@
 #include "light/arealight.h"
 #include "utility/timer.h"
 
+#include <thread>
+#include <atomic>
+#include <mutex>
+
 class Integrator {
 public:
     Integrator(
@@ -39,4 +43,32 @@ protected:
     std::shared_ptr<Scene> m_scene;
     std::shared_ptr<Camera> m_camera;
     std::shared_ptr<Framebuffer> m_buffer;
+};
+
+class SampleIntegrator : public Integrator {
+public:
+    SampleIntegrator(
+        const std::shared_ptr<Scene>& scene,
+        const std::shared_ptr<Camera>& camera,
+        const std::shared_ptr<Framebuffer>& buffer,
+        const uint32_t& spp)
+        : Integrator(scene, camera, buffer), m_spp(spp) {}
+    ~SampleIntegrator();
+
+    // Schedule
+    virtual void Start();
+    virtual void Stop();
+    virtual void Wait();
+    virtual bool IsRendering();
+    virtual void RenderTile(const Framebuffer::Tile& tile);
+    // Debug
+    virtual Spectrum NormalCheck(Ray ray, Sampler& sampler);
+protected:
+    // Muti-thread setting
+    std::atomic<bool> m_rendering;
+    std::vector<Framebuffer::Tile> m_tiles;
+    std::thread* m_renderThread;
+
+    // Options
+    uint32_t m_spp;
 };
