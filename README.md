@@ -51,10 +51,18 @@ Or use `./setup_builds.bat`.
 Crepuscular beam  
 ![](images/envbunny_spp=512_density=10_albedo=1.png)  
 Homogeneous medium with HG phase function (density = 10, albedo = 1, g = 0), multi-scatter  
+![](images/cloud_depth=100_1024spp_9h1m17s.png)  
+Disney cloud  
+![](images/smoke_1024spp_2h31m29s.png)  
+Smoke(VDB file from [OpenVDB](https://www.openvdb.org/download/))   
+![](images/fire_128spp.png)  
+Smoke(VDB file from [JangaFX](https://jangafx.com/software/embergen/download/free-vdb-animations/))   
 ![](images/scene_SPPM_5000.png)  
 Initial radius = 0.2, alpha = 0.5, iteration = 5000  
-![](images/torus_SPPM_10k.png)  
-Initial radius = 0.05, alpha = 0.5, iteration = 10000  
+![](images/torus_PT_1024000spp_11h59m46s720ms.png)  
+![](images/torus_PM_0.08_0.5_1mX1k_8m48s.png)  
+The first image is from path tracing, 1024K spp, 11h59m46s   
+The second image is from SPPM, initial radius = 0.08, alpha = 0.5, # of delta photon = 1M, iteration = 1K, 8m48s   
 ![](images/scene_1024_1kiiteration_100kdelta.png)
 Initial radius = 0.05, alpha = 0.3, iteration = 1000, # of delta photon = 100k  
 ![](images/globe_64spp.png)  
