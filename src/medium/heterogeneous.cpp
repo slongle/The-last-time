@@ -23,7 +23,7 @@ HeterogeneousMedium::HeterogeneousMedium(
         openvdb::GridBase::Ptr temperatureBaseGrid;
         temperatureBaseGrid = file.readGrid(densityName);
     }
-    file.close();    
+    file.close();
 
     m_densityGrid = openvdb::gridPtrCast<openvdb::FloatGrid>(densityBaseGrid);
     m_densitySampler = VDBFloatSampler(*m_densityGrid);
@@ -34,6 +34,8 @@ HeterogeneousMedium::HeterogeneousMedium(
 
     m_densityGrid->evalMinMax(m_minDensity, m_maxDensity);
     m_invMaxDensity = m_maxDensity == 0 ? 0 : 1.f / m_maxDensity;
+
+    m_dG = std::shared_ptr<Grid>(new Grid(filename, densityName, 1));
     //std::cout << m_minVal << ' ' << m_maxVal << std::endl;
 }
 
@@ -75,34 +77,42 @@ Spectrum HeterogeneousMedium::Transmittance(const Ray& ray, Sampler& sampler) co
     float d = ray.tMax;
     LOG_IF(FATAL, d == std::numeric_limits<float>::infinity()) << "The estimated ray is infinity.";
     float t = 0;
-    float Tr = 1;
+    float T = 1;
+    
+    
     while (true) {        
         float s = sampler.Next1D();
         t -= std::log(1 - s) * m_invMaxDensity / m_scale;
         if (t >= d) break;
         float density = Density(ray(t));
-        Tr *= (1 - density * m_invMaxDensity);
+        T *= (1 - density * m_invMaxDensity);
 
         const float rrThreshold = .1;
-        if (Tr < rrThreshold) {
-            float q = std::max((float).05, 1 - Tr);
+        if (T < rrThreshold) {
+            float q = std::max((float).05, 1 - T);
             if (sampler.Next1D() < q) {
                 return Spectrum(0.);
             }
-            Tr /= 1 - q;
+            T /= 1 - q;
         }
     }
-    return Tr;
+
+    return T;
 }
 
 float HeterogeneousMedium::Density(const Float3& _pWorld) const
 {
     openvdb::Vec3d pWorld;
+    float a = 0;
     if (m_lefthand) {
         pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.z, -_pWorld.y);
+        //a = m_dG->LookUp(Float3(_pWorld.x, _pWorld.z, -_pWorld.y));
+        return m_dG->LookUp(Float3(_pWorld.x, _pWorld.z, -_pWorld.y));
     }
     else {        
         pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.y, _pWorld.z);
+        //a = m_dG->LookUp(Float3(_pWorld.x, _pWorld.y, _pWorld.z));
+        return m_dG->LookUp(Float3(_pWorld.x, _pWorld.y, _pWorld.z));
     }
     float ret = m_densitySampler.wsSample(pWorld);
     return ret;

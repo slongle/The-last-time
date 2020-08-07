@@ -2,9 +2,12 @@
 
 #include "core/primitive.h"
 
+#include "grid.h"
+
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/Interpolation.h>
 #include <openvdb/tools/ValueTransformer.h>
+#include <openvdb/tools/Dense.h>
 
 class HeterogeneousMedium :public Medium {
 public:
@@ -37,6 +40,8 @@ public:
     VDBFloatSampler m_densitySampler;
     VDBFloatGridPtr m_temperatureGrid;
     VDBFloatSampler m_temperatureSampler;
+
+    std::shared_ptr<Grid> m_dG;
 
     bool m_lefthand;
     bool m_blackbody;

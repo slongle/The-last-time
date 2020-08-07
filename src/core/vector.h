@@ -28,6 +28,7 @@ typedef glm::vec3 Float3;
 typedef glm::vec4 Float4;
 typedef glm::ivec2 Int2;
 typedef glm::ivec3 Int3;
+typedef glm::u64vec3 ULL3;
 
 //inline void ReSample(Float2& s, const float& v) {}
 
@@ -95,6 +96,9 @@ inline Float3 Max(const Float3& v1, const Float3& v2) {
     return glm::max(v1, v2);
 }
 
+inline Float3 Floor(const Float3& v) {
+    return Float3(std::floor(v.x), std::floor(v.y), std::floor(v.z));
+}
 
 class Ray {
 public:
@@ -138,6 +142,12 @@ public:
     int MaxAxis() const {
         Float3 diag = m_pMax - m_pMin;
         return diag.x > diag.y ? (diag.x > diag.z ? 0 : 2) : (diag.y > diag.z ? 1 : 2);
+    }
+
+    bool Contain(const Float3& p) const {
+        return m_pMin.x <= p.x && p.x <= m_pMax.x && 
+            m_pMin.y <= p.y && p.y <= m_pMax.y && 
+            m_pMin.z <= p.z && p.z <= m_pMax.z;
     }
 
     bool Intersect(const Ray& ray) const {
