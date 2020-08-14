@@ -21,6 +21,7 @@
 #include "integrator/volumepathtracer.h"
 #include "integrator/pathguider.h"
 #include "integrator/sppm.h"
+#include "integrator/vppm.h"
 #include "texture/consttexture.h"
 #include "texture/imagemap.h"
 #include "texture/checker.h"
@@ -406,6 +407,17 @@ void Parse(const std::string& filename, Renderer& renderer)
             int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
             int spp = GetInt(integratorProperties, "spp", 1);
             integrator = std::make_shared<VolumePathIntegrator>(scene, camera, buffer, maxBounce, spp);
+        }
+        else if (type == "vppm") {
+            int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
+            int maxIteration = GetInt(integratorProperties, "max_iteration", 1);
+            int deltaPhotonNum = GetInt(integratorProperties, "delta_photon_num", 10000);
+            float initialRadius = GetFloat(integratorProperties, "initial_radius", 1);
+            float alpha = GetFloat(integratorProperties, "alpha", 2.f / 3.f);
+            integrator = std::shared_ptr<VPPMIntegrator>(new VPPMIntegrator(scene, camera, buffer, maxBounce,
+                maxIteration, deltaPhotonNum, initialRadius, alpha));
+            //integrator = std::make_shared<VPPMIntegrator>(scene, camera, buffer, maxBounce,
+            //    maxIteration, deltaPhotonNum, initialRadius, alpha);
         }
         else {
             assert(false);
