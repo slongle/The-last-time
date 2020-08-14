@@ -35,7 +35,7 @@ HeterogeneousMedium::HeterogeneousMedium(
     m_densityGrid->evalMinMax(m_minDensity, m_maxDensity);
     m_invMaxDensity = m_maxDensity == 0 ? 0 : 1.f / m_maxDensity;
 
-    m_dG = std::shared_ptr<Grid>(new Grid(filename, densityName, 1));
+    //m_dG = std::shared_ptr<Grid>(new Grid(filename, densityName, 1));
     //std::cout << m_minVal << ' ' << m_maxVal << std::endl;
 }
 
@@ -107,12 +107,12 @@ float HeterogeneousMedium::Density(const Float3& _pWorld) const
     if (m_lefthand) {
         pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.z, -_pWorld.y);
         //a = m_dG->LookUp(Float3(_pWorld.x, _pWorld.z, -_pWorld.y));
-        return m_dG->LookUp(Float3(_pWorld.x, _pWorld.z, -_pWorld.y));
+        //return m_dG->LookUp(Float3(_pWorld.x, _pWorld.z, -_pWorld.y));
     }
     else {        
         pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.y, _pWorld.z);
         //a = m_dG->LookUp(Float3(_pWorld.x, _pWorld.y, _pWorld.z));
-        return m_dG->LookUp(Float3(_pWorld.x, _pWorld.y, _pWorld.z));
+        //return m_dG->LookUp(Float3(_pWorld.x, _pWorld.y, _pWorld.z));
     }
     float ret = m_densitySampler.wsSample(pWorld);
     return ret;

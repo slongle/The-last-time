@@ -1,5 +1,7 @@
 #include "integrator.h"
 
+#include <sampler/independent.h>
+
 #include <tbb/parallel_for.h>
 #include <tbb/blocked_range.h>
 #include <tbb/concurrent_vector.h>
@@ -118,7 +120,7 @@ bool SampleIntegrator::IsRendering()
 
 void SampleIntegrator::RenderTile(const Framebuffer::Tile& tile)
 {
-    Sampler sampler;
+    IndependentSampler sampler;
     unsigned int s = tile.pos[1] * m_buffer->m_width + tile.pos[0];
     sampler.Setup(s);
 

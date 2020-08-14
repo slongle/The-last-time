@@ -1,5 +1,7 @@
 #include "vppm.h"
 
+#include "sampler/independent.h"
+
 #include <tbb/parallel_for.h>
 #include <tbb/blocked_range.h>
 #include <tbb/concurrent_vector.h>
@@ -89,7 +91,7 @@ std::string VPPMIntegrator::ToString() const
 
 void VPPMIntegrator::RenderTile(const Framebuffer::Tile& tile)
 {
-    Sampler sampler;
+    IndependentSampler sampler;
     uint64_t s = (tile.pos[1] * m_buffer->m_width + tile.pos[0]) +
         m_currentIteration * (m_buffer->m_width * m_buffer->m_height);
     sampler.Setup(s);
@@ -114,7 +116,7 @@ void VPPMIntegrator::EmitPhoton(const uint32_t& photonIndex)
         return;
     }
     // Initialize sampler
-    Sampler sampler;
+    IndependentSampler sampler;
     uint64_t seed = (uint64_t)m_currentIteration * m_deltaPhotonNum + photonIndex;
     sampler.Setup(seed);
     // Randomly pick an emitter

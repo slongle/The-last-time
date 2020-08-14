@@ -26,8 +26,7 @@ file(GLOB SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/bsdf/*.cpp
     ${CMAKE_SOURCE_DIR}/src/core/*.h
     ${CMAKE_SOURCE_DIR}/src/core/*.cpp
-    ${CMAKE_SOURCE_DIR}/src/ext/stb_image/*.h
-    ${CMAKE_SOURCE_DIR}/src/ext/stb_image/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/ext/pcg32/*.h
     ${CMAKE_SOURCE_DIR}/src/gui/*.h
     ${CMAKE_SOURCE_DIR}/src/gui/*.cpp
     ${CMAKE_SOURCE_DIR}/src/integrator/*.h
@@ -36,6 +35,8 @@ file(GLOB SOURCE_FILE
     ${CMAKE_SOURCE_DIR}/src/light/*.cpp
     ${CMAKE_SOURCE_DIR}/src/medium/*.h
     ${CMAKE_SOURCE_DIR}/src/medium/*.cpp
+    ${CMAKE_SOURCE_DIR}/src/sampler/*.h
+    ${CMAKE_SOURCE_DIR}/src/sampler/*.cpp
     ${CMAKE_SOURCE_DIR}/src/shape/*.h
     ${CMAKE_SOURCE_DIR}/src/shape/*.cpp
     ${CMAKE_SOURCE_DIR}/src/texture/*.h

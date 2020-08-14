@@ -9,17 +9,18 @@ class Sampler {
 public:
     Sampler() {}
 
-    void Setup(uint64_t s) {
-        m_engine.seed(s);
+    virtual void Setup(uint64_t s) {
+        m_engine.seed(s);        
     }
 
-    float Next1D() {
+    virtual float Next1D() {
         return m_rng(m_engine);
     }
-    Float2 Next2D() {
+    virtual Float2 Next2D() {
         return Float2(Next1D(), Next1D());
     }
 
+private:
     std::default_random_engine m_engine;
     std::uniform_real_distribution<float> m_rng;
 };
