@@ -17,7 +17,8 @@
 
 If you don't know how to add the three libraries, I recommend you use some package manager like `vcpkg`.  
 ```bash
- > vcpkg install embree3 openvdb tinyobjloader imgui glfw3 glew fmt glog nlohmann-json:x64-windows  
+ > set VCPKG_DEFAULT_TRIPLET=x64-windows  
+ > vcpkg install embree3 openvdb tinyobjloader imgui glab glfw3 glew fmt glog nlohmann-json stb   
  > vcpkg integrate install 
 ```
 ### Build
@@ -37,7 +38,7 @@ Or use `./setup_builds.bat`.
 [This Offline Renderer](https://github.com/slongle/The-Last-time) is a physically-based photorealistic 3D renderer I am writing from scratch in C++. Rainbow is built from the ground up as a global illumination renderer supporting global illumination through light transport algorithms, including volumetric unidirectional pathtracing with multiple importance sampling. The renderer is still a work in progress.  
 
 ### Features
-**Advanced Global Illumination**: Volumetric Unidirectional Path Tracing (Quasi-Monte Carlo), Stochastic progressive photon mapping, Primary Sample Space Metroplis Light Transport (Kelemen-style MLT), Path Guider (WIP).    
+**Advanced Global Illumination**: Volumetric Unidirectional Path Tracing (Quasi-Monte Carlo), Volumetric progressive photon mapping, Primary Sample Space Metroplis Light Transport (Kelemen-style MLT), Path Guider (WIP).    
 **Geometry**: Support triangle and quad meshes with instancing. Also can support sphere and box.  
 **Lights**: Support point light, spot light, area light(rectangle and sphere).  
 **Materials and BSDFs**: Support physically based BSDFs, including multiple microfacet models (GGX), smooth and rough versions of Fresnel conductors, specular dielectrics, transparent BSDF, blend BSDF.   
