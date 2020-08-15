@@ -166,6 +166,8 @@ void Renderer::Render()
 	//Display loop for the ongoing or completed render
 	glfwSetWindowTitle(m_window, "Rendering...");
     bool debugRay = false, debugKDTree = false;
+    int px, py;
+    int click_px = -1, click_py = -1;
 	while (!glfwWindowShouldClose(m_window)) {
         // Initialize window color
         //glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
@@ -195,9 +197,7 @@ void Renderer::Render()
             ImGui::Text((integratorString + "\n\n" + sceneString).c_str());
         }
         if (ImGui::CollapsingHeader("Debug"))
-        {
-            int px, py;
-            int click_px, click_py;
+        {            
             ImGuiIO& io = ImGui::GetIO();
             if (ImGui::IsMousePosValid()) {
                 px = io.MousePos.x;

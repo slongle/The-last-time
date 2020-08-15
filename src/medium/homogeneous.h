@@ -15,10 +15,10 @@ public:
         const Spectrum& density,
         const Spectrum& albedo,
         const float& scale)
-        :Medium(pf), m_density(density), m_albedo(albedo), m_scale(scale)        
+        :Medium(pf), m_density(density), m_albedo(albedo), m_scale(scale)
     {
         m_sigmaT = density * scale;
-        m_sigmaS = m_sigmaT * m_albedo; 
+        m_sigmaS = m_sigmaT * m_albedo;
         m_sigmaA = m_sigmaT - m_sigmaS;
     }
 

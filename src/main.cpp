@@ -23,6 +23,7 @@ int main(int argc, char* argv[]) {
 	scenes[13] = "6.Caustics/DiscoBall/scene.json";
 	scenes[14] = "6.Caustics/Water/scene.json";
 	scenes[15] = "6.Caustics/VolumeCaustics/scene.json";
+	scenes[16] = "6.Caustics/VolumeCaustics/scene_debug.json";
 	std::string filename = prefix + scenes[15];
 
 	Renderer renderer(filename);

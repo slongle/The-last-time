@@ -50,14 +50,14 @@ void KDTree::Clear()
 
 void KDTree::Query(Float3 center, const float& radius, std::vector<Photon>& photons) const
 {
-    float sqrRadius = std::sqr(radius);
+    double sqrRadius = std::sqr(radius);
     std::stack<uint32_t> stack;
     stack.push(m_root);
     while (!stack.empty()) {
         uint32_t idx = stack.top(); stack.pop();
         const auto& node = m_nodes[idx];
         const auto& photon = m_photons[node.m_photonIndex];
-        float minSqrDistance =
+        double minSqrDistance =
             std::sqr(std::max(0.f, std::max(center.x - node.m_bounds.m_pMax.x,
                 node.m_bounds.m_pMin.x - center.x))) +
             std::sqr(std::max(0.f, std::max(center.y - node.m_bounds.m_pMax.y,

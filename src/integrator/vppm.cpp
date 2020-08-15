@@ -29,8 +29,8 @@ void VPPMIntegrator::Start()
         [this] {
             // Photon pass            
             auto photonPass = [this](const tbb::blocked_range<int>& range) {
-                for (int i = range.begin(); i < range.end(); ++i) {    
-                    if (m_rendering) {                        
+                for (int i = range.begin(); i < range.end(); ++i) {
+                    if (m_rendering) {
                         EmitPhoton(i);
                     }
                 }
@@ -49,29 +49,38 @@ void VPPMIntegrator::Start()
             // Iteration
             m_currentRadius = m_initialRadius;
             m_currentPhotonNum = 0;
-            for (m_currentIteration = 0; m_currentIteration < m_maxIteration && m_rendering; m_currentIteration++) {            
+            for (m_currentIteration = 0; m_currentIteration < m_maxIteration && m_rendering; m_currentIteration++) {
                 if (!m_rendering) {
                     break;
-                }                
+                }
                 // Photon pass
                 tbb::blocked_range<int> photonRange(0, m_deltaPhotonNum);
+#ifdef _DEBUG
+                photonPass(photonRange);
+#else
                 tbb::parallel_for(photonRange, photonPass);
-                //photonPass(photonRange);
+#endif // _DEBUG
+
 
                 // Construct photon structure
                 m_photonTree.Build();
+                //std::cout << m_photonTree.m_photons.size() << std::endl;
 
                 // Camera pass
                 tbb::blocked_range<int> tileRange(0, m_tiles.size());
+#ifdef _DEBUG
+                cameraPass(tileRange);
+#else
                 tbb::parallel_for(tileRange, cameraPass);
-                //cameraPass(tileRange);
+#endif // _DEBUG
+
 
                 // Update settings
                 if (m_currentIteration + 1 != m_maxIteration) {
                     m_photonTree.Clear();
                 }
                 m_currentPhotonNum += m_deltaPhotonNum;
-                m_currentRadius = std::sqrt((m_currentIteration + m_alpha) / (m_currentIteration + 1)) * 
+                m_currentRadius = std::sqrt((m_currentIteration + m_alpha) / (m_currentIteration + 1)) *
                     m_currentRadius;
             }
 
@@ -98,14 +107,20 @@ void VPPMIntegrator::RenderTile(const Framebuffer::Tile& tile)
 
     for (int j = 0; j < tile.res[1]; j++) {
         for (int i = 0; i < tile.res[0]; i++) {
-            if (!m_rendering) {
-                break;
+            for (int k = 0; k < 16; k++) {
+                if (!m_rendering) {
+                    break;
+                }
+                int x = i + tile.pos[0], y = j + tile.pos[1];
+                Ray ray;
+                m_camera->GenerateRay(Float2(x, y), sampler, ray);
+#ifdef _DEBUG
+                Spectrum radiance = LiDebug(ray, sampler);
+#else
+                Spectrum radiance = Li(ray, sampler);
+#endif // _DEBUG
+                m_buffer->AddSample(x, y, radiance);
             }
-            int x = i + tile.pos[0], y = j + tile.pos[1];
-            Ray ray;
-            m_camera->GenerateRay(Float2(x, y), sampler, ray);
-            Spectrum radiance = Li(ray, sampler);
-            m_buffer->AddSample(x, y, radiance);
         }
     }
 }
@@ -131,19 +146,9 @@ void VPPMIntegrator::EmitPhoton(const uint32_t& photonIndex)
     for (int bounce = 0; bounce < m_maxBounce; bounce++) {
         // Intersect test
         HitRecord hitRec;
-        bool hit = m_scene->Intersect(ray, hitRec);        
+        bool hit = m_scene->Intersect(ray, hitRec);
         if (!hit) {
             break;
-        }
-        auto& bsdf = hitRec.m_primitive->m_bsdf;
-        // Hit medium bound
-        if (!bsdf) {
-            auto medium = hitRec.GetMedium(ray.d);
-            ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);
-            hit = m_scene->Intersect(ray, hitRec);
-
-            bounce--;
-            continue;
         }
         // Sample medium
         MediumRecord mediumRec;
@@ -151,11 +156,23 @@ void VPPMIntegrator::EmitPhoton(const uint32_t& photonIndex)
             flux *= ray.m_medium->Sample(ray, mediumRec, sampler);
         }
         // Store photon
-        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
-        if (mediumRec.m_internal || !isDelta) {
-            Photon photon(hitRec.m_geoRec.m_p, -ray.d, flux);
-            m_photonTree.Add(photon);            
+        auto& bsdf = hitRec.m_primitive->m_bsdf;
+        if (mediumRec.m_internal) {
+            Photon photon(mediumRec.m_p, -ray.d, flux);
+            m_photonTree.Add(photon);
         }
+        else if (bsdf && !bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
+            Photon photon(hitRec.m_geoRec.m_p, -ray.d, flux);
+            m_photonTree.Add(photon);
+        }
+        // Hit medium bound
+        if (!mediumRec.m_internal && !bsdf) {
+            auto medium = hitRec.GetMedium(ray.d);
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);            
+
+            bounce--;
+            continue;
+        }        
         // Scatter photon
         if (mediumRec.m_internal) {
             // Sample phase function
@@ -192,20 +209,10 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
     HitRecord hitRec;
     for (int bounce = 0; bounce < m_maxBounce; bounce++) {
         bool hit = m_scene->Intersect(ray, hitRec);
-        radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
+        radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);        
         // No hit
         if (!hit) {
             break;
-        }
-        auto& bsdf = hitRec.m_primitive->m_bsdf;
-        // Hit medium bound
-        if (!bsdf) {
-            auto medium = hitRec.GetMedium(ray.d);
-            ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);
-            hit = m_scene->Intersect(ray, hitRec);
-
-            bounce--;
-            continue;
         }
         // Sample medium
         MediumRecord mediumRec;
@@ -213,16 +220,23 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
             throughput *= ray.m_medium->Sample(ray, mediumRec, sampler);
         }
         // Estimate radiance
+        auto& bsdf = hitRec.m_primitive->m_bsdf;
         auto& phase = ray.m_medium->m_phaseFunction;
-        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
-        if (mediumRec.m_internal || !isDelta) {
-            if (mediumRec.m_internal) {
-                radiance += EstimateMedium(ray, hitRec, phase);
-            }
-            else {                
-                radiance += throughput * EstimatePlane(ray, hitRec, bsdf);
-            }
+        if (mediumRec.m_internal) {
+            radiance += throughput * EstimateMedium(ray, mediumRec, phase);
             break;
+        }
+        else if (bsdf && !bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
+            radiance += throughput * EstimatePlane(ray, hitRec, bsdf);
+            break;
+        }
+        // Hit medium bound
+        if (!bsdf) {
+            auto medium = hitRec.GetMedium(ray.d);
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);
+
+            bounce--;
+            continue;
         }
         // Scatter 
         if (mediumRec.m_internal) {
@@ -232,7 +246,7 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
             ray = Ray(mediumRec.m_p, phaseRec.m_wo, ray.m_medium);
             throughput *= phaseVal;
         }
-        else {            
+        else {
             //Sample BSDF
             MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
             Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
@@ -241,7 +255,7 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
             }
             Float3 dir = matRec.ToWorld(matRec.m_wo);
             ray = Ray(hitRec.m_geoRec.m_p, dir, hitRec.GetMedium(dir));
-            throughput *= bsdfVal;            
+            throughput *= bsdfVal;
         }
 
         // Russian roulette
@@ -258,12 +272,12 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
 }
 
 Spectrum VPPMIntegrator::EstimateMedium(
-    const Ray& ray, 
-    const HitRecord& hitRec, 
+    const Ray& ray,
+    const MediumRecord& mediumRec,
     const std::shared_ptr<PhaseFunction>& phase)
 {
     std::vector<Photon> gatheredPhotons;
-    m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
+    m_photonTree.Query(mediumRec.m_p, m_currentRadius, gatheredPhotons);
     Spectrum sum(0.f);
     for (const auto& photon : gatheredPhotons) {
         PhaseFunctionRecord phaseRec(-ray.d, photon.m_direction);
@@ -289,7 +303,80 @@ Spectrum VPPMIntegrator::EstimatePlane(
         sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon.m_flux;
     }
     float area = M_PI * m_currentRadius * m_currentRadius;
-    Spectrum radiance =  sum / (area * m_deltaPhotonNum);
+    Spectrum radiance = sum / (area * m_deltaPhotonNum);
+    return radiance;
+}
+
+void VPPMIntegrator::Debug(DebugRecord& debugRec)
+{
+    if (debugRec.m_debugRay) {
+        Float2 pos = debugRec.m_rasterPosition;
+        if (pos.x >= 0 && pos.x < m_buffer->m_width &&
+            pos.y >= 0 && pos.y < m_buffer->m_height)
+        {
+            int x = pos.x, y = m_buffer->m_height - pos.y;
+            Sampler sampler;
+            unsigned int s = y * m_buffer->m_width + x;
+            sampler.Setup(s);
+            Ray ray;
+            m_camera->GenerateRay(Float2(x, y), sampler, ray);
+            LiDebug(ray, sampler);
+        }
+    }
+}
+
+Spectrum VPPMIntegrator::LiDebug(Ray ray, Sampler& sampler)
+{
+    Spectrum radiance(0.f);
+    Spectrum throughput(1.f);
+    float eta = 1.f;
+    HitRecord hitRec;
+    for (int bounce = 0; bounce < m_maxBounce; bounce++) {
+        bool hit = m_scene->Intersect(ray, hitRec);
+        // No hit
+        if (!hit) {
+            break;
+        }
+        auto& bsdf = hitRec.m_primitive->m_bsdf;        
+        // Sample medium
+        MediumRecord mediumRec;
+        if (ray.m_medium) {
+            throughput *= ray.m_medium->Sample(ray, mediumRec, sampler);
+        }
+        if (!mediumRec.m_internal) {
+            // Estimate radiance
+            std::vector<Photon> gatheredPhotons;
+            m_photonTree.Query(mediumRec.m_p, m_currentRadius, gatheredPhotons);
+            Spectrum sum(0.f);
+            for (const auto& photon : gatheredPhotons) {
+                sum += photon.m_flux;
+            }
+            float vol = 4.f / 3.f * M_PI * m_currentRadius * m_currentRadius * m_currentRadius;
+            radiance += sum / (vol * m_deltaPhotonNum);
+        }
+        else {
+            // Hit medium bound
+            if (!bsdf) {
+                auto medium = hitRec.GetMedium(ray.d);
+                ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);
+
+                bounce--;
+                continue;
+            }
+            // Estimate radiance
+            std::vector<Photon> gatheredPhotons;
+            m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
+            Spectrum sum(0.f);
+            for (const auto& photon : gatheredPhotons) {
+                sum += photon.m_flux;
+            }
+            float area = M_PI * m_currentRadius * m_currentRadius;
+            radiance += sum / (area * m_deltaPhotonNum);
+        }
+
+
+        break;
+    }
     return radiance;
 }
 

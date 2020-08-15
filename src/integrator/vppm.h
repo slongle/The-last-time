@@ -30,20 +30,23 @@ public:
             m_renderThread->join();
         }
     }
-    bool IsRendering() { return m_rendering; }    
-    std::string ToString() const;   
+    bool IsRendering() { return m_rendering; }
+    std::string ToString() const;
 private:
     void RenderTile(const Framebuffer::Tile& tile);
     void EmitPhoton(const uint32_t& photonIndex);
     Spectrum Li(Ray ray, Sampler& sampler);
     Spectrum EstimateMedium(
         const Ray& ray,
-        const HitRecord& hitRec,
+        const MediumRecord& mediumRec,
         const std::shared_ptr<PhaseFunction>& phase);
     Spectrum EstimatePlane(
-        const Ray& ray, 
-        const HitRecord& hitRec, 
+        const Ray& ray,
+        const HitRecord& hitRec,
         const std::shared_ptr<BSDF>& bsdf);
+private:
+    void Debug(DebugRecord& debugRec);    
+    Spectrum LiDebug(Ray ray, Sampler& sampler);
 private:
     // Options
     uint32_t m_maxBounce;
