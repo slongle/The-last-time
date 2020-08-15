@@ -8,7 +8,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
     float eta = 1.f;
     HitRecord hitRec;
     bool hit = m_scene->Intersect(ray, hitRec);
-    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
+    for (int bounce = 0; bounce < m_maxBounce; bounce++) {
         // Sample medium
         MediumRecord mediumRec;
         if (hit && ray.m_medium) {

@@ -72,8 +72,8 @@ Spectrum AreaLight::SamplePhoton(Float2& s1, Float2& s2, Ray& ray) const
     m_shape->Sample(geoRec, s1);
     Float3 dir = SampleCosineHemisphere(s2);
     float dirPdf = PdfCosineHemisphere(dir);
-
-    ray = Ray(geoRec.m_p, Frame(geoRec.m_ns).ToWorld(dir));
+    
+    ray = Ray(geoRec.m_p, Frame(geoRec.m_ns).ToWorld(dir), this->m_mediumInterface.m_outsideMedium);
 
     return m_radiance * M_PI / geoRec.m_pdf;
 }

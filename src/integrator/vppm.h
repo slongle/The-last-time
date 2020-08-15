@@ -36,6 +36,14 @@ private:
     void RenderTile(const Framebuffer::Tile& tile);
     void EmitPhoton(const uint32_t& photonIndex);
     Spectrum Li(Ray ray, Sampler& sampler);
+    Spectrum EstimateMedium(
+        const Ray& ray,
+        const HitRecord& hitRec,
+        const std::shared_ptr<PhaseFunction>& phase);
+    Spectrum EstimatePlane(
+        const Ray& ray, 
+        const HitRecord& hitRec, 
+        const std::shared_ptr<BSDF>& bsdf);
 private:
     // Options
     uint32_t m_maxBounce;

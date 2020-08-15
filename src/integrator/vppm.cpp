@@ -128,26 +128,51 @@ void VPPMIntegrator::EmitPhoton(const uint32_t& photonIndex)
     Spectrum flux = light->SamplePhoton(sampler.Next2D(), sampler.Next2D(), ray);
     flux *= lightNum;
     // Trace photon
-    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
+    for (int bounce = 0; bounce < m_maxBounce; bounce++) {
         // Intersect test
         HitRecord hitRec;
-        bool hit = m_scene->Intersect(ray, hitRec);
-        //DrawLine(ray.o, hitRec.m_geoRec.m_p, Spectrum(1, 0, 0));
+        bool hit = m_scene->Intersect(ray, hitRec);        
         if (!hit) {
             break;
         }
         auto& bsdf = hitRec.m_primitive->m_bsdf;
-        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
+        // Hit medium bound
+        if (!bsdf) {
+            auto medium = hitRec.GetMedium(ray.d);
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);
+            hit = m_scene->Intersect(ray, hitRec);
+
+            bounce--;
+            continue;
+        }
+        // Sample medium
+        MediumRecord mediumRec;
+        if (ray.m_medium) {
+            flux *= ray.m_medium->Sample(ray, mediumRec, sampler);
+        }
         // Store photon
-        Photon photon(hitRec.m_geoRec.m_p, -ray.d, flux);
-        if (!isDelta) {
-            m_photonTree.Add(photon);
+        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
+        if (mediumRec.m_internal || !isDelta) {
+            Photon photon(hitRec.m_geoRec.m_p, -ray.d, flux);
+            m_photonTree.Add(photon);            
         }
         // Scatter photon
-        MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st, Importance);
-        Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
-        flux *= bsdfVal;
-        ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
+        if (mediumRec.m_internal) {
+            // Sample phase function
+            auto& phase = ray.m_medium->m_phaseFunction;
+            PhaseFunctionRecord phaseRec(-ray.d);
+            Spectrum phaseVal = phase->Sample(phaseRec, sampler.Next2D());
+            flux *= phaseVal;
+            ray = Ray(mediumRec.m_p, phaseRec.m_wo, ray.m_medium);
+        }
+        else {
+            // Sample BSDF
+            MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st, Importance);
+            Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
+            flux *= bsdfVal;
+            Float3 dir = matRec.ToWorld(matRec.m_wo);
+            ray = Ray(hitRec.m_geoRec.m_p, dir, hitRec.GetMedium(dir));
+        }
         // Russian roulette
         if (bounce > 5) {
             float q = std::min(0.99f, MaxComponent(flux));
@@ -165,42 +190,59 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
     Spectrum throughput(1.f);
     float eta = 1.f;
     HitRecord hitRec;
-    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
+    for (int bounce = 0; bounce < m_maxBounce; bounce++) {
         bool hit = m_scene->Intersect(ray, hitRec);
         radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
-
+        // No hit
         if (!hit) {
             break;
         }
-
-        // Get basf
         auto& bsdf = hitRec.m_primitive->m_bsdf;
+        // Hit medium bound
+        if (!bsdf) {
+            auto medium = hitRec.GetMedium(ray.d);
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);
+            hit = m_scene->Intersect(ray, hitRec);
+
+            bounce--;
+            continue;
+        }
+        // Sample medium
+        MediumRecord mediumRec;
+        if (ray.m_medium) {
+            throughput *= ray.m_medium->Sample(ray, mediumRec, sampler);
+        }
+        // Estimate radiance
+        auto& phase = ray.m_medium->m_phaseFunction;
         bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
-
-        // Estimate Li
-        if (!isDelta) {
-            std::vector<Photon> gatheredPhotons;
-            m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
-            Spectrum sum(0.f);
-            for (const auto& photon : gatheredPhotons) {
-                MaterialRecord matRec(-ray.d, photon.m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-                Spectrum bsdfVal = bsdf->Eval(matRec);
-                sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon.m_flux;
+        if (mediumRec.m_internal || !isDelta) {
+            if (mediumRec.m_internal) {
+                radiance += EstimateMedium(ray, hitRec, phase);
             }
-            float area = M_PI * m_currentRadius * m_currentRadius;
-            radiance += throughput * sum / (area * m_deltaPhotonNum);
+            else {                
+                radiance += throughput * EstimatePlane(ray, hitRec, bsdf);
+            }
             break;
         }
-
-        // Sample BSDF            
-        MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-        Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
-        ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
-        if (bsdfVal.IsBlack()) {
-            break;
+        // Scatter 
+        if (mediumRec.m_internal) {
+            // Sample phase function
+            PhaseFunctionRecord phaseRec(-ray.d);
+            Spectrum phaseVal = phase->Sample(phaseRec, sampler.Next2D());
+            ray = Ray(mediumRec.m_p, phaseRec.m_wo, ray.m_medium);
+            throughput *= phaseVal;
         }
-        // Update throughput
-        throughput *= bsdfVal;
+        else {            
+            //Sample BSDF
+            MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+            Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
+            if (bsdfVal.IsBlack()) {
+                break;
+            }
+            Float3 dir = matRec.ToWorld(matRec.m_wo);
+            ray = Ray(hitRec.m_geoRec.m_p, dir, hitRec.GetMedium(dir));
+            throughput *= bsdfVal;            
+        }
 
         // Russian roulette
         if (bounce > 5) {
@@ -212,6 +254,42 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
         }
     }
 
+    return radiance;
+}
+
+Spectrum VPPMIntegrator::EstimateMedium(
+    const Ray& ray, 
+    const HitRecord& hitRec, 
+    const std::shared_ptr<PhaseFunction>& phase)
+{
+    std::vector<Photon> gatheredPhotons;
+    m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
+    Spectrum sum(0.f);
+    for (const auto& photon : gatheredPhotons) {
+        PhaseFunctionRecord phaseRec(-ray.d, photon.m_direction);
+        Spectrum phaseVal = phase->EvalPdf(phaseRec);
+        sum += phaseVal * photon.m_flux;
+    }
+    float vol = 4.f / 3.f * M_PI * m_currentRadius * m_currentRadius * m_currentRadius;
+    Spectrum radiance = sum / (vol * m_deltaPhotonNum);
+    return radiance;
+}
+
+Spectrum VPPMIntegrator::EstimatePlane(
+    const Ray& ray,
+    const HitRecord& hitRec,
+    const std::shared_ptr<BSDF>& bsdf)
+{
+    std::vector<Photon> gatheredPhotons;
+    m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
+    Spectrum sum(0.f);
+    for (const auto& photon : gatheredPhotons) {
+        MaterialRecord matRec(-ray.d, photon.m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+        Spectrum bsdfVal = bsdf->Eval(matRec);
+        sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon.m_flux;
+    }
+    float area = M_PI * m_currentRadius * m_currentRadius;
+    Spectrum radiance =  sum / (area * m_deltaPhotonNum);
     return radiance;
 }
 
