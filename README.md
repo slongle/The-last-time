@@ -18,7 +18,7 @@
 If you don't know how to add the three libraries, I recommend you use some package manager like `vcpkg`.  
 ```bash
  > set VCPKG_DEFAULT_TRIPLET=x64-windows  
- > vcpkg install embree3 openvdb tinyobjloader imgui glab glfw3 glew fmt glog nlohmann-json stb   
+ > vcpkg install embree3 openvdb tinyobjloader imgui glad glfw3 glew fmt glog nlohmann-json stb   
  > vcpkg integrate install 
 ```
 ### Build
