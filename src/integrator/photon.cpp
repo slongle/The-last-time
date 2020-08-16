@@ -43,12 +43,46 @@ void KDTree::Build()
 
 void KDTree::Clear()
 {
-    m_photons.clear();
+    int photonNum = m_photons.size();
+    int nodeNum = m_nodes.size();
+    m_photons.clear();    
     m_nodes.clear();
+    m_photons.reserve(photonNum);
+    m_nodes.reserve(nodeNum);
     m_bounds = Bounds();
 }
 
-void KDTree::Query(Float3 center, const float& radius, std::vector<Photon>& photons) const
+void KDTree::Query(const Float3& center, const float& radius, std::vector<const Photon*>& photons) const
+{
+    double sqrRadius = std::sqr(radius);
+    std::stack<uint32_t> stack;
+    stack.push(m_root);
+    while (!stack.empty()) {
+        uint32_t idx = stack.top(); stack.pop();
+        const auto& node = m_nodes[idx];
+        const auto& photon = m_photons[node.m_photonIndex];
+        double minSqrDistance =
+            std::sqr(std::max(0.f, std::max(center.x - node.m_bounds.m_pMax.x,
+                node.m_bounds.m_pMin.x - center.x))) +
+            std::sqr(std::max(0.f, std::max(center.y - node.m_bounds.m_pMax.y,
+                node.m_bounds.m_pMin.y - center.y))) +
+            std::sqr(std::max(0.f, std::max(center.z - node.m_bounds.m_pMax.z,
+                node.m_bounds.m_pMin.z - center.z)));
+        if (minSqrDistance <= sqrRadius) {
+            if (SqrLength(center - photon.m_position) <= sqrRadius) {
+                photons.push_back(&photon);
+            }
+            if (node.m_children[0] != -1) {
+                stack.push(node.m_children[0]);
+            }
+            if (node.m_children[1] != -1) {
+                stack.push(node.m_children[1]);
+            }
+        }
+    }
+}
+
+void KDTree::Query(const Float3& center, const float& radius, std::vector<Photon>& photons) const
 {
     double sqrRadius = std::sqr(radius);
     std::stack<uint32_t> stack;

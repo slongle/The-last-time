@@ -288,13 +288,13 @@ Spectrum VPPMIntegrator::EstimateMediumPoint3D(
     const MediumRecord& mediumRec,
     const std::shared_ptr<PhaseFunction>& phase)
 {
-    std::vector<Photon> gatheredPhotons;
+    std::vector<const Photon*> gatheredPhotons;
     m_photonTree.Query(mediumRec.m_p, m_currentRadius, gatheredPhotons);
     Spectrum sum(0.f);
     for (const auto& photon : gatheredPhotons) {
-        PhaseFunctionRecord phaseRec(-ray.d, photon.m_direction);
+        PhaseFunctionRecord phaseRec(-ray.d, photon->m_direction);
         Spectrum phaseVal = phase->EvalPdf(phaseRec);
-        sum += phaseVal * photon.m_flux;
+        sum += phaseVal * photon->m_flux;
     }
     float vol = 4.f / 3.f * M_PI * m_currentRadius * m_currentRadius * m_currentRadius;
     Spectrum radiance = sum / (vol * m_deltaPhotonNum);
@@ -306,13 +306,13 @@ Spectrum VPPMIntegrator::EstimatePlane(
     const HitRecord& hitRec,
     const std::shared_ptr<BSDF>& bsdf)
 {
-    std::vector<Photon> gatheredPhotons;
+    std::vector<const Photon*> gatheredPhotons;
     m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
     Spectrum sum(0.f);
     for (const auto& photon : gatheredPhotons) {
-        MaterialRecord matRec(-ray.d, photon.m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+        MaterialRecord matRec(-ray.d, photon->m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
         Spectrum bsdfVal = bsdf->Eval(matRec);
-        sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon.m_flux;
+        sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon->m_flux;
     }
     float area = M_PI * m_currentRadius * m_currentRadius;
     Spectrum radiance = sum / (area * m_deltaPhotonNum);

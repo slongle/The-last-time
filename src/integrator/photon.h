@@ -35,7 +35,8 @@ public:
     void Add(const Photon& photon);
     void Build();
     void Clear();
-    void Query(Float3 center, const float& radius, std::vector<Photon>& photons) const;
+    void Query(const Float3& center, const float& radius, std::vector<const Photon*>& photons) const;
+    void Query(const Float3& center, const float& radius, std::vector<Photon>& photons) const;
 
     uint32_t RecursiveBuild(uint32_t l, uint32_t r, const Bounds& bounds);
 
