@@ -14,6 +14,7 @@
 #include "light/arealight.h"
 #include "light/environment.h"
 #include "light/directional.h"
+#include "light/point.h"
 #include "medium/hg.h"
 #include "medium/homogeneous.h"
 #include "medium/heterogeneous.h"
@@ -342,6 +343,19 @@ void Parse(const std::string& filename, Renderer& renderer)
                 Spectrum irradiance = GetSpectrum(lightProperties, "irradiance", Spectrum(1.f));
                 float scale = GetFloat(lightProperties, "scale", 1.f);
                 auto light = std::shared_ptr<DirectionalLight>(new DirectionalLight(irradiance * scale, direction));
+                scene->m_lights.push_back(light);
+            }
+            else if (lightType == "point") {
+                std::string inMedium = lightProperties["interior_medium"];
+                std::string outMedium = lightProperties["exterior_medium"];
+                auto inMediumPtr = scene->GetMedium(inMedium);
+                auto outMediumPtr = scene->GetMedium(outMedium);
+                MediumInterface mi(inMediumPtr, outMediumPtr);
+
+                Float3 position = GetFloat3(lightProperties, "position", Float3(0, 0, 0));
+                Spectrum intensity = GetSpectrum(lightProperties, "intensity", Spectrum(1.f));
+                float scale = GetFloat(lightProperties, "scale", 1.f);
+                auto light = std::shared_ptr<PointLight>(new PointLight(position, intensity * scale, mi));
                 scene->m_lights.push_back(light);
             }
             else {
