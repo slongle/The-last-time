@@ -196,6 +196,11 @@ void Renderer::Render()
             std::string sceneString = m_scene->ToString();
             ImGui::Text((integratorString + "\n\n" + sceneString).c_str());
         }
+        if (ImGui::CollapsingHeader("Control")) {
+            if (ImGui::Button("Save")) {
+                m_integrator->Save();
+            }
+        }
         if (ImGui::CollapsingHeader("Debug"))
         {            
             ImGuiIO& io = ImGui::GetIO();
