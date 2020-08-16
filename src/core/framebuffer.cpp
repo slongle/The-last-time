@@ -72,7 +72,7 @@ void Framebuffer::DrawCircle(float cx, float cy, float r, const Spectrum& s)
             if ((x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r) {
                 SetVal(x, y, s);
             }
-        }        
+        }
     }
 }
 
@@ -98,16 +98,16 @@ void Framebuffer::Save(const std::string& suffix)
         if (m_sampleNum[i] == 0) {
             m_sampleNum[i] = 1;
         }
-        Spectrum c = (m_accumulate[i] / float(m_sampleNum[i]));        
+        Spectrum c = (m_accumulate[i] / float(m_sampleNum[i]));
         linearRGB[i * 3 + 0] = c.r;
         linearRGB[i * 3 + 1] = c.g;
         linearRGB[i * 3 + 2] = c.b;
     }
-    
+
     std::string filename = suffix == "" ?
         fmt::format("{0}/{1}.{2}", GetFileResolver()->string(), m_name, m_ext) :
         fmt::format("{0}/{1}_{2}.{3}", GetFileResolver()->string(), m_name, suffix, m_ext);
-    
+
     WriteImage(filename, m_width, m_height, linearRGB);
     delete[] linearRGB;
 

@@ -1,5 +1,5 @@
 #pragma once
-    
+
 #include "framebuffer.h"
 #include "scene.h"
 #include "camera.h"
@@ -21,7 +21,7 @@ public:
     Renderer(const std::string& filename);
     void Render();
 private:
-    void InitializeGUI();    
+    void InitializeGUI();
     void Draw();
 
 public:

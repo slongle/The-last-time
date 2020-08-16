@@ -2,7 +2,7 @@
 
 #include "vector.h"
 
-void CoordinateSystem(const Float3& a, Float3& b, Float3& c);    
+void CoordinateSystem(const Float3& a, Float3& b, Float3& c);
 
 class Frame {
 public:

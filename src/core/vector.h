@@ -145,8 +145,8 @@ public:
     }
 
     bool Contain(const Float3& p) const {
-        return m_pMin.x <= p.x && p.x <= m_pMax.x && 
-            m_pMin.y <= p.y && p.y <= m_pMax.y && 
+        return m_pMin.x <= p.x && p.x <= m_pMax.x &&
+            m_pMin.y <= p.y && p.y <= m_pMax.y &&
             m_pMin.z <= p.z && p.z <= m_pMax.z;
     }
 

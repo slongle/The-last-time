@@ -10,7 +10,7 @@
 
 class AreaLight;
 
-class Shape {    
+class Shape {
 public:
     virtual bool Intersect(Ray& ray, HitRecord& hitRec) const = 0;
     virtual void SetGeometryRecord(GeometryRecord& geoRec) const = 0;
@@ -104,7 +104,7 @@ public:
         MediumInterface mi)
         :m_shape(shape), m_bsdf(bsdf), m_mediumInterface(mi)
     {}
-    
+
     bool IsAreaLight() const { return m_areaLight != nullptr; }
 
     std::shared_ptr<Shape> m_shape;

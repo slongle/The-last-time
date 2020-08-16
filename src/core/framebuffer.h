@@ -10,14 +10,14 @@ const int tile_size = 16;
 
 class Framebuffer
 {
-public:    
+public:
     struct Tile {
         int pos[2];
         int res[2];
     };
 
     Framebuffer() {}
-    Framebuffer(const std::string& filename, const int& width, const int& height);        
+    Framebuffer(const std::string& filename, const int& width, const int& height);
     ~Framebuffer();
 
     void Initialize();
@@ -37,9 +37,9 @@ private:
     std::string m_name;
     std::string m_ext;
 
-    sRGB *m_outputBuffer;
-    sRGB *m_debugBuffer;
-    sRGB *m_image;
-    Spectrum *m_accumulate;
-    unsigned int *m_sampleNum;
+    sRGB* m_outputBuffer;
+    sRGB* m_debugBuffer;
+    sRGB* m_image;
+    Spectrum* m_accumulate;
+    unsigned int* m_sampleNum;
 };

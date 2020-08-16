@@ -32,31 +32,31 @@
 
 static void glfw_error_callback(int error, const char* description)
 {
-	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
 inline static void _callback_key(GLFWwindow* window, int key, int /*scancode*/, int action, int mods) {
-	if (action == GLFW_PRESS) {
-		switch (key) {
-		case GLFW_KEY_ESCAPE:
-			glfwSetWindowShouldClose(window, GLFW_TRUE);
-			break;
-		default:
-			break;
-		}
-	}
+    if (action == GLFW_PRESS) {
+        switch (key) {
+        case GLFW_KEY_ESCAPE:
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 const uint32_t auxiliaryWidth = 250;
 
 Renderer::Renderer(const std::string& filename)
 {
-	Parse(filename, *this);
-	std::cout << "Parse Done\n";
+    Parse(filename, *this);
+    std::cout << "Parse Done\n";
 }
 
 void Renderer::InitializeGUI()
-{	
+{
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) {
@@ -90,7 +90,7 @@ void Renderer::InitializeGUI()
         assert(false);
         exit(-1);
     }
-        
+
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1); // Enable vsync
 
@@ -155,20 +155,20 @@ void Renderer::Draw()
 }
 
 void Renderer::Render()
-{    
+{
     ImVec4 clear_color = ImVec4(0.62f, 0.87f, 1.00f, 1.00f);
 
     // Initialize GUI
-	InitializeGUI();
-	//Start rendering
-	m_integrator->Start();
+    InitializeGUI();
+    //Start rendering
+    m_integrator->Start();
 
-	//Display loop for the ongoing or completed render
-	glfwSetWindowTitle(m_window, "Rendering...");
+    //Display loop for the ongoing or completed render
+    glfwSetWindowTitle(m_window, "Rendering...");
     bool debugRay = false, debugKDTree = false;
     int px, py;
     int click_px = -1, click_py = -1;
-	while (!glfwWindowShouldClose(m_window)) {
+    while (!glfwWindowShouldClose(m_window)) {
         // Initialize window color
         //glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -183,7 +183,7 @@ void Renderer::Render()
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();        
+        ImGui::NewFrame();
 
         // Auxiliary windows
         bool clearDebugBuffer = false;
@@ -202,7 +202,7 @@ void Renderer::Render()
             }
         }
         if (ImGui::CollapsingHeader("Debug"))
-        {            
+        {
             ImGuiIO& io = ImGui::GetIO();
             if (ImGui::IsMousePosValid()) {
                 px = io.MousePos.x;
@@ -213,7 +213,7 @@ void Renderer::Render()
                 }
             }
             // Visualize
-            if (ImGui::TreeNode("Visualize")) 
+            if (ImGui::TreeNode("Visualize"))
             {
                 ImGui::Checkbox(fmt::format("Debug ray : ({0}, {1})", px, py).c_str(), &debugRay);
                 ImGui::Checkbox(fmt::format("Debug kd-tree").c_str(), &debugKDTree);
@@ -221,7 +221,7 @@ void Renderer::Render()
                 ImGui::TreePop();
             }
             // Color
-            if (ImGui::TreeNode("Color")) 
+            if (ImGui::TreeNode("Color"))
             {
                 sRGB color(0.f);
                 for (int dx = -1; dx <= 1; dx++) {
@@ -258,16 +258,16 @@ void Renderer::Render()
                         debugRec.SetDebugRay(Float2(io.MousePos.x, io.MousePos.y));
                     }
                 }
-            }            
+            }
             if (debugKDTree) {
                 debugRec.m_debugKDTree = true;
             }
             if (clearDebugBuffer) {
                 m_buffer->ClearDebugBuffer();
-            }            
+            }
             m_integrator->Debug(debugRec);
         }
-        
+
 
         // Rendering
         ImGui::Render();
@@ -276,14 +276,14 @@ void Renderer::Render()
         //glViewport(0, 0, display_w, display_h);        
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		glfwSwapBuffers(m_window);        
-	}
+        glfwSwapBuffers(m_window);
+    }
 
-	//Stop the renderer if it hasn't been already.
-	m_integrator->Stop();
-	m_integrator->Wait();
+    //Stop the renderer if it hasn't been already.
+    m_integrator->Stop();
+    m_integrator->Wait();
     m_integrator->Save();
-	glfwSetWindowTitle(m_window, "Render done");
+    glfwSetWindowTitle(m_window, "Render done");
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

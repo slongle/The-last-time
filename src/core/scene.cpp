@@ -47,7 +47,7 @@ std::shared_ptr<BSDF> Scene::GetBSDF(const std::string& name)
 std::shared_ptr<Texture<float>> Scene::GetFloatTexture(const std::string& name)
 {
     LOG_IF(FATAL, !m_floatTextures.count(name)) << "No reference float texture named " << name << ".";
-    return m_floatTextures[name];    
+    return m_floatTextures[name];
 }
 
 std::shared_ptr<Texture<Spectrum>> Scene::GetSpectrumTexture(const std::string& name)
@@ -96,7 +96,7 @@ void Scene::Setup()
 {
     assert(!m_lights.empty() || !m_environmentLights.empty());
     std::cout << "Building BVH" << std::endl;
-    for (Primitive& p: m_primitives) {
+    for (Primitive& p : m_primitives) {
         m_bounds = Union(m_bounds, p.m_shape->GetBounds());
     }
     //m_bvh = std::shared_ptr<BVH>(new BVH(m_primitives));
@@ -166,12 +166,12 @@ bool Scene::OccludeTransparent(Ray& ray, Spectrum& throughput) const
 {
     float t = ray.tMax;
     HitRecord hitRec;
-    while(true){
+    while (true) {
         bool hit = m_embreeBvh->Intersect(ray, hitRec);
         if (!hit) {
             return false;
         }
-        else {            
+        else {
             auto bsdf = hitRec.GetBSDF();
             if (bsdf->IsTransparent()) {
                 MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
@@ -204,10 +204,10 @@ bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance, Sampler& sampler) cons
         }
         if (!hit) {
             return false;
-        }        
+        }
         if (ray.m_medium) {
             transmittance *= ray.m_medium->Transmittance(ray, sampler);
-        }        
+        }
         if (bsdf) {
             MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
             transmittance *= bsdf->Sample(matRec, Float2(0, 0));
@@ -293,6 +293,6 @@ Spectrum Scene::EvalPdfLight(bool hit, const Ray& ray, const HitRecord& hitRec, 
 
 std::string Scene::ToString() const
 {
-    return fmt::format("Scene\n# of primitives : {0}\n# of lights : {1}\nBounds : \n{2}", 
+    return fmt::format("Scene\n# of primitives : {0}\n# of lights : {1}\nBounds : \n{2}",
         m_primitives.size(), m_lights.size(), m_bounds.ToString());
 }

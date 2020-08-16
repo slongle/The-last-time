@@ -6,7 +6,7 @@ class Matte : public BSDF {
 public:
     Matte(
         const std::shared_ptr<Texture<Spectrum>>& reflectance,
-        const std::shared_ptr<Texture<float>>& alpha) 
+        const std::shared_ptr<Texture<float>>& alpha)
         :BSDF(alpha), m_reflectance(reflectance) {}
 
     Spectrum Sample(MaterialRecord& matRec, Float2 s) const
@@ -39,15 +39,15 @@ public:
     }
 
     Spectrum EvalPdf(MaterialRecord& matRec) const {
-        if (!Frame::SameHemisphere(matRec.m_wo,matRec.m_wi)) {
+        if (!Frame::SameHemisphere(matRec.m_wo, matRec.m_wi)) {
             return Spectrum(0.f);
         }
-        
+
         matRec.m_pdf = PdfCosineHemisphere(matRec.m_wo);
         return m_reflectance->Evaluate(matRec.m_st) * INV_PI * Frame::AbsCosTheta(matRec.m_wo);
     }
 
-    bool IsDelta(const Float2& st) const { 
+    bool IsDelta(const Float2& st) const {
         return BSDF::IsDelta(st) ? true : false;
     }
 

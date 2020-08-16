@@ -141,9 +141,9 @@ void Parse(const std::string& filename, Renderer& renderer)
                 bool blackbody = GetBool(mediumProperties, "blackbody", false);
                 std::string temperatureName = GetString(mediumProperties, "temperature", "temperature");
                 Spectrum albedo = GetSpectrum(mediumProperties, "albedo", Spectrum(0.5f));
-                float scale = GetFloat(mediumProperties, "scale", 1);                
+                float scale = GetFloat(mediumProperties, "scale", 1);
                 medium = new HeterogeneousMedium(
-                    std::shared_ptr<PhaseFunction>(pf), 
+                    std::shared_ptr<PhaseFunction>(pf),
                     filename, lefthand, densityName, blackbody, temperatureName, albedo, scale);
             }
             else {
@@ -226,7 +226,7 @@ void Parse(const std::string& filename, Renderer& renderer)
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 std::string materialName = GetString(bsdfProperties, "material", "Al");
                 Spectrum k(GetFileResolver()->string() + "/spds/" + materialName + ".k.spd");
-                Spectrum eta(GetFileResolver()->string() + "/spds/" + materialName + ".eta.spd");                
+                Spectrum eta(GetFileResolver()->string() + "/spds/" + materialName + ".eta.spd");
                 float alphaU = GetFloat(bsdfProperties, "alphaU", 0.5);
                 float alphaV = GetFloat(bsdfProperties, "alphaV", 0.5);
                 bsdf = new RoughConductor(reflectance, eta, k, alphaU, alphaV, alpha);
@@ -282,14 +282,14 @@ void Parse(const std::string& filename, Renderer& renderer)
 
             std::string shapeName = primitiveProperties["shape"];
             std::vector<std::shared_ptr<Shape>> shapes;
-                        
+
             std::shared_ptr<Mesh> mesh = scene->GetMesh(shapeName);
             scene->m_orderedMeshes.push_back(mesh);
             shapes.reserve(mesh->m_triangleNum);
             for (uint32_t i = 0; i < mesh->m_triangleNum; i++) {
                 shapes.emplace_back(new Triangle(mesh, i));
             }
-            
+
             std::string bsdfName = primitiveProperties["bsdf"];
             std::shared_ptr<BSDF> bsdf = scene->GetBSDF(bsdfName);
 

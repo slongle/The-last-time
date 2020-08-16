@@ -13,7 +13,7 @@ public:
         :BSDF(alpha), m_reflectance(reflectance), m_eta(eta), m_k(k) {}
 
     Spectrum Sample(MaterialRecord& matRec, Float2 s) const {
-        if (Frame::CosTheta(matRec.m_wi) <= 0) {            
+        if (Frame::CosTheta(matRec.m_wi) <= 0) {
             return Spectrum(0.f);
         }
 
@@ -28,7 +28,7 @@ public:
         matRec.m_wo = Reflect(matRec.m_wi);
         matRec.m_pdf = 1.f;
         matRec.m_eta = 1.f;
-        return m_reflectance->Evaluate(matRec.m_st) * 
+        return m_reflectance->Evaluate(matRec.m_st) *
             FresnelConductor(Frame::CosTheta(matRec.m_wi), m_eta, m_k);
     }
     Spectrum Eval(MaterialRecord& matRec) const {
@@ -40,22 +40,22 @@ public:
         return m_reflectance->Evaluate(matRec.m_st) *
             FresnelConductor(Frame::CosTheta(matRec.m_wi), m_eta, m_k);
     }
-    float Pdf(MaterialRecord& matRec) const { 
+    float Pdf(MaterialRecord& matRec) const {
         if (false || Frame::CosTheta(matRec.m_wi) <= 0 ||
             Frame::CosTheta(matRec.m_wo) <= 0 ||
             !Frame::SameDirection(matRec.m_wo, Reflect(matRec.m_wi))) {
             return matRec.m_pdf = 0.f;
         }
-        return matRec.m_pdf = 1.f;        
+        return matRec.m_pdf = 1.f;
     }
-    Spectrum EvalPdf(MaterialRecord& matRec) const { 
+    Spectrum EvalPdf(MaterialRecord& matRec) const {
         if (Frame::CosTheta(matRec.m_wi) <= 0 ||
             Frame::CosTheta(matRec.m_wo) <= 0 ||
             !Frame::SameDirection(matRec.m_wo, Reflect(matRec.m_wi))) {
             matRec.m_pdf = 0.f;
             return Spectrum(0.f);
         }
-        matRec.m_pdf = 1.f; 
+        matRec.m_pdf = 1.f;
         return m_reflectance->Evaluate(matRec.m_st) *
             FresnelConductor(Frame::CosTheta(matRec.m_wi), m_eta, m_k);
     }
@@ -76,7 +76,7 @@ public:
         const Spectrum& eta, const Spectrum& k,
         const float& alphaU, const float& alphaV,
         const std::shared_ptr<Texture<float>>& alphaTexture)
-        :BSDF(alphaTexture), m_reflectance(reflectance), m_eta(eta), m_k(k), 
+        :BSDF(alphaTexture), m_reflectance(reflectance), m_eta(eta), m_k(k),
         m_alphaU(alphaU), m_alphaV(alphaV) {}
 
     Spectrum Sample(MaterialRecord& matRec, Float2 s) const {
@@ -140,7 +140,7 @@ public:
     }
     Spectrum EvalPdf(MaterialRecord& matRec) const {
         if (Frame::CosTheta(matRec.m_wi) <= 0 ||
-            Frame::CosTheta(matRec.m_wo) <= 0) {            
+            Frame::CosTheta(matRec.m_wo) <= 0) {
             matRec.m_pdf = 0.f;
             return Spectrum(0.f);
         }

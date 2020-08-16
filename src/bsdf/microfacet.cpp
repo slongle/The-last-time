@@ -19,8 +19,8 @@ Float3 Microfacet::SampleVisible(const Float3& wi, Float2& u) const
     // Section 4.3: reprojection onto hemisphere
     Float3 Nh = t1 * T1 + t2 * T2 + std::sqrt(std::max(0.0f, 1.0f - t1 * t1 - t2 * t2)) * Vh;
     // Section 3.4: transforming the normal back to the ellipsoid configuration
-    Float3 Ne = Normalize(Float3(m_alpha.x * Nh.x, m_alpha.y * Nh.y, std::max(0.0f, Nh.z)));    
-    return Ne;    
+    Float3 Ne = Normalize(Float3(m_alpha.x * Nh.x, m_alpha.y * Nh.y, std::max(0.0f, Nh.z)));
+    return Ne;
 }
 
 float Microfacet::PdfVisible(const Float3& wi, const Float3& m) const

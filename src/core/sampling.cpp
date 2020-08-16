@@ -102,7 +102,7 @@ Float2 Distribution2D::Sample(const Float2& s, float& pdf) const
 float Distribution2D::Pdf(const Float2& s) const
 {
     int iv = std::min(uint32_t(s.y * m_nv), m_nv - 1);
-    int iu = std::min(uint32_t(s.x * m_nu), m_nu - 1);    
+    int iu = std::min(uint32_t(s.x * m_nu), m_nu - 1);
     float pdf = m_conditional[iv]->m_func[iu] / m_marginal->GetSum();
     return pdf;
 }

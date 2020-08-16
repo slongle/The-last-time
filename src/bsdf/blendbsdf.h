@@ -24,8 +24,8 @@ public:
         float weight[2] = { w,1 - w };
         int slot;
         if (s.x < weight[0]) {
-            slot = 0; 
-            s.x /= weight[0];            
+            slot = 0;
+            s.x /= weight[0];
         }
         else {
             slot = 1;
@@ -46,13 +46,13 @@ public:
         return f / matRec.m_pdf;
     }
 
-    Spectrum Eval(MaterialRecord& matRec) const { 
+    Spectrum Eval(MaterialRecord& matRec) const {
         float weight = m_weight->Evaluate(matRec.m_st);
         return m_bsdf[0]->Eval(matRec) * weight +
             m_bsdf[1]->Eval(matRec) * (1 - weight);
     }
 
-    float Pdf(MaterialRecord& matRec) const { 
+    float Pdf(MaterialRecord& matRec) const {
         float weight = m_weight->Evaluate(matRec.m_st);
         float pdf = m_bsdf[0]->Pdf(matRec) * weight +
             m_bsdf[1]->Pdf(matRec) * (1 - weight);

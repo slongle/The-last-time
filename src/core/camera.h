@@ -8,7 +8,7 @@ class Medium;
 class Camera {
 public:
     Camera() {}
-    Camera(const Transform& c2w, const float& fov, const std::shared_ptr<Medium>& m) 
+    Camera(const Transform& c2w, const float& fov, const std::shared_ptr<Medium>& m)
         :m_cameraToWorld(c2w), m_fov(fov), m_medium(m)
     {}
 

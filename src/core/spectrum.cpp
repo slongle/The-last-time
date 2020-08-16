@@ -361,7 +361,7 @@ const float CIE_Z[nCIESamples] = {
     0.0f,    0.0f,    0.0f,    0.0f,
     0.0f,    0.0f,    0.0f,    0.0f,
     0.0f,    0.0f,    0.0f,    0.0f,
-    0.0f,    0.0f,    0.0f};
+    0.0f,    0.0f,    0.0f };
 
 const float CIE_lambda[nCIESamples] = {
     360, 361, 362, 363, 364, 365, 366, 367, 368, 369, 370, 371, 372, 373, 374,
@@ -422,7 +422,7 @@ RGBSpectrum::RGBSpectrum(const std::string& filename)
         val.push_back(v);
     }
     ifs.close();
-    *this = FromSPD(&lambda[0], &val[0], val.size());    
+    *this = FromSPD(&lambda[0], &val[0], val.size());
 }
 
 RGBSpectrum RGBSpectrum::FromSPD(const float* lambda, const float* v, const int& n)

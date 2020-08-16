@@ -49,7 +49,7 @@ public:
 
     Spectrum Eval(MaterialRecord& matRec) const { return Spectrum(0.f); }
     float Pdf(MaterialRecord& matRec) const { matRec.m_pdf = 0.f; return 0.f; }
-    Spectrum EvalPdf(MaterialRecord& matRec) const { 
+    Spectrum EvalPdf(MaterialRecord& matRec) const {
         float cosThetaT;
         float Fr = FresnelDieletric(Frame::CosTheta(matRec.m_wi), cosThetaT, m_eta);
         if (Frame::SameHemisphere(matRec.m_wi, matRec.m_wo)) {
@@ -111,7 +111,7 @@ public:
         float sign = math::signum(Frame::CosTheta(matRec.m_wi));
 
         Microfacet microfacet(Float2(m_alphaU, m_alphaV));
-        Float3 wh = microfacet.SampleVisible(sign * matRec.m_wi, s); 
+        Float3 wh = microfacet.SampleVisible(sign * matRec.m_wi, s);
         float pdf_wh = microfacet.PdfVisible(sign * matRec.m_wi, wh);
         if (pdf_wh == 0) {
             return Spectrum(0.f);
@@ -119,7 +119,7 @@ public:
         float D = microfacet.D(wh);
 
         float cosThetaT;
-        float F = FresnelDieletric(Dot(matRec.m_wi, wh), cosThetaT, m_eta);        
+        float F = FresnelDieletric(Dot(matRec.m_wi, wh), cosThetaT, m_eta);
         if (s.x < F) {
             // Reflect
             matRec.m_wo = Reflect(matRec.m_wi, wh);
@@ -127,7 +127,7 @@ public:
                 return Spectrum(0.f);
             }
             matRec.m_eta = 1.f;
-            float dwh_dwo = 1.0f / (4 * AbsDot(matRec.m_wi,wh));
+            float dwh_dwo = 1.0f / (4 * AbsDot(matRec.m_wi, wh));
             matRec.m_pdf = F * pdf_wh * dwh_dwo;
             return m_reflectance->Evaluate(matRec.m_st) * microfacet.G1(matRec.m_wo, wh);
         }
@@ -146,7 +146,7 @@ public:
             matRec.m_pdf = (1 - F) * pdf_wh * dwh_dwo;
             matRec.m_eta = eta;
             float factor = matRec.m_mode == Radiance ? (cosThetaT < 0.f ? m_invEta : m_eta) : 1.f;
-            return m_transmittance->Evaluate(matRec.m_st) * (factor * factor) * 
+            return m_transmittance->Evaluate(matRec.m_st) * (factor * factor) *
                 microfacet.G1(matRec.m_wo, wh);
         }
     }
@@ -156,23 +156,23 @@ public:
     /*
      * CosTheta(wi) > 0 is not the same as cosThetaT < 0
      * The former one is wi.z, the latter one is Dot(wo, wh)
-     * For example, 
+     * For example,
      * wo = array([0.714, 0.578, 0.394])
      * wi = array([-0.488, -0.845, -0.217])
      * eta_i = 1.5, eta_o = 1
      * then wh = Normalize(eta_i * wi + eta_o + wo)
      * wh = array([-0.02596923, -0.99476568,  0.09882734])
-     * so 
+     * so
      * CosTheta(wi) = wi.z = -0.217 < 0
      * cosThetaT = Dot(wo, wh) = -0.554 < 0
      */
     Spectrum EvalPdf(MaterialRecord& matRec) const {
-        bool reflect = Frame::SameHemisphere(matRec.m_wi, matRec.m_wo);        
-       
+        bool reflect = Frame::SameHemisphere(matRec.m_wi, matRec.m_wo);
+
         Float3 wh;
         float dwh_dwo;
 
-        
+
         if (reflect) {
             // Reflect
             wh = Normalize(matRec.m_wo + matRec.m_wi);
@@ -183,7 +183,7 @@ public:
             float eta = Frame::CosTheta(matRec.m_wi) > 0.f ? m_eta : m_invEta;
             wh = Normalize(matRec.m_wi + eta * matRec.m_wo);
             float sqrtDenom = Dot(matRec.m_wi, wh) + eta * Dot(matRec.m_wo, wh);
-            dwh_dwo = eta * eta * AbsDot(matRec.m_wo,wh) / (sqrtDenom * sqrtDenom);
+            dwh_dwo = eta * eta * AbsDot(matRec.m_wo, wh) / (sqrtDenom * sqrtDenom);
         }
 
         wh *= math::signum(Frame::CosTheta(wh));
@@ -202,9 +202,9 @@ public:
         if (matRec.m_pdf == 0) {
             return Spectrum(0.f);
         }
-         
+
         if (reflect) {
-            float fs = F * D * G / (4 * Frame::AbsCosTheta(matRec.m_wi));            
+            float fs = F * D * G / (4 * Frame::AbsCosTheta(matRec.m_wi));
             return m_reflectance->Evaluate(matRec.m_st) * fs;
         }
         else {
@@ -212,8 +212,8 @@ public:
             float sqrtDenom = Dot(matRec.m_wi, wh) + eta * Dot(matRec.m_wo, wh);
             float fs = (1 - F) * G * D * AbsDot(matRec.m_wo, wh) * AbsDot(matRec.m_wi, wh)
                 * eta * eta / (Frame::AbsCosTheta(matRec.m_wi) * sqrtDenom * sqrtDenom);
-            float factor = matRec.m_mode == Radiance ? 
-                (Frame::CosTheta(matRec.m_wi) > 0.0f ? m_invEta : m_eta) : 1.f;            
+            float factor = matRec.m_mode == Radiance ?
+                (Frame::CosTheta(matRec.m_wi) > 0.0f ? m_invEta : m_eta) : 1.f;
             return m_transmittance->Evaluate(matRec.m_st) * (factor * factor) * fs;
         }
     }

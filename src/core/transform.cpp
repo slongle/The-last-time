@@ -25,12 +25,12 @@ Transform Perspective(const float& fov, const float& width, const float& height)
 
 Transform Scale(const float& x, const float& y, const float& z)
 {
-    Matrix4x4 I(1.0f);    
-    return Transform(glm::scale(I, Float3(x, y, z)), glm::scale(I, Float3(1.f / x, 1.f / y, 1.f / z)));    
+    Matrix4x4 I(1.0f);
+    return Transform(glm::scale(I, Float3(x, y, z)), glm::scale(I, Float3(1.f / x, 1.f / y, 1.f / z)));
 }
 
 Transform Translate(const float& x, const float& y, const float& z)
 {
     Matrix4x4 I(1.0f);
-    return Transform(glm::translate(I, Float3(x, y, z)), glm::translate(I, Float3(-x, -y, -z)));    
+    return Transform(glm::translate(I, Float3(x, y, z)), glm::translate(I, Float3(-x, -y, -z)));
 }

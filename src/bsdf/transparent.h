@@ -14,7 +14,7 @@ public:
         bool opaque = !(m_alpha->Evaluate(matRec.m_st) >= 0.99f);
         if (opaque) {
             matRec.m_wo = -matRec.m_wi;
-            matRec.m_pdf = 1.f;            
+            matRec.m_pdf = 1.f;
             return Spectrum(1.f);
         }
 

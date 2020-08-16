@@ -27,13 +27,13 @@ public:
     std::shared_ptr<EmbreeBVH> m_embreeBvh = nullptr;
     std::vector<Primitive> m_primitives;
     std::vector<std::shared_ptr<Light>> m_lights;
-    std::vector<std::shared_ptr<EnvironmentLight>> m_environmentLights;    
+    std::vector<std::shared_ptr<EnvironmentLight>> m_environmentLights;
     Bounds m_bounds;
 
 
 public:
     void AddMesh(const std::string& name, const std::shared_ptr<Mesh>& mesh);
-    void AddShape(const std::string& name, const std::shared_ptr<Shape>& shape);    
+    void AddShape(const std::string& name, const std::shared_ptr<Shape>& shape);
     void AddMedium(const std::string& name, const std::shared_ptr<Medium>& medium);
     void AddBSDF(const std::string& name, const std::shared_ptr<BSDF>& bsdf);
     void AddFloatTexture(const std::string& name, const std::shared_ptr<Texture<float>>& texture);
@@ -45,7 +45,7 @@ public:
     std::shared_ptr<BSDF> GetBSDF(const std::string& name);
     std::shared_ptr<Texture<float>> GetFloatTexture(const std::string& name);
     std::shared_ptr<Texture<Spectrum>> GetSpectrumTexture(const std::string& name);
-    
+
     std::vector<std::shared_ptr<Mesh>> m_orderedMeshes;
     std::unordered_map<std::string, std::shared_ptr<Mesh>> m_meshes;
     std::unordered_map<std::string, std::shared_ptr<Shape>> m_shapes;

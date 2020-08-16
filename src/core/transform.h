@@ -11,10 +11,10 @@ typedef glm::mat4x4 Matrix4x4;
 
 inline std::ostream& operator << (std::ostream& os, const Matrix4x4& t) {
     auto a = glm::transpose(t);
-    os << glm::to_string(a[0]) << '\n' 
-       << glm::to_string(a[1]) << '\n' 
-       << glm::to_string(a[2]) << '\n' 
-       << glm::to_string(a[3]);
+    os << glm::to_string(a[0]) << '\n'
+        << glm::to_string(a[1]) << '\n'
+        << glm::to_string(a[2]) << '\n'
+        << glm::to_string(a[3]);
     return os;
 }
 

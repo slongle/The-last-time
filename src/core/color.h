@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-inline float Clamp(const float& v, const float& l, const float& r){
+inline float Clamp(const float& v, const float& l, const float& r) {
     return std::min(std::max(v, l), r);
 }
 

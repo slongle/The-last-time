@@ -4,7 +4,7 @@
 #include "core/spectrum.h"
 
 template<typename T>
-class Texture {    
+class Texture {
 public:
     Texture(const uint32_t& w, const uint32_t& h) :m_width(w), m_height(h), m_resolution(w, h) {}
     virtual ~Texture() {}

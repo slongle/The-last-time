@@ -28,17 +28,17 @@ public:
 };
 
 enum TransportMode {
-    Radiance, 
+    Radiance,
     Importance
 };
 
 class MaterialRecord {
 public:
     MaterialRecord() :m_eta(1) {}
-    MaterialRecord(const Float3& wi, const Float3& ns, const Float2& st, 
+    MaterialRecord(const Float3& wi, const Float3& ns, const Float2& st,
         const TransportMode& mode = Radiance)
         :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_st(st), m_mode(mode), m_eta(1) {}
-    MaterialRecord(const Float3& wi, const Float3& wo, const Float3& ns, const Float2& st, 
+    MaterialRecord(const Float3& wi, const Float3& wo, const Float3& ns, const Float2& st,
         const TransportMode& mode = Radiance)
         :m_frame(ns), m_wi(m_frame.ToLocal(wi)), m_wo(m_frame.ToLocal(wo)), m_st(st), m_mode(mode), m_eta(1) {}
 
@@ -79,7 +79,7 @@ class LightRecord {
 public:
     LightRecord() {}
     LightRecord(const Float3& _ref) :m_ref(_ref) {}
-    LightRecord(const Float3& _ref, const GeometryRecord& _geoRec) 
+    LightRecord(const Float3& _ref, const GeometryRecord& _geoRec)
         :m_ref(_ref), m_geoRec(_geoRec) {}
     LightRecord(const Ray& ray) :m_ref(ray.o), m_wi(ray.d) {}
 
@@ -88,10 +88,10 @@ public:
     GeometryRecord m_geoRec;
     Float3 m_wi;
     float m_pdf;
-    Ray m_shadowRay;    
+    Ray m_shadowRay;
 };
 
-class DebugRecord { 
+class DebugRecord {
 public:
     DebugRecord() :m_debugRay(false), m_debugKDTree(false) {}
 
