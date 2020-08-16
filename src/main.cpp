@@ -3,7 +3,7 @@
 int main(int argc, char* argv[]) {
     google::InitGoogleLogging("Render");
     google::InstallFailureSignalHandler();
-
+    
     LOG_IF(FATAL, argc < 2) << "Without scenes' path.";
     std::string prefix(argv[1]);
     std::vector<std::string> scenes(100);

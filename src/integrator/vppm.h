@@ -37,6 +37,11 @@ private:
     void RenderTile(const Framebuffer::Tile& tile);
     void EmitPhoton(const uint32_t& photonIndex);
     Spectrum Li(Ray ray, Sampler& sampler);
+    Spectrum EstimateMediumBeam3D(
+        const Ray& ray,
+        const MediumRecord& mediumRec,
+        const std::shared_ptr<PhaseFunction>& phase,
+        Sampler& sampler);
     Spectrum EstimateMediumPoint3D(
         const Ray& ray,
         const MediumRecord& mediumRec,
@@ -62,7 +67,8 @@ private:
     float m_currentRadius;
 
     // Photons
-    KDTree m_photonTree;
+    KDTree m_photonPlane;
+    KDTree m_photonMedium;
 
     // Muti-thread setting
     std::atomic<bool> m_rendering;

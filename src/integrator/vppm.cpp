@@ -45,7 +45,7 @@ void VPPMIntegrator::Start()
     // Add render thread
     m_renderThread = new std::thread(
         [this] {
-            // Photon pass            
+            // Photon pass
             auto photonPass = [this](const tbb::blocked_range<int>& range) {
                 for (int i = range.begin(); i < range.end(); ++i) {
                     if (m_rendering) {
@@ -63,7 +63,7 @@ void VPPMIntegrator::Start()
                     }
                 }
             };
-
+            
             // Iteration
             m_currentRadius = m_initialRadius;
             m_currentPhotonNum = 0;
@@ -74,20 +74,23 @@ void VPPMIntegrator::Start()
                 // Photon pass
                 tbb::blocked_range<int> photonRange(0, m_deltaPhotonNum);
 #ifdef _DEBUG
-                photonPass(photonRange);
+                //photonPass(photonRange);
+                tbb::parallel_for(photonRange, photonPass);
 #else
+                //photonPass(photonRange);
                 tbb::parallel_for(photonRange, photonPass);
 #endif // _DEBUG
 
 
                 // Construct photon structure
-                m_photonTree.Build();
-                //std::cout << m_photonTree.m_photons.size() << std::endl;
+                m_photonMedium.Build(m_currentRadius);
+                m_photonPlane.Build();
 
                 // Camera pass
                 tbb::blocked_range<int> tileRange(0, m_tiles.size());
 #ifdef _DEBUG
-                cameraPass(tileRange);
+                //cameraPass(tileRange);
+                tbb::parallel_for(tileRange, cameraPass);
 #else
                 tbb::parallel_for(tileRange, cameraPass);
 #endif // _DEBUG
@@ -95,7 +98,8 @@ void VPPMIntegrator::Start()
 
                 // Update settings
                 if (m_currentIteration + 1 != m_maxIteration) {
-                    m_photonTree.Clear();
+                    m_photonMedium.Clear();
+                    m_photonPlane.Clear();
                 }
                 m_currentPhotonNum += m_deltaPhotonNum;
                 m_currentRadius = std::sqrt((m_currentIteration + m_alpha) / (m_currentIteration + 1)) *
@@ -127,7 +131,8 @@ void VPPMIntegrator::RenderTile(const Framebuffer::Tile& tile)
                 Ray ray;
                 m_camera->GenerateRay(Float2(x, y), sampler, ray);
 #ifdef _DEBUG
-                Spectrum radiance = LiDebug(ray, sampler);
+                Spectrum radiance = Li(ray, sampler);
+                //Spectrum radiance = LiDebug(ray, sampler);
 #else
                 Spectrum radiance = Li(ray, sampler);
 #endif // _DEBUG
@@ -171,11 +176,11 @@ void VPPMIntegrator::EmitPhoton(const uint32_t& photonIndex)
         auto& bsdf = hitRec.m_primitive->m_bsdf;
         if (mediumRec.m_internal) {
             Photon photon(mediumRec.m_p, -ray.d, flux);
-            m_photonTree.Add(photon);
+            m_photonMedium.Add(photon);
         }
         else if (bsdf && !bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
             Photon photon(hitRec.m_geoRec.m_p, -ray.d, flux);
-            m_photonTree.Add(photon);
+            m_photonPlane.Add(photon);
         }
         // Hit medium bound
         if (!mediumRec.m_internal && !bsdf) {
@@ -228,20 +233,23 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
         }
         // Sample medium
         MediumRecord mediumRec;
+        Spectrum mediumTr(1.f);
         if (ray.m_medium) {
-            throughput *= ray.m_medium->Sample(ray, mediumRec, sampler);
+            mediumTr = ray.m_medium->Sample(ray, mediumRec, sampler);
         }
         // Estimate radiance
         auto& bsdf = hitRec.m_primitive->m_bsdf;
         auto& phase = ray.m_medium->m_phaseFunction;
         if (mediumRec.m_internal) {
-            radiance += throughput * EstimateMediumPoint3D(ray, mediumRec, phase);
+            //radiance += throughput * EstimateMediumBeam3D(ray, mediumRec, phase, sampler);
+            radiance += mediumTr * throughput * EstimateMediumPoint3D(ray, mediumRec, phase);            
             break;
         }
         else if (bsdf && !bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
-            radiance += throughput * EstimatePlane(ray, hitRec, bsdf);
+            radiance += mediumTr * throughput * EstimatePlane(ray, hitRec, bsdf);            
             break;
         }
+        throughput *= mediumTr;
         // Hit medium bound
         if (!bsdf) {
             auto medium = hitRec.GetMedium(ray.d);
@@ -283,13 +291,40 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
     return radiance;
 }
 
+Spectrum VPPMIntegrator::EstimateMediumBeam3D(
+    const Ray& ray, 
+    const MediumRecord& mediumRec, 
+    const std::shared_ptr<PhaseFunction>& phase,
+    Sampler& sampler)
+{
+    Ray beam(ray.o, ray.d, 0, mediumRec.m_t);
+    std::vector<std::pair<const Photon*, float>> gatheredPhotons;
+    m_photonMedium.QueryBeam(beam, m_currentRadius, gatheredPhotons);
+    Spectrum sum(0.f);
+    for (const auto& p : gatheredPhotons) {
+        const auto& photon = p.first;
+        const auto& t = p.second;
+        // Estimate Tr
+        Spectrum Tr = ray.m_medium->Transmittance(Ray(ray.o, ray.d, 0, t), sampler);
+        // Evaluate phase function
+        PhaseFunctionRecord phaseRec(-ray.d, photon->m_direction);
+        Spectrum phaseVal = phase->EvalPdf(phaseRec);
+        // Add contribution
+        sum += Tr * phaseVal * photon->m_flux;
+    }
+    float num = gatheredPhotons.empty() ? 1 : gatheredPhotons.size();
+    float vol = 4.f / 3.f * M_PI * m_currentRadius * m_currentRadius * m_currentRadius;
+    Spectrum radiance = sum / (vol * m_deltaPhotonNum * 25);
+    return radiance;
+}
+
 Spectrum VPPMIntegrator::EstimateMediumPoint3D(
     const Ray& ray,
     const MediumRecord& mediumRec,
     const std::shared_ptr<PhaseFunction>& phase)
 {
     std::vector<const Photon*> gatheredPhotons;
-    m_photonTree.Query(mediumRec.m_p, m_currentRadius, gatheredPhotons);
+    m_photonMedium.Query(mediumRec.m_p, m_currentRadius, gatheredPhotons);
     Spectrum sum(0.f);
     for (const auto& photon : gatheredPhotons) {
         PhaseFunctionRecord phaseRec(-ray.d, photon->m_direction);
@@ -307,7 +342,7 @@ Spectrum VPPMIntegrator::EstimatePlane(
     const std::shared_ptr<BSDF>& bsdf)
 {
     std::vector<const Photon*> gatheredPhotons;
-    m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
+    m_photonPlane.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
     Spectrum sum(0.f);
     for (const auto& photon : gatheredPhotons) {
         MaterialRecord matRec(-ray.d, photon->m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
@@ -358,7 +393,7 @@ Spectrum VPPMIntegrator::LiDebug(Ray ray, Sampler& sampler)
         if (!mediumRec.m_internal) {
             // Estimate radiance
             std::vector<Photon> gatheredPhotons;
-            m_photonTree.Query(mediumRec.m_p, m_currentRadius, gatheredPhotons);
+            m_photonMedium.Query(mediumRec.m_p, m_currentRadius, gatheredPhotons);
             Spectrum sum(0.f);
             for (const auto& photon : gatheredPhotons) {
                 sum += photon.m_flux;
@@ -377,7 +412,7 @@ Spectrum VPPMIntegrator::LiDebug(Ray ray, Sampler& sampler)
             }
             // Estimate radiance
             std::vector<Photon> gatheredPhotons;
-            m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
+            m_photonPlane.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
             Spectrum sum(0.f);
             for (const auto& photon : gatheredPhotons) {
                 sum += photon.m_flux;

@@ -129,6 +129,8 @@ public:
     Bounds() :m_pMin(std::numeric_limits<float>::max()), m_pMax(std::numeric_limits<float>::min()) {}
     Bounds(const Float3& p) :m_pMin(p), m_pMax(p) {}
     Bounds(const Float3& pMin, const Float3& pMax) :m_pMin(pMin), m_pMax(pMax) {}
+    Bounds(const Float3& center, const float& radius) :
+        m_pMin(center - Float3(radius)), m_pMax(center + Float3(radius)) {}
 
     const Float3& operator[](const int& idx) const { return idx == 0 ? m_pMin : m_pMax; }
 

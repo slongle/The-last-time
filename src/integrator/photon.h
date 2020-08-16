@@ -33,12 +33,17 @@ struct KDTreeNode {
 class KDTree {
 public:
     void Add(const Photon& photon);
-    void Build();
+    void Build(const float& radius = 0);
     void Clear();
+
     void Query(const Float3& center, const float& radius, std::vector<const Photon*>& photons) const;
     void Query(const Float3& center, const float& radius, std::vector<Photon>& photons) const;
+    void QueryBeam(
+        const Ray& ray, 
+        const float& radius, 
+        std::vector<std::pair<const Photon*, float>>& photons) const; 
 
-    uint32_t RecursiveBuild(uint32_t l, uint32_t r, const Bounds& bounds);
+    uint32_t RecursiveBuild(uint32_t l, uint32_t r, Bounds& bounds, const float& radius);
 
     uint32_t m_root;
     std::vector<Photon> m_photons;
