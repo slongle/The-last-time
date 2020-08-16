@@ -6,6 +6,24 @@
 #include <tbb/blocked_range.h>
 #include <tbb/concurrent_vector.h>
 
+void VPPMIntegrator::Save()
+{
+    std::string suffix =
+        fmt::format("{0}iteration_{1}_{2}_{3}_{4}",
+            FormatNumber(m_currentIteration),
+            FormatNumber(m_deltaPhotonNum),
+            m_initialRadius,
+            m_alpha,
+            m_timer.ToString());
+    m_buffer->Save(suffix);
+}
+
+std::string VPPMIntegrator::ToString() const
+{
+    return fmt::format("VPPM\nnmax bounce : {0}\niteration : {1}\n# photon : {2}\nradius : {3}",
+        m_maxBounce, m_currentIteration, m_currentPhotonNum, m_currentRadius);
+}
+
 void VPPMIntegrator::Start()
 {
     Setup();
@@ -87,15 +105,9 @@ void VPPMIntegrator::Start()
             // Initialize render status (stop)
             m_rendering = false;
             m_timer.Stop();
-            m_buffer->Save();
+            //m_buffer->Save();
         }
     );
-}
-
-std::string VPPMIntegrator::ToString() const
-{
-    return fmt::format("VPPM\nnmax bounce : {0}\niteration : {1}\n# photon : {2}\nradius : {3}",
-        m_maxBounce, m_currentIteration, m_currentPhotonNum, m_currentRadius);
 }
 
 void VPPMIntegrator::RenderTile(const Framebuffer::Tile& tile)
@@ -168,11 +180,11 @@ void VPPMIntegrator::EmitPhoton(const uint32_t& photonIndex)
         // Hit medium bound
         if (!mediumRec.m_internal && !bsdf) {
             auto medium = hitRec.GetMedium(ray.d);
-            ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);            
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d, medium);
 
             bounce--;
             continue;
-        }        
+        }
         // Scatter photon
         if (mediumRec.m_internal) {
             // Sample phase function
@@ -209,7 +221,7 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
     HitRecord hitRec;
     for (int bounce = 0; bounce < m_maxBounce; bounce++) {
         bool hit = m_scene->Intersect(ray, hitRec);
-        radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);        
+        radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
         // No hit
         if (!hit) {
             break;
@@ -223,7 +235,7 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
         auto& bsdf = hitRec.m_primitive->m_bsdf;
         auto& phase = ray.m_medium->m_phaseFunction;
         if (mediumRec.m_internal) {
-            radiance += throughput * EstimateMedium(ray, mediumRec, phase);
+            radiance += throughput * EstimateMediumPoint3D(ray, mediumRec, phase);
             break;
         }
         else if (bsdf && !bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
@@ -271,7 +283,7 @@ Spectrum VPPMIntegrator::Li(Ray ray, Sampler& sampler)
     return radiance;
 }
 
-Spectrum VPPMIntegrator::EstimateMedium(
+Spectrum VPPMIntegrator::EstimateMediumPoint3D(
     const Ray& ray,
     const MediumRecord& mediumRec,
     const std::shared_ptr<PhaseFunction>& phase)
@@ -337,7 +349,7 @@ Spectrum VPPMIntegrator::LiDebug(Ray ray, Sampler& sampler)
         if (!hit) {
             break;
         }
-        auto& bsdf = hitRec.m_primitive->m_bsdf;        
+        auto& bsdf = hitRec.m_primitive->m_bsdf;
         // Sample medium
         MediumRecord mediumRec;
         if (ray.m_medium) {

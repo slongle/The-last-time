@@ -22,7 +22,7 @@ public:
 
     void Initialize();
     void AddSample(int x, int y, const Spectrum& s);
-    void Save(const std::string& prefix = "");
+    void Save(const std::string& suffix = "");
     sRGB* GetsRGBBuffer() const;
     sRGB GetPixelSpectrum(const Int2& pos) const;
     // Debug
@@ -34,6 +34,9 @@ public:
     int m_width, m_height;
 private:
     std::string m_filename;
+    std::string m_name;
+    std::string m_ext;
+
     sRGB *m_outputBuffer;
     sRGB *m_debugBuffer;
     sRGB *m_image;

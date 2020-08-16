@@ -31,12 +31,13 @@ public:
         }
     }
     bool IsRendering() { return m_rendering; }
+    void Save();
     std::string ToString() const;
 private:
     void RenderTile(const Framebuffer::Tile& tile);
     void EmitPhoton(const uint32_t& photonIndex);
     Spectrum Li(Ray ray, Sampler& sampler);
-    Spectrum EstimateMedium(
+    Spectrum EstimateMediumPoint3D(
         const Ray& ray,
         const MediumRecord& mediumRec,
         const std::shared_ptr<PhaseFunction>& phase);
@@ -45,7 +46,7 @@ private:
         const HitRecord& hitRec,
         const std::shared_ptr<BSDF>& bsdf);
 private:
-    void Debug(DebugRecord& debugRec);    
+    void Debug(DebugRecord& debugRec);
     Spectrum LiDebug(Ray ray, Sampler& sampler);
 private:
     // Options
@@ -60,7 +61,7 @@ private:
     uint32_t m_currentIteration;
     float m_currentRadius;
 
-    // 
+    // Photons
     KDTree m_photonTree;
 
     // Muti-thread setting

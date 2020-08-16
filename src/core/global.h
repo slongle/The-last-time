@@ -57,9 +57,26 @@
 
 class Medium;
 
-inline std::shared_ptr<std::filesystem::path> GetFileResolver(){
+inline std::string FormatNumber(const uint64_t& num) {
+    if (num < 100) {
+        return fmt::format("{}", num);
+    }
+    else if (num < 100000) {
+        return fmt::format("{:.1f}K", num * 0.001);
+    }
+    else {
+        return fmt::format("{:.1f}M", num * 0.000001);
+    }
+}
+
+inline std::shared_ptr<std::filesystem::path> GetFileResolver() {
     static std::shared_ptr<std::filesystem::path> path(new std::filesystem::path());
     return path;
+}
+
+inline std::string GetFilename(const std::string& filename) {
+    std::string name = filename.substr(0, filename.find_last_of('.'));
+    return name;
 }
 
 inline std::string GetFileExtension(const std::string& filename) {

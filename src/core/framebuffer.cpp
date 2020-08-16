@@ -5,6 +5,8 @@
 Framebuffer::Framebuffer(const std::string& filename, const int& width, const int& height)
     : m_filename(filename), m_width(width), m_height(height)
 {
+    m_name = GetFilename(m_filename);
+    m_ext = GetFileExtension(m_filename);
     m_outputBuffer = new sRGB[m_width * m_height];
     m_debugBuffer = new sRGB[m_width * m_height];
     m_image = new sRGB[m_width * m_height];
@@ -89,7 +91,7 @@ void Framebuffer::DrawLine(Float2 p, Float2 q, const Spectrum& s)
     }
 }
 
-void Framebuffer::Save(const std::string& prefix)
+void Framebuffer::Save(const std::string& suffix)
 {
     float* linearRGB = new float[m_width * m_height * 3];
     for (int i = 0; i < m_width * m_height; i++) {
@@ -101,9 +103,11 @@ void Framebuffer::Save(const std::string& prefix)
         linearRGB[i * 3 + 1] = c.g;
         linearRGB[i * 3 + 2] = c.b;
     }
-    std::string filename = prefix == "" ? 
-        GetFileResolver()->string() + "/" + m_filename :
-        GetFileResolver()->string() + "/" + prefix + "_" + m_filename;
+    
+    std::string filename = suffix == "" ?
+        fmt::format("{0}/{1}.{2}", GetFileResolver()->string(), m_name, m_ext) :
+        fmt::format("{0}/{1}_{2}.{3}", GetFileResolver()->string(), m_name, suffix, m_ext);
+    
     WriteImage(filename, m_width, m_height, linearRGB);
     delete[] linearRGB;
 
