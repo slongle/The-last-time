@@ -5,17 +5,7 @@
 ## Building
 
 ### External libraries
-- embree3
-- openvdb
-- tinyobjloader
-- ImGui
-- glfw3
-- glew
-- fmt
-- glog
-- nlohmann-json
-
-If you don't know how to add the three libraries, I recommend you use some package manager like `vcpkg`.  
+I recommend you use some package manager like `vcpkg`.  
 ```bash
  > set VCPKG_DEFAULT_TRIPLET=x64-windows  
  > vcpkg install embree3 openvdb tinyobjloader imgui glad glfw3 glew fmt glog nlohmann-json stb   
@@ -58,6 +48,8 @@ Disney cloud
 Smoke(VDB file from [OpenVDB](https://www.openvdb.org/download/))   
 ![](images/fire_128spp.png)  
 Smoke(VDB file from [JangaFX](https://jangafx.com/software/embergen/download/free-vdb-animations/))   
+![](images/vppm_0.5Kiteration_10.0M_0.005_0.9.png)  
+Initial radius = 0.005, alpha = 0.9, # of delta photon = 1M, iteration = 0.5K     
 ![](images/scene_SPPM_5000.png)  
 Initial radius = 0.2, alpha = 0.5, iteration = 5000  
 ![](images/torus_PT_1024000spp_11h59m46s720ms.png)  
