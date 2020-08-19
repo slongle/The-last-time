@@ -46,7 +46,7 @@ Homogeneous medium with HG phase function (density = 10, albedo = 1, g = 0), mul
 Disney cloud  
 ![](images/smoke_1024spp_2h31m29s.png)  
 Smoke(VDB file from [OpenVDB](https://www.openvdb.org/download/))   
-![](images/fire_128spp.png)  
+![](images/fire_128spp.gif)  
 Smoke(VDB file from [JangaFX](https://jangafx.com/software/embergen/download/free-vdb-animations/))   
 ![](images/vppm_0.5Kiteration_10.0M_0.005_0.9.png)  
 Initial radius = 0.005, alpha = 0.9, # of delta photon = 1M, iteration = 0.5K     
