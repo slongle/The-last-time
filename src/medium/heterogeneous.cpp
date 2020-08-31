@@ -8,8 +8,10 @@ HeterogeneousMedium::HeterogeneousMedium(
     const bool& blackbody,
     const std::string& temperatureName,
     const Spectrum& albedo,
-    const float& scale)
-    : Medium(pf), m_lefthand(lefthand), m_blackbody(blackbody), m_albedo(albedo), m_scale(scale), 
+    const float& scale,
+    const float& temperatureScale)
+    : Medium(pf), m_lefthand(lefthand), m_blackbody(blackbody), m_albedo(albedo), 
+    m_scale(scale), m_temperatureScale(temperatureScale),
     m_densitySampler({}), m_temperatureSampler({})
 {
     openvdb::initialize();
@@ -54,17 +56,23 @@ Spectrum HeterogeneousMedium::Sample(const Ray& ray, MediumRecord& mediumRec, Sa
         if (t >= d) {
             mediumRec.m_p = ray(d);
             mediumRec.m_t = d;
-            mediumRec.m_pdf = pdf;
+            mediumRec.m_pdf = 0;
             mediumRec.m_internal = false;
             break;
         }
         float density = Density(ray(t));
         //Tr *= (1 - density * m_invMaxDensity);
         pdf *= (1 - density * m_invMaxDensity);
-        if (sampler.Next1D() <= density * m_invMaxDensity) {
+        float sigma_s = density * m_albedo.r;
+        //float sigma_a = std::max(0.f, density - sigma_s);
+        s = sampler.Next1D() * m_maxDensity;
+        if (s <= density) {
+            if (s > sigma_s) {
+                mediumRec.m_Le = BlackbodyRadiance(ray(t));
+            }
             mediumRec.m_p = ray(t);
             mediumRec.m_t = t;
-            mediumRec.m_pdf = pdf;
+            mediumRec.m_pdf = 0;
             mediumRec.m_internal = true;
             return m_albedo;
         }
@@ -103,7 +111,6 @@ Spectrum HeterogeneousMedium::Transmittance(const Ray& ray, Sampler& sampler) co
 float HeterogeneousMedium::Density(const Float3& _pWorld) const
 {
     openvdb::Vec3d pWorld;
-    float a = 0;
     if (m_lefthand) {
         pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.z, -_pWorld.y);
         //a = m_dG->LookUp(Float3(_pWorld.x, _pWorld.z, -_pWorld.y));
@@ -118,7 +125,16 @@ float HeterogeneousMedium::Density(const Float3& _pWorld) const
     return ret;
 }
 
-Spectrum HeterogeneousMedium::BlackbodyRadiance(const Float3& p) const
+Spectrum HeterogeneousMedium::BlackbodyRadiance(const Float3& _pWorld) const
 {
-    return Spectrum(0.f);
+    openvdb::Vec3d pWorld;
+    if (m_lefthand) {
+        pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.z, -_pWorld.y);
+    }
+    else {
+        pWorld = openvdb::Vec3d(_pWorld.x, _pWorld.y, _pWorld.z);
+    }
+    float T = m_temperatureSampler.wsSample(pWorld);
+    T *= m_temperatureScale;
+    return BlackBody(T);
 }

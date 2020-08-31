@@ -23,6 +23,11 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                 break;
             }
 
+            if (!mediumRec.m_Le.IsBlack()) {
+                radiance += throughput * mediumRec.m_Le;
+                break;
+            }
+
             auto& phase = ray.m_medium->m_phaseFunction;
 
             // Sample light

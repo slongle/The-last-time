@@ -3,6 +3,7 @@
 #include "vector.h"
 #include "sampling.h"
 #include "camera.h"
+#include "spectrum.h"
 
 class Primitive;
 class BSDF;
@@ -67,12 +68,13 @@ public:
 
 class MediumRecord {
 public:
-    MediumRecord() {}
+    MediumRecord() :m_internal(false), m_Le(0.f) {}
 
-    bool m_internal = false;
+    bool m_internal;
     float m_t;
     float m_pdf;
     Float3 m_p;
+    Spectrum m_Le;
 };
 
 class LightRecord {

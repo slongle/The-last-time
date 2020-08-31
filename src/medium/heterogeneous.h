@@ -19,7 +19,8 @@ public:
         const bool& blackbody,
         const std::string& temperatureName,
         const Spectrum& albedo,
-        const float& scale);
+        const float& scale,
+        const float& temperatureScale);
 
     Spectrum Sample(const Ray& ray, MediumRecord& mediumRec, Sampler& sampler) const;
     Spectrum Transmittance(const Ray& ray, Sampler& sampler) const;
@@ -30,6 +31,7 @@ public:
     
     Spectrum m_albedo;
     float m_scale;
+    float m_temperatureScale;
 
     float m_minDensity, m_maxDensity;
     float m_invMaxDensity;
