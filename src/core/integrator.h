@@ -40,9 +40,9 @@ protected:
 public:
     Timer m_timer;
 protected:
+    std::shared_ptr<Framebuffer> m_buffer;
     std::shared_ptr<Scene> m_scene;
     std::shared_ptr<Camera> m_camera;
-    std::shared_ptr<Framebuffer> m_buffer;
 };
 
 class SampleIntegrator : public Integrator {

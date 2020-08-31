@@ -3,7 +3,7 @@
 int main(int argc, char* argv[]) {
     google::InitGoogleLogging("Render");
     google::InstallFailureSignalHandler();
-    
+
     LOG_IF(FATAL, argc < 2) << "Without scenes' path.";
     std::string prefix(argv[1]);
     std::vector<std::string> scenes(100);
@@ -25,7 +25,8 @@ int main(int argc, char* argv[]) {
     scenes[15] = "6.Caustics/VolumeCaustics/scene.json";
     scenes[16] = "6.Caustics/VolumeCaustics/scene_debug.json";
     scenes[17] = "6.Caustics/VolumeCaustics2/scene.json";
-    std::string filename = prefix + scenes[16];
+    scenes[18] = "2.Shader/SVBRDF/scene.json";
+    std::string filename = prefix + scenes[18];
 
     Renderer renderer(filename);
     renderer.Render();

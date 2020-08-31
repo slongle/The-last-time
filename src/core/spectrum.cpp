@@ -434,6 +434,52 @@ RGBSpectrum RGBSpectrum::FromSPD(const float* lambda, const float* v, const int&
         XYZ[1] += CIE_Y[i] * val;
         XYZ[2] += CIE_Z[i] * val;
     }
+    float scale = (CIE_lambda[nCIESamples - 1] - CIE_lambda[0]) / (CIE_Y_integral * nCIESamples);    
+    XYZ[0] *= scale;
+    XYZ[1] *= scale;
+    XYZ[2] *= scale;
+    float rgb[3];
+    XYZToRGB(XYZ, rgb);
+    return RGBSpectrum(rgb);
+}
+
+
+float BlackBody(float lambda, float t)
+{
+    if (t <= 0) return 0;
+    const float c = 299792458;
+    const float h = 6.62606957e-34;
+    const float kb = 1.3806488e-23;
+    
+    float l = lambda * 1e-9;
+    float l5 = std::sqr(std::sqr(l)) * l;
+    float Le = (2 * h * c * c) / (l5 * (std::exp((h * c) / (l * kb * t)) - 1));
+    return Le;
+}
+
+
+RGBSpectrum BlackBody(float T) {
+    if (T <= 0) return RGBSpectrum(0.f);
+    
+    RGBSpectrum Le;
+    float lambdas[] = { 750, 500, 375 };
+    for (int i = 0; i < 3; i++) {
+        Le[i] = BlackBody(lambdas[i], T);
+    }
+    Le /= MaxComponent(Le);
+    return Le;    
+
+    /*
+    float lambdaMax = 2.8977721e-3 / T * 1e9;
+    float maxL = ::BlackBody(lambdaMax, T);
+
+    float XYZ[3] = { 0,0,0 };
+    for (int i = 0; i < nCIESamples; i++) {
+        float Le = ::BlackBody(CIE_lambda[i], T);
+        XYZ[0] += CIE_X[i] * Le;
+        XYZ[1] += CIE_Y[i] * Le;
+        XYZ[2] += CIE_Z[i] * Le;
+    }
     float scale = (CIE_lambda[nCIESamples - 1] - CIE_lambda[0]) /
         (CIE_Y_integral * nCIESamples);
     XYZ[0] *= scale;
@@ -441,5 +487,6 @@ RGBSpectrum RGBSpectrum::FromSPD(const float* lambda, const float* v, const int&
     XYZ[2] *= scale;
     float rgb[3];
     XYZToRGB(XYZ, rgb);
-    return RGBSpectrum(rgb);
+    return RGBSpectrum(XYZ);   
+    */
 }

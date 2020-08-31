@@ -11,6 +11,7 @@
 #include "bsdf/conductor.h"
 #include "bsdf/blendbsdf.h"
 #include "bsdf/transparent.h"
+#include "bsdf/svbrdf.h"
 #include "light/arealight.h"
 #include "light/environment.h"
 #include "light/directional.h"
@@ -23,6 +24,7 @@
 #include "integrator/pathguider.h"
 #include "integrator/sppm.h"
 #include "integrator/vppm.h"
+#include "integrator/director.h"
 #include "texture/consttexture.h"
 #include "texture/imagemap.h"
 #include "texture/checker.h"
@@ -143,9 +145,10 @@ void Parse(const std::string& filename, Renderer& renderer)
                 std::string temperatureName = GetString(mediumProperties, "temperature", "temperature");
                 Spectrum albedo = GetSpectrum(mediumProperties, "albedo", Spectrum(0.5f));
                 float scale = GetFloat(mediumProperties, "scale", 1);
+                float temperatureScale = GetFloat(mediumProperties, "temperature_scale", 1);
                 medium = new HeterogeneousMedium(
                     std::shared_ptr<PhaseFunction>(pf),
-                    filename, lefthand, densityName, blackbody, temperatureName, albedo, scale);
+                    filename, lefthand, densityName, blackbody, temperatureName, albedo, scale, temperatureScale);
             }
             else {
                 LOG(FATAL) << "Wrong medium type " << mediumType;
@@ -243,6 +246,13 @@ void Parse(const std::string& filename, Renderer& renderer)
             else if (type == "transparent") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 bsdf = new Transparent(reflectance, alpha);
+            }
+            else if (type == "svbrdf") {
+                auto diffuse = GetSpectrumTexture(bsdfProperties, "diffuse", Spectrum(1.f), scene);
+                auto specular = GetSpectrumTexture(bsdfProperties, "specular", Spectrum(1.f), scene);
+                auto normal = GetSpectrumTexture(bsdfProperties, "normal", Spectrum(1.f), scene);
+                auto roughness = GetFloatTexture(bsdfProperties, "roughness", 1.f, scene);
+                bsdf = new SVBRDF(diffuse, specular, normal, roughness, alpha);
             }
             else {
                 assert(false);
@@ -432,6 +442,11 @@ void Parse(const std::string& filename, Renderer& renderer)
                 maxIteration, deltaPhotonNum, initialRadius, alpha));
             //integrator = std::make_shared<VPPMIntegrator>(scene, camera, buffer, maxBounce,
             //    maxIteration, deltaPhotonNum, initialRadius, alpha);
+        }
+        else if (type == "director") {
+            int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
+            int spp = GetInt(integratorProperties, "spp", 1);
+            integrator = std::make_shared<DirectorIntegrator>(scene, camera, buffer, maxBounce, spp);
         }
         else {
             assert(false);

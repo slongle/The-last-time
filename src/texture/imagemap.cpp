@@ -1,6 +1,7 @@
 #include "imagemap.h"
 
 #include "utility/imageio.h"
+#include "utility/timer.h"
 
 template<typename T>
 inline T ImageTexture<T>::Evaluate(const Float2& uv) const
@@ -64,8 +65,13 @@ std::shared_ptr<ImageTexture<Spectrum>> CreateSpectrumImageTexture(std::string f
     filename = GetFileResolver()->string() + "/" + filename;
 
     int width, height, channel;
+    //Timer timer;
+    //timer.Start();
     std::shared_ptr<float[]> image = ReadImage(filename, &width, &height, &channel, 3);
+    //timer.Stop();
+    //std::cout << timer.ToString() << std::endl;;
 
+    //timer.Start();
     std::string ext = GetFileExtension(filename);
     std::shared_ptr<Spectrum[]> spectrumImage(new Spectrum[width * height]);    
     for (int i = 0; i < width * height; i++) {
@@ -74,5 +80,12 @@ std::shared_ptr<ImageTexture<Spectrum>> CreateSpectrumImageTexture(std::string f
             (image[i * 3 + 1]),
             (image[i * 3 + 2]));
     }
-    return std::make_shared<ImageTexture<Spectrum>>(width, height, spectrumImage);
+    //timer.Stop();
+    //std::cout << timer.ToString() << std::endl;
+
+    //timer.Start();
+    auto a = std::make_shared<ImageTexture<Spectrum>>(width, height, spectrumImage);
+    //timer.Stop();
+    //std::cout << timer.ToString() << std::endl;
+    return a;
 }

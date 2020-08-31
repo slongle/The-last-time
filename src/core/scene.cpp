@@ -101,7 +101,8 @@ void Scene::Setup()
     }
     //m_bvh = std::shared_ptr<BVH>(new BVH(m_primitives));
     //m_bvh->Build();
-    m_embreeBvh = std::shared_ptr<EmbreeBVH>(new EmbreeBVH(m_orderedMeshes, m_primitives));
+    m_embreeBvh = std::make_shared<EmbreeBVH>(m_orderedMeshes, m_primitives);
+    //m_embreeBvh = std::shared_ptr<EmbreeBVH>(new EmbreeBVH(m_orderedMeshes, m_primitives));
     std::cout << "BVH Done" << std::endl;
 }
 
@@ -151,7 +152,7 @@ bool Scene::IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance, Sa
 
 bool Scene::Occlude(Ray& ray) const
 {
-    return m_embreeBvh->Occlude(ray);
+    //return m_embreeBvh->Occlude(ray);
     return m_bvh->Occlude(ray);
     HitRecord hitRec;
     for (const Primitive& primitive : m_primitives) {
@@ -209,6 +210,7 @@ bool Scene::OccludeTr(Ray& _ray, Spectrum& transmittance, Sampler& sampler) cons
             transmittance *= ray.m_medium->Transmittance(ray, sampler);
         }
         if (bsdf) {
+            return true;
             MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
             transmittance *= bsdf->Sample(matRec, Float2(0, 0));
             t -= ray.tMax;

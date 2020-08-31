@@ -25,7 +25,7 @@ bool BVH::Intersect(Ray& ray, HitRecord& hitRec) const
     int dirIsNeg[3] = { ray.d.x < 0, ray.d.y < 0, ray.d.z < 0 };
 
     bool hit = false;
-    while (true) {
+    while (true) {        
         const BVHNode& node = m_nodes[nodeIdx];
         if (!node.m_bounds.Intersect(ray, invDir, dirIsNeg)) {
             if (stackIdx == 0) {

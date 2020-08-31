@@ -29,6 +29,11 @@ public:
         else if (i == 1) return g;
         else return b;
     }
+    float& operator [] (const uint32_t& i) {
+        if (i == 0) return r;
+        else if (i == 1) return g;
+        else return b;
+    }
     bool IsNaN() const { return std::isnan(r) | std::isnan(g) | std::isnan(b); }
 
     RGBSpectrum operator * (float v) const { return RGBSpectrum(r * v, g * v, b * v); }
@@ -49,6 +54,7 @@ public:
     sRGB TosRGB() const { return sRGB(GammaCorrect(r), GammaCorrect(g), GammaCorrect(b)); }
 
     static RGBSpectrum FromSPD(const float* lambda, const float* val, const int& n);
+    //static RGBSpectrum BlackBody(float t);
 
     float r, g, b;
 
@@ -63,3 +69,4 @@ public:
 };
 
 typedef RGBSpectrum Spectrum;
+RGBSpectrum BlackBody(float t);

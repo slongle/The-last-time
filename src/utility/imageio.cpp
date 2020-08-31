@@ -11,6 +11,9 @@
 #include <stb_image_write.h>
 #endif // !STB_IMAGE_WRITE_IMPLEMENTATION
 
+#include <OpenImageIO/imageio.h>
+using namespace OIIO;
+
 
 /**
  * @brief stb_image : index of left-lower is (0, 0)
@@ -27,12 +30,29 @@ std::shared_ptr<float[]> ReadImage(
     int* channel,
     int reqChannel)
 {
+    /*
     stbi_set_flip_vertically_on_load(true);
     const std::string ext = GetFileExtension(filename);
     float* ptr = stbi_loadf(filename.c_str(), width, height, channel, reqChannel);
     LOG_IF(FATAL, !ptr) << "Can't load image : " << filename;
     //std::cout << ptr[0] << ' ' << ptr[1] << ' ' << ptr[2] << std::endl;
     return std::shared_ptr<float[]>(ptr);
+    */
+    auto in = ImageInput::open(filename);
+    if (!in) {
+        LOG(FATAL) << "Can't load " << filename;
+    }
+    const ImageSpec& spec = in->spec();
+    int xres = spec.width;
+    int yres = spec.height;
+    int channels = spec.nchannels;
+    std::shared_ptr<float[]> pixels(new float[xres * yres * channels]);
+    in->read_image(TypeDesc::FLOAT, &pixels[0]);
+    in->close();
+    *width = xres;
+    *height = yres;
+    *channel = channels;
+    return pixels;
 }
 
 /**

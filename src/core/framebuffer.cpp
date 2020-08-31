@@ -138,3 +138,11 @@ void Framebuffer::ClearDebugBuffer()
 {
     memset(m_debugBuffer, 0, sizeof(sRGB) * m_width * m_height);
 }
+
+void Framebuffer::ClearOutputBuffer()
+{
+    memset(m_outputBuffer, 0, sizeof(sRGB) * m_width * m_height);
+    memset(m_image, 0, sizeof(sRGB) * m_width * m_height);
+    memset(m_accumulate, 0, sizeof(Spectrum) * m_width * m_height);
+    memset(m_sampleNum, 0, sizeof(int) * m_width * m_height);
+}

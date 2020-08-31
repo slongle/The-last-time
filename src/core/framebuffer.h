@@ -29,6 +29,7 @@ public:
     void SetVal(int x, int y, const Spectrum& s);
     void DrawCircle(float cx, float cy, float r, const Spectrum& s);
     void DrawLine(Float2 p, Float2 q, const Spectrum& s);
+    void ClearOutputBuffer();
     void ClearDebugBuffer();
 public:
     int m_width, m_height;
