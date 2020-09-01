@@ -26,16 +26,16 @@ public:
         }
 
         auto InvGamma = [](const Spectrum& s)->Spectrum {
-            return Spectrum(InverseGammaCorrect(s.r), InverseGammaCorrect(s.g), InverseGammaCorrect(s.b));
+            return Spectrum(GammaCorrect(s.r), GammaCorrect(s.g), GammaCorrect(s.b));
         };
 
-        Spectrum n = (InvGamma(m_normal->Evaluate(matRec.m_st)));
+        Spectrum n = ((m_normal->Evaluate(matRec.m_st)));
         Spectrum diffuse = m_diffuse->Evaluate(matRec.m_st);
         Spectrum specular = m_specular->Evaluate(matRec.m_st);
         float roughness = m_roughness->Evaluate(matRec.m_st);
-        Float3 microNormal(n.r, n.g, n.b);
+        Float3 microNormal(n.r, n.g, n.b);        
         //return microNormal;
-        microNormal = Normalize(microNormal);
+        microNormal = Normalize(microNormal - Float3(0.5));
         //return microNormal;
 
         auto GGX = [](float NoH, float roughness)->float {

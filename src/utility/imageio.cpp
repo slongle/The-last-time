@@ -17,6 +17,8 @@ using namespace OIIO;
 
 /**
  * @brief stb_image : index of left-lower is (0, 0)
+ *  OIIO loads the image in linear space
+ *  stb_image loads the image in sRGB
  * 
  * @param filename 
  * @param width 
@@ -38,6 +40,7 @@ std::shared_ptr<float[]> ReadImage(
     //std::cout << ptr[0] << ' ' << ptr[1] << ' ' << ptr[2] << std::endl;
     return std::shared_ptr<float[]>(ptr);
     */
+    
     auto in = ImageInput::open(filename);
     if (!in) {
         LOG(FATAL) << "Can't load " << filename;

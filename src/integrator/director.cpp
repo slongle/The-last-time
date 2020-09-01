@@ -86,6 +86,6 @@ void DirectorIntegrator::DebugRay(Ray ray, Sampler& sampler)
         Spectrum f = bsdf->Eval(matRec);
 
         std::cout << f << std::endl;
-        std::cout << lightRec.m_wi << std::endl;
+        std::cout << Le << std::endl;
     }
 }
