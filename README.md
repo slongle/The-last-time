@@ -28,16 +28,19 @@ Or use `./setup_builds.bat`.
 [This Offline Renderer](https://github.com/slongle/The-Last-time) is a physically-based photorealistic 3D renderer I am writing from scratch in C++. Rainbow is built from the ground up as a global illumination renderer supporting global illumination through light transport algorithms, including volumetric unidirectional pathtracing with multiple importance sampling. The renderer is still a work in progress.  
 
 ### Features
-**Advanced Global Illumination**: Volumetric Unidirectional Path Tracing (Quasi-Monte Carlo), Volumetric progressive photon mapping, Primary Sample Space Metroplis Light Transport (Kelemen-style MLT), Path Guider (WIP).    
+**Advanced Global Illumination**: Volumetric Unidirectional Path Tracing (Quasi-Monte Carlo), Volumetric progressive photon mapping(Point estimation and Beam estimation), Primary Sample Space Metroplis Light Transport (Kelemen-style MLT)(WIP), Path Guider (WIP).    
 **Geometry**: Support triangle and quad meshes with instancing. Also can support sphere and box.  
-**Lights**: Support point light, spot light, area light(rectangle and sphere).  
-**Materials and BSDFs**: Support physically based BSDFs, including multiple microfacet models (GGX), smooth and rough versions of Fresnel conductors, specular dielectrics, transparent BSDF, blend BSDF.   
+**Lights**: Support point light, spot light, directional light, area light(rectangle and sphere).  
+**Materials and BSDFs**: Support physically based BSDFs, including thin-film iridescence, microfacet models (GGX), smooth and rough versions of Fresnel conductors, specular dielectrics, transparent BSDF, blend BSDF.   
 **Media**: Support homogeneous and heterogeneous medium.  
 **Acceleration Structure System**: Use SAH-BVH acceleration.  
 **Render Mode**: Adaptive, Progressive and Final mode.  
 
 ### Select Images
-
+![](images/ir_eta2_1.33_eta3_1_k3_0_d_300-450.png)  
+![](images/ir_eta2_1.33_eta3_1_k3_0_d_500-650.png)  
+![](images/ir_eta2_1.33_eta3_1_k3_0_d_700-850.png)  
+Iridescence effect, using the method from Belcour and Barla 2017 (eta_1 = 1.0, eta_2 = 1.33, eta_3 = 1.0, k_3 = 0, d = 300-850nm)
 ![](images/glory_4096spp.png)  
 Crepuscular beam  
 ![](images/envbunny_spp=512_density=10_albedo=1.png)  
