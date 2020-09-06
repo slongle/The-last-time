@@ -16,6 +16,19 @@ public:
     std::string ToString() const;    
 private:
     void Setup() { Integrator::Setup(); }
+    Spectrum EvalLight(
+        bool hit,
+        const Ray& ray,
+        const HitRecord& hitRec) const;
+    Spectrum EvalPdfLight(
+        bool hit,
+        const Ray& ray,
+        const HitRecord& hitRec,
+        LightRecord& lightRec) const;
+    Spectrum SampleLight(
+        LightRecord& lightRec,
+        Sampler& sampler,
+        const std::shared_ptr<Medium>& medium) const;
     // Debug
     void Debug(DebugRecord& debugRec);
     void DebugRay(Ray ray, Sampler& sampler);

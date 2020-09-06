@@ -43,6 +43,23 @@ float PdfUniformSphere(const Float3& v)
     return INV_FOURPI;
 }
 
+int SampleDiscrete(const std::vector<float>& pdfs, float u)
+{
+    float sum = 0;
+    for (const float& p : pdfs) {
+        sum += p;
+    }
+    u *= sum;
+    for (int i = 0; i < pdfs.size(); i++) {
+        if (u <= pdfs[i]) {
+            return i;
+        }
+        else {
+            u -= pdfs[i];
+        }
+    }
+}
+
 Distribution1D::Distribution1D(const float* ptr, int n)
     :m_func(ptr, ptr + n), m_cdf(n + 1)
 {

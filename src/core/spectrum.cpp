@@ -490,3 +490,21 @@ RGBSpectrum BlackBody(float T) {
     return RGBSpectrum(XYZ);   
     */
 }
+
+RGBSpectrum XYZToRGB(const RGBSpectrum& s)
+{
+    float xyz[3] = { s.r,s.g,s.b };
+    float rgb[3];
+    XYZToRGB(xyz, rgb);
+    return RGBSpectrum(rgb);
+}
+
+RGBSpectrum Clamp(const RGBSpectrum& s, const RGBSpectrum& l, const RGBSpectrum& r)
+{
+    return RGBSpectrum(Clamp(s.r, l.r, r.r), Clamp(s.g, l.g, r.g), Clamp(s.b, l.b, r.b));
+}
+
+RGBSpectrum ClampNegative(const RGBSpectrum& s)
+{
+    return RGBSpectrum(std::max(0.f,s.r), std::max(0.f, s.g), std::max(0.f, s.b));
+}

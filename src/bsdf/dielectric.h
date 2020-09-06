@@ -73,10 +73,6 @@ public:
         return true;
     }
 private:
-    Float3 Reflect(const Float3& v) const {
-        return Float3(-v.x, -v.y, v.z);
-    }
-
     Float3 Refract(const Float3& v, const float& cosThetaT) const {
         float factor = -(cosThetaT < 0.f ? m_invEta : m_eta);
         return Float3(factor * v.x, factor * v.y, cosThetaT);
@@ -108,7 +104,7 @@ public:
             return Spectrum(1.f);
         }
 
-        float sign = math::signum(Frame::CosTheta(matRec.m_wi));
+        float sign = math::Signum(Frame::CosTheta(matRec.m_wi));
 
         Microfacet microfacet(Float2(m_alphaU, m_alphaV));
         Float3 wh = microfacet.SampleVisible(sign * matRec.m_wi, s);
@@ -186,7 +182,7 @@ public:
             dwh_dwo = eta * eta * AbsDot(matRec.m_wo, wh) / (sqrtDenom * sqrtDenom);
         }
 
-        wh *= math::signum(Frame::CosTheta(wh));
+        wh *= math::Signum(Frame::CosTheta(wh));
         Microfacet microfacet(Float2(m_alphaU, m_alphaV));
         float D = microfacet.D(wh);
         if (D == 0) {
@@ -197,7 +193,7 @@ public:
         float cosThetaT;
         float F = FresnelDieletric(Dot(matRec.m_wi, wh), cosThetaT, m_eta);
 
-        Float3 wi = math::signum(Frame::CosTheta(matRec.m_wi)) * matRec.m_wi;
+        Float3 wi = math::Signum(Frame::CosTheta(matRec.m_wi)) * matRec.m_wi;
         matRec.m_pdf = microfacet.PdfVisible(wi, wh) * dwh_dwo * (reflect ? F : 1 - F);
         if (matRec.m_pdf == 0) {
             return Spectrum(0.f);
@@ -221,10 +217,6 @@ public:
         return BSDF::IsDelta(st);
     }
 private:
-    Float3 Reflect(const Float3& v, const Float3& n) const {
-        return 2 * Dot(v, n) * n - v;
-    }
-
     Float3 Refract(const Float3& v, const Float3& n, const float& cosThetaT) const {
         float factor = -(cosThetaT < 0.f ? m_invEta : m_eta);
         return n * (-Dot(v, n) * factor + cosThetaT) + v * factor;

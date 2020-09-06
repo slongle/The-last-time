@@ -36,6 +36,7 @@ public:
     }
     bool IsNaN() const { return std::isnan(r) | std::isnan(g) | std::isnan(b); }
 
+    RGBSpectrum operator - () const { return RGBSpectrum(-r, -g, -b); }
     RGBSpectrum operator * (float v) const { return RGBSpectrum(r * v, g * v, b * v); }
     RGBSpectrum operator / (float v) const { assert(v != 0.f); return RGBSpectrum(r / v, g / v, b / v); }
     RGBSpectrum& operator /= (float v) { assert(v != 0.f); r /= v; g /= v; b /= v; return *this; }
@@ -60,7 +61,8 @@ public:
 
     friend RGBSpectrum operator * (float v, const RGBSpectrum& s) { return RGBSpectrum(s.r * v, s.g * v, s.b * v); }
     friend RGBSpectrum Exp(const RGBSpectrum& s) { return RGBSpectrum(std::exp(s.r), std::exp(s.g), std::exp(s.b)); }
-    friend RGBSpectrum Sqrt(const RGBSpectrum& s) { return RGBSpectrum(Sqrt(s.r), Sqrt(s.g), Sqrt(s.b)); }
+    friend RGBSpectrum Cos(const RGBSpectrum& s) { return RGBSpectrum(std::cos(s.r), std::cos(s.g), std::cos(s.b)); }
+    friend RGBSpectrum Sqrt(const RGBSpectrum& s) { return RGBSpectrum(math::SafeSqrt(s.r), math::SafeSqrt(s.g), math::SafeSqrt(s.b)); }
     friend float MaxComponent(const RGBSpectrum& s) { return std::max(s.r, std::max(s.g, s.b)); }
     friend std::ostream& operator <<(std::ostream& os, const RGBSpectrum& s) {
         os << s.r << ' ' << s.g << ' ' << s.b;
@@ -70,3 +72,6 @@ public:
 
 typedef RGBSpectrum Spectrum;
 RGBSpectrum BlackBody(float t);
+RGBSpectrum XYZToRGB(const RGBSpectrum& s);
+RGBSpectrum Clamp(const RGBSpectrum& s, const RGBSpectrum& l, const RGBSpectrum& r);
+RGBSpectrum ClampNegative(const RGBSpectrum& s);

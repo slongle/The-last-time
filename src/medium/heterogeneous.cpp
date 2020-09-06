@@ -50,9 +50,11 @@ Spectrum HeterogeneousMedium::Sample(const Ray& ray, MediumRecord& mediumRec, Sa
     float Tr = 1;
 
     mediumRec.m_internal = true;
+    float s;
     while (true) {
-        float s = sampler.Next1D();
+        s = sampler.Next1D();
         t -= std::log(1 - s) * m_invMaxDensity / m_scale;
+        // Outside the medium
         if (t >= d) {
             mediumRec.m_p = ray(d);
             mediumRec.m_t = d;
@@ -60,21 +62,31 @@ Spectrum HeterogeneousMedium::Sample(const Ray& ray, MediumRecord& mediumRec, Sa
             mediumRec.m_internal = false;
             break;
         }
+        // Get _sigma_a_, _sigma_s_
         float density = Density(ray(t));
-        //Tr *= (1 - density * m_invMaxDensity);
-        pdf *= (1 - density * m_invMaxDensity);
         float sigma_s = density * m_albedo.r;
-        //float sigma_a = std::max(0.f, density - sigma_s);
-        s = sampler.Next1D() * m_maxDensity;
-        if (s <= density) {
-            if (s > sigma_s) {
-                mediumRec.m_Le = BlackbodyRadiance(ray(t));
-            }
+        float sigma_a = density * std::max(0.f, 1 - m_albedo.r);
+        float sigma_n = m_maxDensity - density;
+        pdf *= 1 - density * m_invMaxDensity;
+        // Sample particle's kind
+        int mod = SampleDiscrete({ sigma_s, sigma_a, sigma_n }, sampler.Next1D());
+        if (mod == 0) {
+            // Scatter
             mediumRec.m_p = ray(t);
             mediumRec.m_t = t;
             mediumRec.m_pdf = 0;
             mediumRec.m_internal = true;
             return m_albedo;
+        }
+        else if (mod == 1) {
+            // Absorb
+            //mediumRec.m_Le = BlackbodyRadiance(ray(t));
+        }
+        else if (mod == 2) {
+            // Null
+        }
+        else {
+            
         }
     }
     return Spectrum(1.f);

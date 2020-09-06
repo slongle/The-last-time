@@ -70,3 +70,4 @@ float PdfCosineHemisphere(const Float3& v);
 Float2 SampleUniformTriangle(const Float2& s);
 Float3 SampleUniformSphere(const Float2& s);
 float PdfUniformSphere(const Float3& v);
+int SampleDiscrete(const std::vector<float>& pdfs, float u);

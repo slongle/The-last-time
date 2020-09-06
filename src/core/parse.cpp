@@ -12,6 +12,7 @@
 #include "bsdf/blendbsdf.h"
 #include "bsdf/transparent.h"
 #include "bsdf/svbrdf.h"
+#include "bsdf/iridescence.h"
 #include "light/arealight.h"
 #include "light/environment.h"
 #include "light/directional.h"
@@ -93,6 +94,10 @@ GetFloatTexture(const json::value_type& node, const std::string name,
 
 std::string GetString(const json::value_type& node, const std::string name, const std::string& defaultValue) {
     return node.contains(name) ? node[name] : defaultValue;
+}
+
+bool ContainValue(const json::value_type& node, const std::string name) {
+    return node.contains(name);
 }
 
 void Parse(const std::string& filename, Renderer& renderer)
@@ -192,22 +197,22 @@ void Parse(const std::string& filename, Renderer& renderer)
         {
             std::string BSDFName = bsdfProperties["name"];
             std::string type = bsdfProperties["type"];
-            auto alpha = GetFloatTexture(bsdfProperties, "alpha", 1.f, scene);
+            auto alphaTex = GetFloatTexture(bsdfProperties, "alpha", 1.f, scene);
             BSDF* bsdf = nullptr;
             if (type == "matte")
             {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
-                bsdf = new Matte(reflectance, alpha);
+                bsdf = new Matte(reflectance, alphaTex);
             }
             else if (type == "mirror") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
-                bsdf = new Mirror(reflectance, alpha);
+                bsdf = new Mirror(reflectance, alphaTex);
             }
             else if (type == "smooth_dielectric") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 auto transmittance = GetSpectrumTexture(bsdfProperties, "transmittance", Spectrum(1.f), scene);
                 float eta = GetFloat(bsdfProperties, "eta", 1.5f);
-                bsdf = new SmoothDielectric(reflectance, transmittance, eta, alpha);
+                bsdf = new SmoothDielectric(reflectance, transmittance, eta, alphaTex);
             }
             else if (type == "rough_dielectric") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
@@ -215,14 +220,14 @@ void Parse(const std::string& filename, Renderer& renderer)
                 float eta = GetFloat(bsdfProperties, "eta", 1.5f);
                 float alphaU = GetFloat(bsdfProperties, "alphaU", 0.5);
                 float alphaV = GetFloat(bsdfProperties, "alphaV", 0.5);
-                bsdf = new RoughDielectric(reflectance, transmittance, eta, alphaU, alphaV, alpha);
+                bsdf = new RoughDielectric(reflectance, transmittance, eta, alphaU, alphaV, alphaTex);
             }
             else if (type == "smooth_conductor") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 std::string materialName = GetString(bsdfProperties, "material", "Al");
                 Spectrum k(GetFileResolver()->string() + "/spds/" + materialName + ".k.spd");
                 Spectrum eta(GetFileResolver()->string() + "/spds/" + materialName + ".eta.spd");
-                bsdf = new SmoothConductor(reflectance, eta, k, alpha);
+                bsdf = new SmoothConductor(reflectance, eta, k, alphaTex);
                 //std::cout << k << std::endl;
                 //std::cout << eta << std::endl;
             }
@@ -233,7 +238,7 @@ void Parse(const std::string& filename, Renderer& renderer)
                 Spectrum eta(GetFileResolver()->string() + "/spds/" + materialName + ".eta.spd");
                 float alphaU = GetFloat(bsdfProperties, "alphaU", 0.5);
                 float alphaV = GetFloat(bsdfProperties, "alphaV", 0.5);
-                bsdf = new RoughConductor(reflectance, eta, k, alphaU, alphaV, alpha);
+                bsdf = new RoughConductor(reflectance, eta, k, alphaU, alphaV, alphaTex);
             }
             else if (type == "blend") {
                 auto weight = GetFloatTexture(bsdfProperties, "weight", 0.5f, scene);
@@ -241,18 +246,36 @@ void Parse(const std::string& filename, Renderer& renderer)
                 std::string bsdf2Name = bsdfProperties["bsdf2"];
                 std::shared_ptr<BSDF> bsdf1 = scene->GetBSDF(bsdf1Name);
                 std::shared_ptr<BSDF> bsdf2 = scene->GetBSDF(bsdf2Name);
-                bsdf = new BlendBSDF(weight, bsdf1, bsdf2, alpha);
+                bsdf = new BlendBSDF(weight, bsdf1, bsdf2, alphaTex);
             }
             else if (type == "transparent") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
-                bsdf = new Transparent(reflectance, alpha);
+                bsdf = new Transparent(reflectance, alphaTex);
             }
             else if (type == "svbrdf") {
                 auto diffuse = GetSpectrumTexture(bsdfProperties, "diffuse", Spectrum(1.f), scene);
                 auto specular = GetSpectrumTexture(bsdfProperties, "specular", Spectrum(1.f), scene);
                 auto normal = GetSpectrumTexture(bsdfProperties, "normal", Spectrum(1.f), scene);
                 auto roughness = GetFloatTexture(bsdfProperties, "roughness", 1.f, scene);
-                bsdf = new SVBRDF(diffuse, specular, normal, roughness, alpha);
+                bsdf = new SVBRDF(diffuse, specular, normal, roughness, alphaTex);
+            }
+            else if (type == "iridescence") {
+                float eta_1 = GetFloat(bsdfProperties, "eta_1", 1);
+                float eta_2 = GetFloat(bsdfProperties, "eta_2", 1);
+                float eta_3 = GetFloat(bsdfProperties, "eta_3", 1);
+                float k_3 = GetFloat(bsdfProperties, "k_3", 1);
+                float Dinc;
+                if (ContainValue(bsdfProperties, "d")) {
+                    float d = GetFloat(bsdfProperties, "d", 100);
+                    Dinc = 2 * d * eta_2;
+                }
+                else {
+                    Dinc = GetFloat(bsdfProperties, "Dinc", 100);                    
+                }
+                //std::cout << Dinc << std::endl;
+                float alpha = GetFloat(bsdfProperties, "alpha", 0.1);
+                Spectrum reflectance = GetSpectrum(bsdfProperties, "reflectance", Spectrum(1.f));
+                bsdf = new IridescenceConductor(eta_1, eta_2, eta_3, k_3, alpha, Dinc, reflectance, alphaTex);
             }
             else {
                 assert(false);

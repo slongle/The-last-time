@@ -152,7 +152,7 @@ bool Scene::IntersectTr(Ray& ray, HitRecord& hitRec, Spectrum& transmittance, Sa
 
 bool Scene::Occlude(Ray& ray) const
 {
-    //return m_embreeBvh->Occlude(ray);
+    return m_embreeBvh->Occlude(ray);
     return m_bvh->Occlude(ray);
     HitRecord hitRec;
     for (const Primitive& primitive : m_primitives) {

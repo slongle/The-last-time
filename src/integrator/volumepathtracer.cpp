@@ -9,6 +9,12 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
     HitRecord hitRec;
     bool hit = m_scene->Intersect(ray, hitRec);
     for (int bounce = 0; bounce < m_maxBounce; bounce++) {
+        if (hit) {
+            //return Spectrum(0.5f);
+        }
+        else {
+            //return Spectrum(0.f);
+        }
         // Sample medium
         MediumRecord mediumRec;
         if (hit && ray.m_medium) {
@@ -28,12 +34,12 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                 break;
             }
 
-            auto& phase = ray.m_medium->m_phaseFunction;
-
+            auto medium = ray.m_medium;
+            auto& phase = medium->m_phaseFunction;
             // Sample light
             {
                 LightRecord lightRec(mediumRec.m_p);
-                Spectrum emission = m_scene->SampleLight(lightRec, sampler.Next2D(), sampler, ray.m_medium);
+                Spectrum emission = SampleLight(lightRec, sampler, medium);
                 if (!emission.IsBlack()) {
                     // Allocate a record for querying the phase function
                     PhaseFunctionRecord phaseRec(-ray.d, lightRec.m_wi);
@@ -51,9 +57,8 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
             {
                 // Sample phase / pdf
                 PhaseFunctionRecord phaseRec(-ray.d);
-                Spectrum phaseVal = phase->Sample(phaseRec, sampler.Next2D());
-                auto medium = ray.m_medium;
-                ray = Ray(mediumRec.m_p, phaseRec.m_wo, ray.m_medium);
+                Spectrum phaseVal = phase->Sample(phaseRec, sampler.Next2D());                
+                ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
                 // Update throughput
                 throughput *= phaseVal;
                 // Eval light                
@@ -61,7 +66,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                 hit = m_scene->IntersectTr(ray, hitRec, transmittance, sampler);
                 ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
                 LightRecord lightRec;
-                Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
+                Spectrum emission = EvalPdfLight(hit, ray, hitRec, lightRec);
                 emission *= transmittance;
                 if (!emission.IsBlack()) {
                     // Weight using the power heuristic
@@ -77,7 +82,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
         else {
             // Eval direct light at first bounce
             if (bounce == 0) {
-                radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
+                radiance += throughput * EvalLight(hit, ray, hitRec);
             }
             // No hit
             if (!hit) {
@@ -160,6 +165,98 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
 std::string VolumePathIntegrator::ToString() const
 {
     return fmt::format("Volume Path Tracer\nspp : {0}\nmax bounce : {1}", m_spp, m_maxBounce);
+}
+
+Spectrum VolumePathIntegrator::EvalLight(bool hit, const Ray& ray, const HitRecord& hitRec) const
+{
+    Spectrum emission(0.f);
+    if (hit) {
+        if (hitRec.m_primitive->IsAreaLight()) {
+            LightRecord lightRec(ray.o, hitRec.m_geoRec);
+            emission = hitRec.m_primitive->m_areaLight->Eval(lightRec);
+        }
+    }
+    else {
+        // Environment Light
+        for (const auto& envLight : m_scene->m_environmentLights) {
+            emission += envLight->Eval(ray);
+        }
+    }
+    return emission;
+}
+
+Spectrum VolumePathIntegrator::EvalPdfLight(bool hit, const Ray& ray, const HitRecord& hitRec, LightRecord& lightRec) const
+{
+    uint32_t lightNum = m_scene->m_lights.size();
+    float chooseLightPdf = 1.f / lightNum;
+    Spectrum emission(0.f);
+    if (hit) {
+        if (hitRec.m_primitive->IsAreaLight()) {
+            auto areaLight = hitRec.m_primitive->m_areaLight;
+            lightRec = LightRecord(ray.o, hitRec.m_geoRec);
+            emission = areaLight->EvalPdf(lightRec);
+            lightRec.m_pdf *= chooseLightPdf;
+        }
+    }
+    else {
+        // Environment Light
+        for (const auto& envLight : m_scene->m_environmentLights) {
+            lightRec = LightRecord(ray);
+            emission = envLight->EvalPdf(lightRec);
+            lightRec.m_pdf *= chooseLightPdf;
+        }
+    }
+    return emission;
+}
+
+Spectrum VolumePathIntegrator::SampleLight(
+    LightRecord& lightRec, 
+    Sampler& sampler,
+    const std::shared_ptr<Medium>& medium) const
+{
+    uint32_t lightNum = m_scene->m_lights.size();
+    if (lightNum == 0) {
+        return Spectrum(0.f);
+    }
+    // Randomly pick an emitter
+    uint32_t lightIdx = std::min(uint32_t(lightNum * sampler.Next1D()), lightNum - 1);
+    float lightChoosePdf = 1.f / lightNum;
+    const auto& light = m_scene->m_lights[lightIdx];
+    // Sample on light
+    Spectrum emission = light->Sample(lightRec, sampler.Next2D());
+    // Occlude test
+    if (lightRec.m_pdf != 0) {
+        // Handle medium
+        Spectrum throughput(1.f);
+        bool occlude;
+        {
+            HitRecord hitRec;
+            Ray ray = lightRec.m_shadowRay;
+            float tMax = ray.tMax;
+            bool hit = m_scene->Intersect(ray, hitRec);
+            if (!hit) {
+                // Light inside the medium
+                throughput *= medium->Transmittance(ray, sampler);
+                occlude = false;
+            }
+            else {
+                // Light outside the medium
+                throughput *= medium->Transmittance(ray, sampler);
+                ray = Ray(ray(ray.tMax), ray.d, Ray::epsilon, tMax - ray.tMax);
+                occlude = m_scene->Occlude(ray);
+            }
+        }
+        // Update pdf and Le
+        if (occlude) {
+            return Spectrum(0.0f);
+        }        
+        lightRec.m_pdf *= lightChoosePdf;
+        emission *= throughput / lightChoosePdf;
+        return emission;
+    }
+    else {
+        return Spectrum(0.0f);
+    }
 }
 
 void VolumePathIntegrator::Debug(DebugRecord& debugRec)

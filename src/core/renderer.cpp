@@ -157,31 +157,6 @@ void Renderer::Draw()
 
 void Renderer::Render()
 {    
-    float radius = 1;
-    float theta = 0;
-    float delta = 0.1;
-    int idx = 0;
-
-    m_integrator->Start();
-    while (theta <= M_PI * 2) {
-        while (m_integrator->IsRendering());
-        m_integrator->Stop();
-        m_integrator->Wait();
-        m_buffer->Save(std::to_string(idx));
-        m_buffer->ClearOutputBuffer();
-        
-        theta += delta;
-        idx += 1;
-        if (theta <= M_PI * 2) {
-            MediumInterface mi(nullptr, nullptr);
-            m_scene->m_lights[0] = std::shared_ptr<PointLight>(
-                new PointLight(Float3(radius * std::cos(theta), radius * std::sin(theta), 0.3), Spectrum(1.f), mi));
-            m_integrator->Start();
-        }
-    }
-
-
-
     ImVec4 clear_color = ImVec4(0.62f, 0.87f, 1.00f, 1.00f);
 
     // Initialize GUI
@@ -274,6 +249,7 @@ void Renderer::Render()
             std::string title("Render done in ");
             title += m_integrator->m_timer.ToString();
             glfwSetWindowTitle(m_window, title.c_str());            
+            //break;
 
             // Debug
             DebugRecord debugRec;

@@ -5,6 +5,7 @@
 class Microfacet {
 public:
     Microfacet(const Float2& alpha) :m_alpha(alpha) {}
+    Microfacet(float alpha) :m_alpha(alpha) {}
 
     Float3 SampleVisible(const Float3& wi, Float2& s) const;
     float PdfVisible(const Float3& wi, const Float3& m) const;

@@ -56,9 +56,6 @@ public:
     }
     bool IsDelta(const Float2& st) const { return true; }
 private:
-    Float3 Reflect(const Float3& v) const {
-        return Float3(-v.x, -v.y, v.z);
-    }
 
     std::shared_ptr<Texture<Spectrum>> m_reflectance;
 };

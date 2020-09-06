@@ -60,10 +60,7 @@ public:
             FresnelConductor(Frame::CosTheta(matRec.m_wi), m_eta, m_k);
     }
     bool IsDelta(const Float2& st) const { return true; }
-private:
-    Float3 Reflect(const Float3& v) const {
-        return Float3(-v.x, -v.y, v.z);
-    }
+private:    
 
     Spectrum m_eta, m_k;
     std::shared_ptr<Texture<Spectrum>> m_reflectance;
@@ -101,7 +98,7 @@ public:
             FresnelConductor(Frame::CosTheta(matRec.m_wi), m_eta, m_k);
 
         Spectrum weight = F * microfacet.G1(matRec.m_wo, wh);;
-        float pdf = microfacet.G1(matRec.m_wi, wh) * D / (4 * Frame::AbsCosTheta(matRec.m_wi));
+        float pdf = microfacet.G1(matRec.m_wi, wh) * D / (4 * Frame::CosTheta(matRec.m_wi));
 
         matRec.m_pdf = pdf;
         matRec.m_eta = 1.f;
@@ -126,7 +123,7 @@ public:
         return fs;
     }
     float Pdf(MaterialRecord& matRec) const {
-        if (false || Frame::CosTheta(matRec.m_wi) <= 0 ||
+        if (Frame::CosTheta(matRec.m_wi) <= 0 ||
             Frame::CosTheta(matRec.m_wo) <= 0) {
             return matRec.m_pdf = 0.f;
         }
@@ -162,9 +159,6 @@ public:
     }
     bool IsDelta(const Float2& st) const { return BSDF::IsDelta(st); }
 private:
-    Float3 Reflect(const Float3& v, const Float3& n) const {
-        return 2 * Dot(v, n) * n - v;
-    }
 
     Spectrum m_eta, m_k;
     float m_alphaU, m_alphaV;

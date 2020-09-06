@@ -55,6 +55,14 @@ inline std::ostream& operator << (std::ostream& os, const Int3& v) {
     return os;
 }
 
+inline Float2 Sqrt(const Float2& v) {
+    return Float2(math::SafeSqrt(v.x), math::SafeSqrt(v.y));
+}
+
+inline Float2 Sqr(const Float2& v) {
+    return Float2(math::Sqr(v.x), math::Sqr(v.y));
+}
+
 inline Float2 Mod(const Float2& u, const Int2& v) {
     return Float2(u.x - int(u.x) / v.x * v.x,
         u.y - int(u.y) / v.y * v.y);
