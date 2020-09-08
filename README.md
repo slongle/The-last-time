@@ -28,13 +28,35 @@ Or use `./setup_builds.bat`.
 [This Offline Renderer](https://github.com/slongle/The-Last-time) is a physically-based photorealistic 3D renderer I am writing from scratch in C++. Rainbow is built from the ground up as a global illumination renderer supporting global illumination through light transport algorithms, including volumetric unidirectional pathtracing with multiple importance sampling. The renderer is still a work in progress.  
 
 ### Features
-**Advanced Global Illumination**: Volumetric Unidirectional Path Tracing (Quasi-Monte Carlo), Volumetric progressive photon mapping(Point estimation and Beam estimation), Primary Sample Space Metroplis Light Transport (Kelemen-style MLT)(WIP), Path Guider (WIP).    
-**Geometry**: Support triangle and quad meshes with instancing. Also can support sphere and box.  
-**Lights**: Support point light, spot light, directional light, area light(rectangle and sphere).  
-**Materials and BSDFs**: Support physically based BSDFs, including thin-film iridescence, microfacet models (GGX), smooth and rough versions of Fresnel conductors, specular dielectrics, transparent BSDF, blend BSDF.   
-**Media**: Support homogeneous and heterogeneous medium.  
-**Acceleration Structure System**: Use SAH-BVH acceleration.  
-**Render Mode**: Adaptive, Progressive and Final mode.  
+- Advanced Global illumination 
+  - Volumetric Unidirectional Path Tracing (Quasi-Monte Carlo)
+  - Volumetric progressive photon mapping(Point estimation and Beam estimation)
+  - Primary Sample Space Metroplis Light Transport (Kelemen-style MLT)(WIP)
+  - Path Guider (WIP)
+- Geometry 
+  - Triangle and quad meshes
+- Lights 
+  - Point light
+  - Spot light
+  - Directional light
+  - Area light
+- Materials and BSDFs
+  - Thin-film iridescence
+  - Rough conductor and dielectric using microfacet models (GGX)
+  - Smooth conductor and dielectric
+  - Transparent BSDF
+  - Blend BSDF
+  - Support alpha texture
+- Media
+  - Homogeneous medium
+  - Heterogeneous medium (OpenVDB file)  
+- Acceleration Structure System 
+  - SAH-BVH acceleration
+  - Embree3
+- Render Mode 
+  - Adaptive mode
+  - Progressive mode
+  - Final mode  
 
 ### Select Images
 ![](images/ir_eta2_1.33_eta3_1_k3_0_d_300-450.png)  
