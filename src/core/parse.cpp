@@ -23,7 +23,7 @@
 #include "integrator/pathtracer.h"
 #include "integrator/volumepathtracer.h"
 #include "integrator/pathguider.h"
-#include "integrator/sppm.h"
+#include "integrator/pppm.h"
 #include "integrator/vppm.h"
 #include "integrator/director.h"
 #include "texture/consttexture.h"
@@ -441,14 +441,18 @@ void Parse(const std::string& filename, Renderer& renderer)
             int maxIteration = GetInt(integratorProperties, "max_iteration", 1);
             integrator = std::make_shared<PathGuiderIntegrator>(scene, camera, buffer, maxBounce, initSpp, maxIteration);
         }
-        else if (type == "sppm") {
+        else if (type == "pppm") {
             int maxBounce = GetInt(integratorProperties, "max_bounce", 10);
             int maxIteration = GetInt(integratorProperties, "max_iteration", 1);
             int deltaPhotonNum = GetInt(integratorProperties, "delta_photon_num", 10000);
             float initialRadius = GetFloat(integratorProperties, "initial_radius", 1);
             float alpha = GetFloat(integratorProperties, "alpha", 2.f / 3.f);
-            integrator = std::make_shared<SPPMIntegrator>(scene, camera, buffer, maxBounce,
+            integrator = std::make_shared<PPPMIntegrator>(scene, camera, buffer, maxBounce,
                 maxIteration, deltaPhotonNum, initialRadius, alpha);
+        }
+        else if (type == "sppm") {
+            std::cout << "Wrong integrator type\n";
+            exit(-1);
         }
         else if (type == "volume_path_tracer" || type == "vpt") {
             int maxBounce = GetInt(integratorProperties, "max_bounce", 10);

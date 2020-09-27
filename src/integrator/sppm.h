@@ -1,11 +1,24 @@
 #pragma once
-
 #include "core/integrator.h"
+
 #include "photon.h"
 
 #include <atomic>
 #include <thread>
 #include <mutex>
+
+class GatherPoint {
+public:
+    GatherPoint() :m_throughphut(0.f), m_sumEmission(0.f), m_emission(0.f), m_radius(0.f), m_num(0.f) {}
+
+    HitRecord m_hitRec;
+    Spectrum m_throughphut;
+    Spectrum m_sumEmission;
+    Spectrum m_emission;
+    float m_radius;
+    float m_num;
+    Int2 m_pos;
+};
 
 class SPPMIntegrator : public Integrator {
 public:
@@ -22,36 +35,30 @@ public:
         m_maxBounce(maxBounce), m_maxIteration(maxIteration),
         m_deltaPhotonNum(deltaPhotonNum), m_initialRadius(initialRadius), m_alpha(alpha) {}
 
-    Spectrum Li(Ray ray, Sampler& sampler);
     void Start();
-    void Stop();
-    void Wait();
-    bool IsRendering();
+    void Stop() { m_rendering = false; }
+    void Wait() {
+        if (m_renderThread->joinable()) {
+            m_renderThread->join();
+        }
+    }
+    bool IsRendering() { return m_rendering; }
+    void Save();
     std::string ToString() const;
-    // Debug
+private:
+    void InitializeGatherPoints();
+    void PhotonPass(int index);
+    void BuildPhotonMap();
+    void CameraPass(int index);
+    void Update();
+    Spectrum EstimatePlane(
+        const HitRecord& hitRec,
+        float radius);
+
+private:
     void Debug(DebugRecord& debugRec);
+    Spectrum LiDebug(Ray ray, Sampler& sampler);
 private:
-
-    void Setup();
-    void Render();
-    void PhotonIteration();
-    void EmitPhoton(Sampler& sampler);
-    void RenderIteration(const uint32_t& spp, const uint32_t& iteration);
-    void RenderTile(const Framebuffer::Tile& tile, const uint32_t& spp, const uint32_t& iteration);
-    void SynchronizeThreads();
-    // Debug
-    void DebugRay(Ray ray, Sampler& sampler);
-private:
-    // Muti-thread setting
-    bool m_rendering;
-    std::atomic<int> m_renderingNum;
-    std::vector<std::thread*> m_renderThreads;
-    std::unique_ptr<std::thread> m_controlThread;
-    std::vector<Framebuffer::Tile> m_tiles;
-    std::atomic<uint32_t> m_currentTileIndex;
-    std::vector<uint32_t> m_photons;
-    std::atomic<uint32_t> m_currentPhotonIndex;
-
     // Options
     uint32_t m_maxBounce;
     uint32_t m_maxIteration;
@@ -62,8 +69,12 @@ private:
     // State
     uint32_t m_currentPhotonNum;
     uint32_t m_currentIteration;
-    float m_currentRadius;
 
-    // 
-    KDTree m_photonTree;
+    // Photons
+    KDTree m_photonPlane;
+
+    // Muti-thread setting
+    std::atomic<bool> m_rendering;
+    std::vector<std::vector<GatherPoint>> m_gatherBlocks;
+    std::thread* m_renderThread;
 };

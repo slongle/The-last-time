@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     scenes[17] = "6.Caustics/VolumeCaustics2/scene.json";
     scenes[18] = "2.Shader/SVBRDF/scene.json";
     scenes[19] = "2.Shader/Shader-ball/scene_shader.json";
-    std::string filename = prefix + scenes[19];
+    std::string filename = prefix + scenes[14];
 
     Renderer renderer(filename);
     renderer.Render();

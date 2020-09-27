@@ -24,6 +24,7 @@ public:
     std::shared_ptr<BSDF> GetBSDF() const;
 
     float m_t;
+    Float3 m_wi;
     GeometryRecord m_geoRec;
     const Primitive* m_primitive = nullptr;
 };

@@ -1,36 +1,99 @@
 #include "sppm.h"
 
-void SPPMIntegrator::EmitPhoton(Sampler& sampler)
-{    
+#include "sampler/independent.h"
+
+#include <tbb/parallel_for.h>
+#include <tbb/blocked_range.h>
+#include <tbb/concurrent_vector.h>
+
+void SPPMIntegrator::Save()
+{
+    std::string suffix =
+        fmt::format("{0}iteration_{1}_{2}_{3}_{4}",
+            FormatNumber(m_currentIteration),
+            FormatNumber(m_deltaPhotonNum),
+            m_initialRadius,
+            m_alpha,
+            m_timer.ToString());
+    m_buffer->Save(suffix);
+}
+
+std::string SPPMIntegrator::ToString() const
+{
+    return fmt::format("SPPM\niteration : {1}\n# photon : {2}",
+        m_currentIteration, m_currentPhotonNum);
+}
+
+void SPPMIntegrator::InitializeGatherPoints()
+{
+    for (int j = 0; j < m_buffer->m_height; j += tile_size) {
+        for (int i = 0; i < m_buffer->m_width; i += tile_size) {
+            m_gatherBlocks.push_back(std::vector<GatherPoint>());
+            std::vector<GatherPoint>& points = m_gatherBlocks.back();
+            points.resize(std::min(m_buffer->m_width - i, tile_size) *
+                std::min(m_buffer->m_height - j, tile_size));
+            int index = 0;
+            for (int xoffset = 0; xoffset < tile_size; xoffset++) {
+                if (i + xoffset < m_buffer->m_width) {
+                    break;
+                }
+                for (int yoffset = 0; yoffset < tile_size; yoffset++) {
+                    if (j + yoffset < m_buffer->m_height) {
+                        break;
+                    }
+                    points[index++].m_pos = Int2(i + xoffset, j + yoffset);
+                }
+            }
+        }
+    }
+}
+
+void SPPMIntegrator::PhotonPass(int index)
+{
+    // Initialize sampler
+    IndependentSampler sampler;
+    uint64_t seed = (uint64_t)m_currentIteration * m_deltaPhotonNum + index;
+    sampler.Setup(seed);
+
     // Randomly pick an emitter
     uint32_t lightNum = m_scene->m_lights.size();
     uint32_t lightIdx = std::min(uint32_t(lightNum * sampler.Next1D()), lightNum - 1);
     const auto& light = m_scene->m_lights[lightIdx];
+
     // Sample photon
     Ray ray;
     Spectrum flux = light->SamplePhoton(sampler.Next2D(), sampler.Next2D(), ray);
-    flux *= lightNum;
+
     // Trace photon
-    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {        
+    for (int bounce = 0; bounce < m_maxBounce; bounce++) {
         // Intersect test
         HitRecord hitRec;
         bool hit = m_scene->Intersect(ray, hitRec);
-        //DrawLine(ray.o, hitRec.m_geoRec.m_p, Spectrum(1, 0, 0));
         if (!hit) {
             break;
         }
-        auto& bsdf = hitRec.m_primitive->m_bsdf;
-        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
+
         // Store photon
-        Photon photon(hitRec.m_geoRec.m_p, -ray.d, flux);
-        if (!isDelta) {
-            m_photonTree.Add(photon);
+        auto& bsdf = hitRec.m_primitive->m_bsdf;
+        if (bsdf && !bsdf->IsDelta(hitRec.m_geoRec.m_st)) {
+            Photon photon(hitRec.m_geoRec.m_p, -ray.d, flux);
+            m_photonPlane.Add(photon);
         }
+
+        // Hit medium bound
+        if (!bsdf) {
+            ray = Ray(hitRec.m_geoRec.m_p, ray.d);
+            bounce--;
+            continue;
+        }
+
         // Scatter photon
+        /// Sample BSDF
         MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st, Importance);
-        Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
-        flux *= bsdfVal;
-        ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
+        flux *= bsdf->Sample(matRec, sampler.Next2D());
+        Float3 dir = matRec.ToWorld(matRec.m_wo);
+        ray = Ray(hitRec.m_geoRec.m_p, dir, hitRec.GetMedium(dir));
+
         // Russian roulette
         if (bounce > 5) {
             float q = std::min(0.99f, MaxComponent(flux));
@@ -42,230 +105,167 @@ void SPPMIntegrator::EmitPhoton(Sampler& sampler)
     }
 }
 
-Spectrum SPPMIntegrator::Li(Ray ray, Sampler& sampler)
+void SPPMIntegrator::BuildPhotonMap()
 {
-    Spectrum radiance(0.f);
-    Spectrum throughput(1.f);
-    float eta = 1.f;
-    HitRecord hitRec;
-    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
-        bool hit = m_scene->Intersect(ray, hitRec);
-        radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
-
-        if (!hit) {
-            break;
-        }
-        
-        // Get basf
-        auto& bsdf = hitRec.m_primitive->m_bsdf;
-        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
-
-        // Estimate Li
-        if (!isDelta) {
-            std::vector<Photon> gatheredPhotons;
-            m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
-            Spectrum sum(0.f);
-            for (const auto& photon : gatheredPhotons) {
-                MaterialRecord matRec(-ray.d, photon.m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-                Spectrum bsdfVal = bsdf->Eval(matRec);
-                sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon.m_flux;
-            }
-            float area = M_PI * m_currentRadius * m_currentRadius;
-            radiance += throughput * sum / (area * m_deltaPhotonNum);
-            break;
-        }
-
-        // Sample BSDF            
-        MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-        Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
-        ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
-        if (bsdfVal.IsBlack()) {
-            break;
-        }
-        // Update throughput
-        throughput *= bsdfVal;
-
-        // Russian roulette
-        if (bounce > 5) {
-            float q = std::min(0.99f, MaxComponent(throughput));
-            if (sampler.Next1D() > q) {
-                break;
-            }
-            throughput /= q;
-        }
-    }
-
-    return radiance;
+    m_photonPlane.Build();
 }
 
-void SPPMIntegrator::Setup()
+void SPPMIntegrator::CameraPass(int index)
 {
-    Integrator::Setup();
+    std::vector<GatherPoint>& block = m_gatherBlocks[index];
+    // Initialize sampler
+    IndependentSampler sampler;
+    uint64_t seed = (block[0].m_pos.y * m_buffer->m_width + block[0].m_pos.x) +
+        m_currentIteration * (m_buffer->m_width * m_buffer->m_height);
+    sampler.Setup(seed);
+
+    // Trace ray
+    for (GatherPoint& gp : block) {
+        // Generate ray
+        Ray ray;
+        m_camera->GenerateRay(gp.m_pos, sampler, ray);
+
+        // Estimate radiance
+        Spectrum throughput(1.f);
+        float eta = 1.f;
+        for (int bounce = 0;; bounce++) {
+            bool hit = m_scene->Intersect(ray, gp.m_hitRec);
+            gp.m_emission += throughput * m_scene->EvalLight(hit, ray, gp.m_hitRec);
+            
+            // No hit
+            if (!hit) {
+                break;
+            }
+
+            // Estimate radiance
+            auto& bsdf = gp.m_hitRec.m_primitive->m_bsdf;
+            if (bsdf && !bsdf->IsDelta(gp.m_hitRec.m_geoRec.m_st)) {
+                gp.m_throughphut = throughput;
+                break;
+            }
+
+            // Hit medium bound
+            if (!bsdf) {
+                ray = Ray(gp.m_hitRec.m_geoRec.m_p, ray.d);
+                bounce--;
+                continue;
+            }
+
+            // Scatter 
+            ///Sample BSDF
+            MaterialRecord matRec(-ray.d, gp.m_hitRec.m_geoRec.m_ns, gp.m_hitRec.m_geoRec.m_st);
+            Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
+            if (bsdfVal.IsBlack()) {
+                break;
+            }
+            Float3 dir = matRec.ToWorld(matRec.m_wo);
+            ray = Ray(gp.m_hitRec.m_geoRec.m_p, dir, gp.m_hitRec.GetMedium(dir));
+            throughput *= bsdfVal;
+        }
+    }
+}
+
+void SPPMIntegrator::Update()
+{
+    auto job = [this](const tbb::blocked_range<int>& range) {
+        for (int i = range.begin(); i < range.end(); ++i) {
+            if (!m_rendering) {
+                break;
+            }
+
+            for (GatherPoint& gp : m_gatherBlocks[i]) {
+                Spectrum flux = gp.m_throughphut * EstimatePlane(gp.m_hitRec, gp.m_radius);
+            }
+        }
+    };
+    tbb::blocked_range<int> tileRange(0, m_gatherBlocks.size());
+    tbb::parallel_for(tileRange, job);
+
+
+    m_photonPlane.Clear();
+    m_currentPhotonNum += m_deltaPhotonNum;
+}
+
+Spectrum SPPMIntegrator::EstimatePlane(const HitRecord& hitRec, float radius)
+{
+    std::shared_ptr<BSDF> bsdf = hitRec.GetBSDF();
+    std::vector<const Photon*> gatheredPhotons;
+    m_photonPlane.Query(hitRec.m_geoRec.m_p, radius, gatheredPhotons);
+    Spectrum sum(0.f);
+    for (const auto& photon : gatheredPhotons) {
+        MaterialRecord matRec(hitRec.m_wi, photon->m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
+        Spectrum bsdfVal = bsdf->Eval(matRec);
+        sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon->m_flux;
+    }
+    float area = M_PI * radius * radius;
+    Spectrum radiance = sum / (area * m_deltaPhotonNum);
+    return radiance;
 }
 
 void SPPMIntegrator::Start()
 {
     Setup();
 
-    m_tiles.clear();
-    for (int j = 0; j < m_buffer->m_height; j += tile_size) {
-        for (int i = 0; i < m_buffer->m_width; i += tile_size) {
-            m_tiles.push_back({
-                {i, j},
-                {std::min(m_buffer->m_width - i, tile_size), std::min(m_buffer->m_height - j, tile_size)}
-                });
-        }
-    }
-    std::reverse(m_tiles.begin(), m_tiles.end());
+    // Initialize gather points
+    InitializeGatherPoints();
 
-    m_photons.clear();
-    for (uint32_t i = 0; i < m_deltaPhotonNum; i++) {
-        m_photons.push_back(i);
-    }
-
-    m_renderingNum = 0;
-    m_rendering = true;    
-
-    m_renderThreads.resize(std::thread::hardware_concurrency());
-    //m_renderThreads.resize(1);
+    // Initialize render status (start)
+    m_rendering = true;
     m_timer.Start();
-    m_controlThread = std::make_unique<std::thread>(&SPPMIntegrator::Render, this);
-}
+    // Add render thread
+    m_renderThread = new std::thread(
+        [this] {
+            auto RunPhotonPass = [this]() {
+                auto job = [this](const tbb::blocked_range<int>& range) {
+                    for (int i = range.begin(); i < range.end(); ++i) {
+                        if (m_rendering) {
+                            PhotonPass(i);
+                        }
+                    }
+                };
+                tbb::blocked_range<int> photonRange(0, m_deltaPhotonNum);
+                tbb::parallel_for(photonRange, job);
+            };
 
-void SPPMIntegrator::Stop()
-{
-    m_rendering = false;
-}
+            auto RunCameraPass = [this]() {
+                auto job = [this](const tbb::blocked_range<int>& range) {
+                    for (int i = range.begin(); i < range.end(); ++i) {
+                        if (m_rendering) {
+                            CameraPass(i);
+                        }
+                    }
+                };
+                tbb::blocked_range<int> tileRange(0, m_gatherBlocks.size());
+                tbb::parallel_for(tileRange, job);
+            };
 
-void SPPMIntegrator::Wait()
-{
-    if (m_controlThread->joinable()) {
-        m_controlThread->join();
-    }
-    assert(m_renderingNum == 0);
-}
 
-bool SPPMIntegrator::IsRendering()
-{
-    return m_rendering;
-}
+            // Iteration
+            m_currentPhotonNum = 0;
+            for (m_currentIteration = 0; m_currentIteration < m_maxIteration && m_rendering; m_currentIteration++) {
+                if (!m_rendering) {
+                    break;
+                }
+                // Photon pass
+                RunPhotonPass();
 
-std::string SPPMIntegrator::ToString() const
-{
-    return fmt::format("SPPM\nnmax bounce : {0}\niteration : {1}\n# photon : {2}\nradius : {3}",
-        m_maxBounce, m_currentIteration, m_currentPhotonNum, m_currentRadius);
-}
+                // Construct photon structure
+                BuildPhotonMap();
 
-void SPPMIntegrator::Render()
-{
-    m_currentRadius = m_initialRadius;
-    m_currentPhotonNum = 0;
-    for (m_currentIteration = 0; m_currentIteration < m_maxIteration && m_rendering; m_currentIteration++) {                
-        m_currentPhotonIndex = 0;
-        m_currentTileIndex = 0;
-        // Photon pass
-        for (std::thread*& thread : m_renderThreads) {
-            thread = new std::thread(&SPPMIntegrator::PhotonIteration, this);
-        }
-        SynchronizeThreads();        
+                // Camera pass
+                RunCameraPass();
 
-        // Construct photon structure
-        m_photonTree.Build();
-
-        // Camera pass
-        for (std::thread*& thread : m_renderThreads) {
-            thread = new std::thread(&SPPMIntegrator::RenderIteration, this, 1, m_currentIteration);
-        }
-        SynchronizeThreads();
-        
-        // Update settings
-        if (m_currentIteration + 1 != m_maxIteration) {
-            m_photonTree.Clear();
-        }
-        m_currentPhotonNum += m_deltaPhotonNum;
-        m_currentRadius = std::sqrt((m_currentIteration + m_alpha)/(m_currentIteration + 1)) * m_currentRadius;
-    }
-    m_rendering = false;
-    m_timer.Stop();
-    m_buffer->Save();
-}
-
-void SPPMIntegrator::PhotonIteration()
-{
-    ++m_renderingNum;
-
-    while (m_rendering) {
-        uint32_t photonIndex;
-        if (m_currentPhotonIndex < m_photons.size()) {
-            photonIndex = m_photons[m_currentPhotonIndex++];
-        }
-        else {
-            break;
-        }
-
-        if (m_rendering) {
-            Sampler sampler;
-            uint64_t seed = (uint64_t)m_currentIteration * m_deltaPhotonNum + photonIndex;
-            sampler.Setup(seed);
-            EmitPhoton(sampler);
-        }
-    }
-
-    m_renderingNum--;
-}
-
-void SPPMIntegrator::RenderIteration(const uint32_t& spp, const uint32_t& iteration)
-{
-    ++m_renderingNum;
-
-    while (m_rendering) {
-        Framebuffer::Tile tile;
-        if (m_currentTileIndex < m_tiles.size()) {
-            tile = m_tiles[m_currentTileIndex++];
-        }
-        else {
-            break;
-        }
-
-        if (m_rendering) {
-            RenderTile(tile, spp, iteration);
-        }
-    }
-
-    m_renderingNum--;
-}
-
-void SPPMIntegrator::RenderTile(
-    const Framebuffer::Tile& tile,
-    const uint32_t& spp,
-    const uint32_t& iteration)
-{
-    Sampler sampler;
-    uint64_t s = (tile.pos[1] * m_buffer->m_width + tile.pos[0]) +
-        iteration * (m_buffer->m_width * m_buffer->m_height);
-    sampler.Setup(s);
-
-    for (int j = 0; j < tile.res[1]; j++) {
-        for (int i = 0; i < tile.res[0]; i++) {
-            for (uint32_t k = 0; k < spp; k++) {
-                int x = i + tile.pos[0], y = j + tile.pos[1];
-                Ray ray;
-                m_camera->GenerateRay(Float2(x, y), sampler, ray);
-                Spectrum radiance = Li(ray, sampler);
-                m_buffer->AddSample(x, y, radiance);
+                // Update
+                Update();                
             }
+
+            // Initialize render status (stop)
+            m_rendering = false;
+            m_timer.Stop();
         }
-    }
+    );
 }
 
-void SPPMIntegrator::SynchronizeThreads()
-{
-    for (std::thread*& thread : m_renderThreads) {
-        thread->join();
-        delete thread;
-    }
-    assert(m_renderingNum == 0);
-}
 
 void SPPMIntegrator::Debug(DebugRecord& debugRec)
 {
@@ -280,67 +280,12 @@ void SPPMIntegrator::Debug(DebugRecord& debugRec)
             sampler.Setup(s);
             Ray ray;
             m_camera->GenerateRay(Float2(x, y), sampler, ray);
-            DebugRay(ray, sampler);
-        }
-    }
-    if (debugRec.m_debugKDTree) {        
-        for (const auto& photon : m_photonTree.m_photons) {
-            DrawPoint(photon.m_position, Spectrum(1, 0, 0) * photon.m_flux.y());
+            LiDebug(ray, sampler);
         }
     }
 }
 
-void SPPMIntegrator::DebugRay(Ray ray, Sampler& sampler)
+Spectrum SPPMIntegrator::LiDebug(Ray ray, Sampler& sampler)
 {
-    Spectrum radiance(0.f);
-    Spectrum throughput(1.f);
-    float eta = 1.f;
-    HitRecord hitRec;
-    for (uint32_t bounce = 0; bounce < m_maxBounce; bounce++) {
-        bool hit = m_scene->Intersect(ray, hitRec);
-        radiance += throughput * m_scene->EvalLight(hit, ray, hitRec);
-
-        // Draw ray
-        if (bounce != 0) {
-            DrawLine(ray.o, hitRec.m_geoRec.m_p, Spectrum(1, 1, 1));
-        }
-
-        // Get basf
-        auto& bsdf = hitRec.m_primitive->m_bsdf;
-        bool isDelta = bsdf->IsDelta(hitRec.m_geoRec.m_st);
-
-        // Estimate Li
-        if (!isDelta) {
-            std::vector<Photon> gatheredPhotons;
-            m_photonTree.Query(hitRec.m_geoRec.m_p, m_currentRadius, gatheredPhotons);
-            Spectrum sum(0.f);
-            for (const auto& photon : gatheredPhotons) {
-                MaterialRecord matRec(-ray.d, photon.m_direction, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-                Spectrum bsdfVal = bsdf->Eval(matRec);
-                sum += bsdfVal / Frame::AbsCosTheta(matRec.m_wo) * photon.m_flux;
-            }
-            float area = M_PI * m_currentRadius * m_currentRadius;
-            radiance += throughput * sum / (area * m_deltaPhotonNum);
-            break;
-        }
-
-        // Sample BSDF            
-        MaterialRecord matRec(-ray.d, hitRec.m_geoRec.m_ns, hitRec.m_geoRec.m_st);
-        Spectrum bsdfVal = bsdf->Sample(matRec, sampler.Next2D());
-        ray = Ray(hitRec.m_geoRec.m_p, matRec.ToWorld(matRec.m_wo));
-        if (bsdfVal.IsBlack()) {
-            break;
-        }
-        // Update throughput
-        throughput *= bsdfVal;
-
-        // Russian roulette
-        if (bounce > 5) {
-            float q = std::min(0.99f, MaxComponent(throughput));
-            if (sampler.Next1D() > q) {
-                break;
-            }
-            throughput /= q;
-        }
-    }
+    return Spectrum(0.f);
 }
