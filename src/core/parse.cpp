@@ -197,7 +197,7 @@ void Parse(const std::string& filename, Renderer& renderer)
         {
             std::string BSDFName = bsdfProperties["name"];
             std::string type = bsdfProperties["type"];
-            auto alphaTex = GetFloatTexture(bsdfProperties, "alpha", 1.f, scene);
+            auto alphaTex = GetFloatTexture(bsdfProperties, "alphaTexture", 1.f, scene);
             BSDF* bsdf = nullptr;
             if (type == "matte")
             {
@@ -218,8 +218,14 @@ void Parse(const std::string& filename, Renderer& renderer)
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
                 auto transmittance = GetSpectrumTexture(bsdfProperties, "transmittance", Spectrum(1.f), scene);
                 float eta = GetFloat(bsdfProperties, "eta", 1.5f);
-                float alphaU = GetFloat(bsdfProperties, "alphaU", 0.5);
-                float alphaV = GetFloat(bsdfProperties, "alphaV", 0.5);
+                float alphaU, alphaV;
+                if (ContainValue(bsdfProperties, "alpha")) {
+                    alphaU = alphaV = GetFloat(bsdfProperties, "alpha", 0.1);
+                }
+                else {
+                    alphaU = GetFloat(bsdfProperties, "alphaU", 0.1);
+                    alphaV = GetFloat(bsdfProperties, "alphaV", 0.1);
+                }
                 bsdf = new RoughDielectric(reflectance, transmittance, eta, alphaU, alphaV, alphaTex);
             }
             else if (type == "smooth_conductor") {
@@ -233,11 +239,24 @@ void Parse(const std::string& filename, Renderer& renderer)
             }
             else if (type == "rough_conductor") {
                 auto reflectance = GetSpectrumTexture(bsdfProperties, "reflectance", Spectrum(1.f), scene);
-                std::string materialName = GetString(bsdfProperties, "material", "Al");
-                Spectrum k(GetFileResolver()->string() + "/spds/" + materialName + ".k.spd");
-                Spectrum eta(GetFileResolver()->string() + "/spds/" + materialName + ".eta.spd");
-                float alphaU = GetFloat(bsdfProperties, "alphaU", 0.5);
-                float alphaV = GetFloat(bsdfProperties, "alphaV", 0.5);
+                Spectrum k, eta;
+                if (ContainValue(bsdfProperties, "material")) {
+                    std::string materialName = GetString(bsdfProperties, "material", "Al");
+                    k = Spectrum(GetFileResolver()->string() + "/spds/" + materialName + ".k.spd");
+                    eta = Spectrum(GetFileResolver()->string() + "/spds/" + materialName + ".eta.spd");
+                }
+                else{
+                    k = GetSpectrum(bsdfProperties, "k", Spectrum(1.f));
+                    eta = GetSpectrum(bsdfProperties, "eta", Spectrum(1.f));
+                }
+                float alphaU, alphaV;
+                if (ContainValue(bsdfProperties, "alpha")) {
+                    alphaU = alphaV = GetFloat(bsdfProperties, "alpha", 0.1);
+                }
+                else {
+                    alphaU = GetFloat(bsdfProperties, "alphaU", 0.1);
+                    alphaV = GetFloat(bsdfProperties, "alphaV", 0.1);                    
+                }
                 bsdf = new RoughConductor(reflectance, eta, k, alphaU, alphaV, alphaTex);
             }
             else if (type == "blend") {

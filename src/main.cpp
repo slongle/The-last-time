@@ -6,6 +6,11 @@ int main(int argc, char* argv[]) {
 
     LOG_IF(FATAL, argc < 2) << "Without scenes' path.";
     std::string prefix(argv[1]);
+    bool mute = false;
+    if (argc >= 3) {
+        mute = true;
+    }
+
     std::vector<std::string> scenes(100);
     scenes[0] = "Box/Diffuse/scene.json";
     scenes[1] = "Box/Specular/scene.json";
@@ -27,9 +32,10 @@ int main(int argc, char* argv[]) {
     scenes[17] = "6.Caustics/VolumeCaustics2/scene.json";
     scenes[18] = "2.Shader/SVBRDF/scene.json";
     scenes[19] = "2.Shader/Shader-ball/scene_shader.json";
-    std::string filename = prefix + scenes[14];
+    scenes[20] = "2.Shader/Spaceship/scene.json";
+    std::string filename = prefix + scenes[20];
 
     Renderer renderer(filename);
-    renderer.Render();
+    renderer.Render(mute);
     return 0;
 }

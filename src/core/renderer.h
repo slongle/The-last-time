@@ -19,7 +19,7 @@ struct GLFWwindow;
 class Renderer {
 public:
     Renderer(const std::string& filename);
-    void Render();
+    void Render(bool mute);
 private:
     void InitializeGUI();
     void Draw();

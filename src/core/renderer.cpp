@@ -155,14 +155,22 @@ void Renderer::Draw()
         GL_RGB, GL_FLOAT, sRGBBuffer);
 }
 
-void Renderer::Render()
+void Renderer::Render(bool mute)
 {    
     ImVec4 clear_color = ImVec4(0.62f, 0.87f, 1.00f, 1.00f);
 
-    // Initialize GUI
-    InitializeGUI();
     //Start rendering
     m_integrator->Start();
+
+    if (mute) {
+        while (m_integrator->IsRendering());
+        m_integrator->Stop();
+        m_integrator->Wait();
+        return;
+    }
+
+    // Initialize GUI
+    InitializeGUI();
 
     //Display loop for the ongoing or completed render
     glfwSetWindowTitle(m_window, "Rendering...");
