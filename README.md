@@ -29,9 +29,9 @@ Or use `./setup_builds.bat`.
 
 ### Features
 - Advanced Global illumination 
-  - Volumetric Unidirectional Path Tracing (Quasi-Monte Carlo)
-  - Volumetric progressive photon mapping(Point estimation and Beam estimation)
-  - Primary Sample Space Metroplis Light Transport (Kelemen-style MLT)(WIP)
+  - Volumetric unidirectional path tracing   
+  - Volumetric probabilistic progressive photon mapping(Point estimation and Beam estimation)
+  - Primary sample space metroplis light transport (Kelemen-style MLT)(WIP)
   - Path Guider (WIP)
 - Geometry 
   - Triangle and quad meshes
@@ -62,7 +62,9 @@ Or use `./setup_builds.bat`.
 ![](images/ir_eta2_1.33_eta3_1_k3_0_d_300-450.png)  
 ![](images/ir_eta2_1.33_eta3_1_k3_0_d_500-650.png)  
 ![](images/ir_eta2_1.33_eta3_1_k3_0_d_700-850.png)  
-Iridescence effect, using the method from Belcour and Barla 2017 (eta_1 = 1.0, eta_2 = 1.33, eta_3 = 1.0, k_3 = 0, d = 300-850nm)
+Iridescence effect, using the method from Belcour and Barla 2017 (eta_1 = 1.0, eta_2 = 1.33, eta_3 = 1.0, k_3 = 0, d = 300-850nm) 
+![](images/ir4.gif)  
+Goniochromism when changing view position, eta_1 = 1.0, eta_2 = 1.33, eta_3 = 1.0, k_3 = 0, d = 550nm, alpha = 0.1    
 ![](images/glory_4096spp.png)  
 Crepuscular beam  
 ![](images/envbunny_spp=512_density=10_albedo=1.png)  
