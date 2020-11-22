@@ -153,7 +153,7 @@ void Parse(const std::string& filename, Renderer& renderer)
                 float temperatureScale = GetFloat(mediumProperties, "temperature_scale", 1);
                 medium = new HeterogeneousMedium(
                     std::shared_ptr<PhaseFunction>(pf),
-                    filename, lefthand, densityName, blackbody, temperatureName, albedo, scale, temperatureScale);
+                    filename, lefthand, densityName, albedo, scale);
             }
             else {
                 LOG(FATAL) << "Wrong medium type " << mediumType;

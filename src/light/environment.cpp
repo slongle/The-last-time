@@ -37,7 +37,7 @@ Spectrum EnvironmentLight::Sample(LightRecord& lightRec, Float2& s) const
     Float3 d = Normalize(p - lightRec.m_ref);
     Float3 o = lightRec.m_ref;
     lightRec.m_wi = d;
-    lightRec.m_shadowRay = Ray(lightRec.m_ref, lightRec.m_wi);
+    lightRec.m_shadowRay = Ray(lightRec.m_ref, lightRec.m_wi, Ray::epsilon, m_radius);
     
     // Calculate pdf
     lightRec.m_pdf = pdf / (2 * M_PI * M_PI * std::sin(theta));

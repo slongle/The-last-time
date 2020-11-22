@@ -29,11 +29,6 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                 break;
             }
 
-            if (!mediumRec.m_Le.IsBlack()) {
-                radiance += throughput * mediumRec.m_Le;
-                break;
-            }
-
             auto medium = ray.m_medium;
             auto& phase = medium->m_phaseFunction;
             // Sample light
@@ -47,7 +42,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                     Spectrum phaseVal = phase->EvalPdf(phaseRec);
                     if (!phaseVal.IsBlack()) {
                         // Weight using the power heuristic
-                        float weight = PowerHeuristic(lightRec.m_pdf, phaseRec.m_pdf);
+                        float weight = PowerHeuristic(lightRec.m_pdf, phaseRec.m_pdf);						
                         radiance += throughput * phaseVal * emission * weight;
                     }
                 }
@@ -63,17 +58,16 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                 throughput *= phaseVal;
                 // Eval light                
                 Spectrum transmittance;
-                hit = m_scene->IntersectTr(ray, hitRec, transmittance, sampler);
-                ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
+                hit = m_scene->IntersectTr(ray, hitRec, transmittance, sampler);                
                 LightRecord lightRec;
-                Spectrum emission = EvalPdfLight(hit, ray, hitRec, lightRec);
-                emission *= transmittance;
+                Spectrum emission = EvalPdfLight(hit, Ray(mediumRec.m_p, phaseRec.m_wo, medium), hitRec, lightRec);
+                emission *= transmittance;				
                 if (!emission.IsBlack()) {
                     // Weight using the power heuristic
                     float weight = PowerHeuristic(phaseRec.m_pdf, lightRec.m_pdf);
                     radiance += throughput * emission * weight;
                 }
-
+                // Intersect
                 ray = Ray(mediumRec.m_p, phaseRec.m_wo, medium);
                 hit = m_scene->Intersect(ray, hitRec);
             }
@@ -137,8 +131,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                 Spectrum transmittance;
                 hit = m_scene->IntersectTr(ray, hitRec, transmittance, sampler);
                 LightRecord lightRec;
-                ray = Ray(rayO, newDirection, medium);
-                Spectrum emission = m_scene->EvalPdfLight(hit, ray, hitRec, lightRec);
+                Spectrum emission = m_scene->EvalPdfLight(hit, Ray(rayO, newDirection, medium), hitRec, lightRec);
                 emission *= transmittance;
                 if (!emission.IsBlack()) {
                     // Weight using the power heuristic
@@ -146,6 +139,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
                         1.f : PowerHeuristic(matRec.m_pdf, lightRec.m_pdf);
                     radiance += throughput * emission * weight;
                 }
+                // Intersect
                 ray = Ray(rayO, newDirection, medium);
                 hit = m_scene->Intersect(ray, hitRec);
             }
@@ -159,6 +153,7 @@ Spectrum VolumePathIntegrator::Li(Ray ray, Sampler& sampler)
             throughput /= q;
         }
     }
+    
     return radiance;
 }
 
@@ -226,30 +221,13 @@ Spectrum VolumePathIntegrator::SampleLight(
     Spectrum emission = light->Sample(lightRec, sampler.Next2D());
     // Occlude test
     if (lightRec.m_pdf != 0) {
-        // Handle medium
+        Ray ray = lightRec.m_shadowRay;
+        ray.m_medium = medium;
+
+        HitRecord hitRec;
         Spectrum throughput(1.f);
-        bool occlude;
-        {
-            HitRecord hitRec;
-            Ray ray = lightRec.m_shadowRay;
-            float tMax = ray.tMax;
-            bool hit = m_scene->Intersect(ray, hitRec);
-            if (!hit) {
-                // Light inside the medium
-                throughput *= medium->Transmittance(ray, sampler);
-                occlude = false;
-            }
-            else {
-                // Light outside the medium
-                throughput *= medium->Transmittance(ray, sampler);
-                ray = Ray(ray(ray.tMax), ray.d, Ray::epsilon, tMax - ray.tMax);
-                occlude = m_scene->Occlude(ray);
-            }
-        }
-        // Update pdf and Le
-        if (occlude) {
-            return Spectrum(0.0f);
-        }        
+        bool hit = m_scene->IntersectTr(ray, hitRec, throughput, sampler);
+        if (hit) return Spectrum(0.f);
         lightRec.m_pdf *= lightChoosePdf;
         emission *= throughput / lightChoosePdf;
         return emission;

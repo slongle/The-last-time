@@ -3,8 +3,8 @@
 Spectrum DirectionalLight::Sample(LightRecord& lightRec, Float2& s) const
 {
     lightRec.m_pdf = 1;
-    lightRec.m_wi = m_direction;
-    lightRec.m_shadowRay = Ray(lightRec.m_ref, m_direction, Ray::epsilon, 1e10);
+    lightRec.m_wi = -m_direction;
+    lightRec.m_shadowRay = Ray(lightRec.m_ref, -m_direction, Ray::epsilon, 1e10);
     return m_irrandance;
 }
 
