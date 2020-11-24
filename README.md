@@ -69,8 +69,8 @@ Goniochromism when changing view position, eta_1 = 1.0, eta_2 = 1.33, eta_3 = 1.
 Crepuscular beam  
 ![](images/envbunny_spp=512_density=10_albedo=1.png)  
 Homogeneous medium with HG phase function (density = 10, albedo = 1, g = 0), multi-scatter  
-![](images/cloud_depth=100_1024spp_9h1m17s.png)  
-Disney cloud  
+![](images/cloud_1050spp_denoised.png)  
+Disney cloud, 1050spp + OIDN denoised   
 ![](images/smoke_1024spp_2h31m29s.png)  
 Smoke(VDB file from [OpenVDB](https://www.openvdb.org/download/))   
 ![](images/fire_128spp.gif)  
