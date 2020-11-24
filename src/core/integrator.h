@@ -16,10 +16,12 @@ public:
         const std::shared_ptr<Scene>& scene,
         const std::shared_ptr<Camera>& camera,
         const std::shared_ptr<Framebuffer>& buffer)
-        : m_scene(scene), m_camera(camera), m_buffer(buffer) {}
+        : m_scene(scene), m_camera(camera), m_buffers({ buffer }) {
+        m_buffers.push_back(std::make_shared<Framebuffer>("", buffer->m_width, buffer->m_height));
+    }
 
     virtual void Setup() {
-        m_camera->Setup(m_buffer->m_width, m_buffer->m_height);
+        m_camera->Setup(m_buffers[0]->m_width, m_buffers[0]->m_height);
         m_scene->Setup();
     }
     virtual Spectrum Li(Ray ray, Sampler& sampler) = 0;
@@ -40,7 +42,9 @@ protected:
 public:
     Timer m_timer;
 protected:
-    std::shared_ptr<Framebuffer> m_buffer;
+    //std::shared_ptr<Framebuffer> m_buffers[0];
+    std::vector<std::pair<Framebuffer::Tile, bool>> m_adaptiveTiles;
+    std::vector<std::shared_ptr<Framebuffer>> m_buffers;
     std::shared_ptr<Scene> m_scene;
     std::shared_ptr<Camera> m_camera;
 };

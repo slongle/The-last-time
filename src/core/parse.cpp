@@ -499,6 +499,7 @@ void Parse(const std::string& filename, Renderer& renderer)
         }
     }
 
+    std::cout << "renderer.m_buffer: " << &buffer << std::endl;
     renderer.m_buffer = buffer;
     renderer.m_scene = scene;
     renderer.m_integrator = integrator;

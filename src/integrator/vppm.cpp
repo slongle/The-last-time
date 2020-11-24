@@ -15,7 +15,7 @@ void VPPMIntegrator::Save()
             m_initialRadius,
             m_alpha,
             m_timer.ToString());
-    m_buffer->Save(suffix);
+    m_buffers[0]->Save(suffix);
 }
 
 std::string VPPMIntegrator::ToString() const
@@ -29,11 +29,11 @@ void VPPMIntegrator::Start()
     Setup();
 
     m_tiles.clear();
-    for (int j = 0; j < m_buffer->m_height; j += tile_size) {
-        for (int i = 0; i < m_buffer->m_width; i += tile_size) {
+    for (int j = 0; j < m_buffers[0]->m_height; j += tile_size) {
+        for (int i = 0; i < m_buffers[0]->m_width; i += tile_size) {
             m_tiles.push_back({
                 {i, j},
-                {std::min(m_buffer->m_width - i, tile_size), std::min(m_buffer->m_height - j, tile_size)}
+                {std::min(m_buffers[0]->m_width - i, tile_size), std::min(m_buffers[0]->m_height - j, tile_size)}
                 });
         }
     }
@@ -109,7 +109,7 @@ void VPPMIntegrator::Start()
             // Initialize render status (stop)
             m_rendering = false;
             m_timer.Stop();
-            //m_buffer->Save();
+            //m_buffers[0]->Save();
         }
     );
 }
@@ -117,8 +117,8 @@ void VPPMIntegrator::Start()
 void VPPMIntegrator::RenderTile(const Framebuffer::Tile& tile)
 {
     IndependentSampler sampler;
-    uint64_t s = (tile.pos[1] * m_buffer->m_width + tile.pos[0]) +
-        m_currentIteration * (m_buffer->m_width * m_buffer->m_height);
+    uint64_t s = (tile.pos[1] * m_buffers[0]->m_width + tile.pos[0]) +
+        m_currentIteration * (m_buffers[0]->m_width * m_buffers[0]->m_height);
     sampler.Setup(s);
 
     for (int j = 0; j < tile.res[1]; j++) {
@@ -136,7 +136,7 @@ void VPPMIntegrator::RenderTile(const Framebuffer::Tile& tile)
 #else
                 Spectrum radiance = Li(ray, sampler);
 #endif // _DEBUG
-                m_buffer->AddSample(x, y, radiance);
+                m_buffers[0]->AddSample(x, y, radiance);
             }
         }
     }
@@ -358,12 +358,12 @@ void VPPMIntegrator::Debug(DebugRecord& debugRec)
 {
     if (debugRec.m_debugRay) {
         Float2 pos = debugRec.m_rasterPosition;
-        if (pos.x >= 0 && pos.x < m_buffer->m_width &&
-            pos.y >= 0 && pos.y < m_buffer->m_height)
+        if (pos.x >= 0 && pos.x < m_buffers[0]->m_width &&
+            pos.y >= 0 && pos.y < m_buffers[0]->m_height)
         {
-            int x = pos.x, y = m_buffer->m_height - pos.y;
+            int x = pos.x, y = m_buffers[0]->m_height - pos.y;
             Sampler sampler;
-            unsigned int s = y * m_buffer->m_width + x;
+            unsigned int s = y * m_buffers[0]->m_width + x;
             sampler.Setup(s);
             Ray ray;
             m_camera->GenerateRay(Float2(x, y), sampler, ray);

@@ -164,12 +164,12 @@ void PathIntegrator::Debug(DebugRecord& debugRec)
     //return;
     if (debugRec.m_debugRay) {
         Float2 pos = debugRec.m_rasterPosition;
-        if (pos.x >= 0 && pos.x < m_buffer->m_width &&
-            pos.y >= 0 && pos.y < m_buffer->m_height)
+        if (pos.x >= 0 && pos.x < m_buffers[0]->m_width &&
+            pos.y >= 0 && pos.y < m_buffers[0]->m_height)
         {
-            int x = pos.x, y = m_buffer->m_height - pos.y;
+            int x = pos.x, y = m_buffers[0]->m_height - pos.y;
             Sampler sampler;
-            unsigned int s = y * m_buffer->m_width + x;
+            unsigned int s = y * m_buffers[0]->m_width + x;
             sampler.Setup(s);
             Ray ray;
             m_camera->GenerateRay(Float2(x, y), sampler, ray);

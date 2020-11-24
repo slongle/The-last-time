@@ -14,6 +14,7 @@ public:
     struct Tile {
         int pos[2];
         int res[2];
+        int GetSize() const { return res[0] * res[1]; }
     };
 
     Framebuffer() {}
@@ -25,6 +26,8 @@ public:
     void Save(const std::string& suffix = "");
     sRGB* GetsRGBBuffer() const;
     sRGB GetPixelSpectrum(const Int2& pos) const;
+    void ClearPixel(const Int2& pos);
+    int GetSize() const { return m_width * m_height; }
     // Debug
     void SetVal(int x, int y, const Spectrum& s);
     void DrawCircle(float cx, float cy, float r, const Spectrum& s);

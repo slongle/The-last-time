@@ -15,7 +15,7 @@ void SPPMIntegrator::Save()
             m_initialRadius,
             m_alpha,
             m_timer.ToString());
-    m_buffer->Save(suffix);
+    m_buffers[0]->Save(suffix);
 }
 
 std::string SPPMIntegrator::ToString() const
@@ -26,19 +26,19 @@ std::string SPPMIntegrator::ToString() const
 
 void SPPMIntegrator::InitializeGatherPoints()
 {
-    for (int j = 0; j < m_buffer->m_height; j += tile_size) {
-        for (int i = 0; i < m_buffer->m_width; i += tile_size) {
+    for (int j = 0; j < m_buffers[0]->m_height; j += tile_size) {
+        for (int i = 0; i < m_buffers[0]->m_width; i += tile_size) {
             m_gatherBlocks.push_back(std::vector<GatherPoint>());
             std::vector<GatherPoint>& points = m_gatherBlocks.back();
-            points.resize(std::min(m_buffer->m_width - i, tile_size) *
-                std::min(m_buffer->m_height - j, tile_size));
+            points.resize(std::min(m_buffers[0]->m_width - i, tile_size) *
+                std::min(m_buffers[0]->m_height - j, tile_size));
             int index = 0;
             for (int xoffset = 0; xoffset < tile_size; xoffset++) {
-                if (i + xoffset < m_buffer->m_width) {
+                if (i + xoffset < m_buffers[0]->m_width) {
                     break;
                 }
                 for (int yoffset = 0; yoffset < tile_size; yoffset++) {
-                    if (j + yoffset < m_buffer->m_height) {
+                    if (j + yoffset < m_buffers[0]->m_height) {
                         break;
                     }
                     points[index++].m_pos = Int2(i + xoffset, j + yoffset);
@@ -115,8 +115,8 @@ void SPPMIntegrator::CameraPass(int index)
     std::vector<GatherPoint>& block = m_gatherBlocks[index];
     // Initialize sampler
     IndependentSampler sampler;
-    uint64_t seed = (block[0].m_pos.y * m_buffer->m_width + block[0].m_pos.x) +
-        m_currentIteration * (m_buffer->m_width * m_buffer->m_height);
+    uint64_t seed = (block[0].m_pos.y * m_buffers[0]->m_width + block[0].m_pos.x) +
+        m_currentIteration * (m_buffers[0]->m_width * m_buffers[0]->m_height);
     sampler.Setup(seed);
 
     // Trace ray
@@ -271,12 +271,12 @@ void SPPMIntegrator::Debug(DebugRecord& debugRec)
 {
     if (debugRec.m_debugRay) {
         Float2 pos = debugRec.m_rasterPosition;
-        if (pos.x >= 0 && pos.x < m_buffer->m_width &&
-            pos.y >= 0 && pos.y < m_buffer->m_height)
+        if (pos.x >= 0 && pos.x < m_buffers[0]->m_width &&
+            pos.y >= 0 && pos.y < m_buffers[0]->m_height)
         {
-            int x = pos.x, y = m_buffer->m_height - pos.y;
+            int x = pos.x, y = m_buffers[0]->m_height - pos.y;
             Sampler sampler;
-            unsigned int s = y * m_buffer->m_width + x;
+            unsigned int s = y * m_buffers[0]->m_width + x;
             sampler.Setup(s);
             Ray ray;
             m_camera->GenerateRay(Float2(x, y), sampler, ray);
