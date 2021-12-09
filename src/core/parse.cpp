@@ -151,9 +151,10 @@ void Parse(const std::string& filename, Renderer& renderer)
                 Spectrum albedo = GetSpectrum(mediumProperties, "albedo", Spectrum(0.5f));
                 float scale = GetFloat(mediumProperties, "scale", 1);
                 float temperatureScale = GetFloat(mediumProperties, "temperature_scale", 1);
+
                 medium = new HeterogeneousMedium(
                     std::shared_ptr<PhaseFunction>(pf),
-                    filename, lefthand, densityName, albedo, scale);
+                    filename, lefthand, densityName, albedo, scale, temperatureName, temperatureScale);
             }
             else {
                 LOG(FATAL) << "Wrong medium type " << mediumType;

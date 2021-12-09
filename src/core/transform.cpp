@@ -23,10 +23,22 @@ Transform Perspective(const float& fov, const float& width, const float& height)
     return Transform(glm::perspectiveFovRH(Radians(fov), width, height, 0.001f, 10000.f));
 }
 
+Transform Scale(const Float3& s)
+{
+	Matrix4x4 I(1.0f);
+	return Transform(glm::scale(I, Float3(s.x, s.y, s.z)), glm::scale(I, Float3(1.f / s.x, 1.f / s.y, 1.f / s.z)));
+}
+
 Transform Scale(const float& x, const float& y, const float& z)
 {
     Matrix4x4 I(1.0f);
     return Transform(glm::scale(I, Float3(x, y, z)), glm::scale(I, Float3(1.f / x, 1.f / y, 1.f / z)));
+}
+
+Transform Translate(const Float3& t)
+{
+	Matrix4x4 I(1.0f);
+	return Transform(glm::translate(I, Float3(t.x, t.y, t.z)), glm::translate(I, Float3(-t.x, -t.y, -t.z)));
 }
 
 Transform Translate(const float& x, const float& y, const float& z)

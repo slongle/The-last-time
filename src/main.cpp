@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
     scenes[20] = "2.Shader/Spaceship/scene.json";
     scenes[21] = "3.Volume/HeteroTest/scene.json";
     scenes[22] = "3.Volume/DisneyCloudTest/scene.json";
-    std::string filename = prefix + scenes[21];
+    scenes[23] = "3.Volume/Fire/scene.json";
+    std::string filename = prefix + scenes[23];
 
     Renderer renderer(filename);
     renderer.Render(mute);
